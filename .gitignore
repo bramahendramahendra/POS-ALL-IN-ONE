@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+desktop/node_modules/
+web/node_modules/
+android/node_modules/
+
+# Build output
+desktop/dist/
+web/dist/
+android/dist/
+android/android/
+*.apk
+
+# Environment
+.env
+*.env.local
+backend/config/config_local.json
+backend/config/config_prod.json
+
+# Logs
+backend/logs/
+desktop/logs/
+*.log
+
+# Database
+desktop/pos-retail.db
+desktop/backups/
+
+# OS
+.DS_Store
+Thumbs.db
