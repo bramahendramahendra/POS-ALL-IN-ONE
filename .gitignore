@@ -1,31 +1,98 @@
-# Dependencies
-node_modules/
+# ================================
+# DESKTOP (Electron + Node.js)
+# ================================
 desktop/node_modules/
-web/node_modules/
-android/node_modules/
-
-# Build output
 desktop/dist/
-web/dist/
-android/dist/
-android/android/
-*.apk
-
-# Environment
-.env
-*.env.local
-backend/config/config_local.json
-backend/config/config_prod.json
-
-# Logs
-backend/logs/
-desktop/logs/
-*.log
-
-# Database
+desktop/out/
 desktop/pos-retail.db
 desktop/backups/
+desktop/logs/
+desktop/.env
 
-# OS
+# ================================
+# BACKEND (Go GIN)
+# ================================
+backend/logs/
+backend/tmp/
+backend/.env
+backend/config/config_prod.json
+backend/config/config_uat.json
+backend/config/config_local.json
+backend/config/config_bors_kost.json
+backend/.scannerwork/
+
+# Go binary & build output
+backend/*.exe
+backend/*.out
+backend/main
+
+# Go test cache
+backend/vendor/
+
+# ================================
+# WEB
+# ================================
+web/node_modules/
+web/dist/
+web/.env
+web/.env.local
+web/.env.production
+
+# ================================
+# ANDROID (Capacitor)
+# ================================
+android/node_modules/
+android/dist/
+android/.env
+android/android/
+android/ios/
+android/.gradle/
+
+# APK output
+*.apk
+*.aab
+
+# ================================
+# SHARED
+# ================================
+shared/.env
+
+# ================================
+# OS & EDITOR
+# ================================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+
+# VS Code
+.vscode/settings.json
+.vscode/launch.json
+*.code-workspace
+
+# JetBrains
+.idea/
+*.iml
+
+# ================================
+# LOGS & TEMP
+# ================================
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# ================================
+# SENSITIVE FILES
+# ================================
+*.pem
+*.key
+*.cert
+*.p12
+*.keystore
+*-keystore.jks
+google-services.json
