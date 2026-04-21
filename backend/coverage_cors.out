@@ -1,0 +1,11 @@
+mode: set
+/Users/ccp/Documents/Psyduck/permen-api/middleware/cors_middleware.go:7.29,13.30 2 1
+/Users/ccp/Documents/Psyduck/permen-api/middleware/cors_middleware.go:13.30,18.48 3 1
+/Users/ccp/Documents/Psyduck/permen-api/middleware/cors_middleware.go:18.48,19.31 1 1
+/Users/ccp/Documents/Psyduck/permen-api/middleware/cors_middleware.go:19.31,21.10 2 1
+/Users/ccp/Documents/Psyduck/permen-api/middleware/cors_middleware.go:26.3,26.24 1 1
+/Users/ccp/Documents/Psyduck/permen-api/middleware/cors_middleware.go:26.24,29.4 2 1
+/Users/ccp/Documents/Psyduck/permen-api/middleware/cors_middleware.go:29.9,33.4 1 1
+/Users/ccp/Documents/Psyduck/permen-api/middleware/cors_middleware.go:35.3,41.36 5 1
+/Users/ccp/Documents/Psyduck/permen-api/middleware/cors_middleware.go:41.36,44.4 2 1
+/Users/ccp/Documents/Psyduck/permen-api/middleware/cors_middleware.go:46.3,46.11 1 1

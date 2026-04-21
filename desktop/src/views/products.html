@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manajemen Produk - POS Retail</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="dashboard-page">
+  <!-- Navbar -->
+  <nav class="navbar"></nav>
+
+   <div class="dashboard-container">
+    <!-- Sidebar -->
+    <aside class="sidebar"></aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="content-header">
+        <h1>Manajemen Produk</h1>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs-container">
+        <div class="tabs">
+          <button class="tab-button active" data-tab="products">Produk</button>
+          <button class="tab-button" data-tab="categories">Kategori</button>
+          <button class="tab-button" data-tab="units">Satuan</button>
+        </div>
+      </div>
+
+      <!-- Tab Content: Products -->
+      <div id="products-tab" class="tab-content active">
+        <div class="tab-header">
+          <button class="btn btn-primary" id="btnAddProduct">
+            <span>➕</span> Tambah Produk
+          </button>
+          <button class="btn btn-secondary" id="btnBulkPrintLabel" style="display:none;">
+            <span>🏷️</span> Cetak Label Terpilih (<span id="selectedCount">0</span>)
+          </button>
+          <button class="btn btn-secondary" id="btnImportProduct" style="display:none;">
+            <span>📥</span> Import Produk
+          </button>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-container">
+          <div class="search-box">
+            <input 
+              type="text" 
+              id="searchProduct" 
+              placeholder="🔍 Cari nama produk atau barcode..."
+              class="search-input"
+            >
+          </div>
+          <div class="filter-group">
+            <select id="filterCategory" class="filter-select">
+              <option value="">Semua Kategori</option>
+            </select>
+            <select id="filterProductStatus" class="filter-select">
+              <option value="">Semua Status</option>
+              <option value="1">Aktif</option>
+              <option value="0">Nonaktif</option>
+              <option value="low_stock">Stok Menipis</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Products Table -->
+        <div class="table-container">
+          <table class="data-table" id="productsTable">
+            <thead>
+              <tr>
+                <th style="width:36px;">
+                  <input type="checkbox" id="checkAllProducts" title="Pilih semua">
+                </th>
+                <th>Barcode</th>
+                <th>Nama Produk</th>
+                <th>Kategori</th>
+                <th>Harga Beli</th>
+                <th>Harga Jual</th>
+                <th>Margin %</th>
+                <th>Stok</th>
+                <th>Satuan</th>
+                <th>Status</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="productsTableBody">
+              <tr>
+                <td colspan="11" class="text-center">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab Content: Categories -->
+      <div id="categories-tab" class="tab-content">
+        <div class="tab-header">
+          <button class="btn btn-primary" id="btnAddCategory">
+            <span>➕</span> Tambah Kategori
+          </button>
+        </div>
+
+        <!-- Categories Table -->
+        <div class="table-container">
+          <table class="data-table" id="categoriesTable">
+            <thead>
+              <tr>
+                <th>Nama Kategori</th>
+                <th>Deskripsi</th>
+                <th>Jumlah Produk</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="categoriesTableBody">
+              <tr>
+                <td colspan="4" class="text-center">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Tab Content: Units -->
+      <div id="units-tab" class="tab-content">
+        <div class="tab-header">
+          <button class="btn btn-primary" id="btnAddUnit">
+            <span>➕</span> Tambah Satuan
+          </button>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table" id="unitsTable">
+            <thead>
+              <tr>
+                <th>Nama Satuan</th>
+                <th>Singkatan</th>
+                <th>Status</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="unitsTableBody">
+              <tr>
+                <td colspan="4" class="text-center">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal Add/Edit Product -->
+  <div id="productModal" class="modal">
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h2 id="productModalTitle">Tambah Produk</h2>
+        <button class="modal-close" id="closeProductModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="productForm">
+          <input type="hidden" id="productId">
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="barcode">Barcode <span class="required">*</span></label>
+              <div class="input-group">
+                <input 
+                  type="text" 
+                  id="barcode" 
+                  placeholder="PROD-xxxxx"
+                  required
+                >
+                <button type="button" class="btn btn-secondary btn-sm" id="btnGenerateBarcode">
+                  Generate
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="productName">Nama Produk <span class="required">*</span></label>
+              <input 
+                type="text" 
+                id="productName" 
+                placeholder="Masukkan nama produk"
+                required
+              >
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="productCategory">Kategori</label>
+              <select id="productCategory">
+                <option value="">Pilih Kategori</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="unit">Satuan <span class="required">*</span></label>
+              <select id="unit" required>
+                <option value="pcs">Pcs</option>
+                <option value="box">Box</option>
+                <option value="pack">Pack</option>
+                <option value="botol">Botol</option>
+                <option value="sachet">Sachet</option>
+                <option value="kg">Kg</option>
+                <option value="liter">Liter</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="purchasePrice">Harga Beli <span class="required">*</span></label>
+              <input 
+                type="number" 
+                id="purchasePrice" 
+                placeholder="0"
+                min="0"
+                step="100"
+                required
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="sellingPrice">Harga Jual <span class="required">*</span></label>
+              <input 
+                type="number" 
+                id="sellingPrice" 
+                placeholder="0"
+                min="0"
+                step="100"
+                required
+              >
+            </div>
+
+            <div class="form-group">
+              <label>Margin</label>
+              <input 
+                type="text" 
+                id="marginDisplay" 
+                placeholder="0%"
+                readonly
+                class="readonly-input"
+              >
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="stock">Stok Awal <span class="required">*</span></label>
+              <input 
+                type="number" 
+                id="stock" 
+                placeholder="0"
+                min="0"
+                required
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="minStock">Stok Minimum <span class="required">*</span></label>
+              <input 
+                type="number" 
+                id="minStock" 
+                placeholder="5"
+                min="1"
+                value="5"
+                required
+              >
+              <small class="form-text">Notifikasi jika stok di bawah nilai ini</small>
+            </div>
+          </div>
+
+          <!-- Harga Tier Section (hanya tampil saat edit) -->
+          <div id="productPricesSection" class="hidden">
+            <hr style="margin: 16px 0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <label style="font-weight:600; font-size:14px;">Harga Grosir / Multi-Harga</label>
+              <button type="button" class="btn btn-secondary btn-sm" id="btnAddProductPrice">➕ Tambah Tier Harga</button>
+            </div>
+            <small class="form-text" style="display:block; margin-bottom:8px;">
+              Harga retail (default) diambil dari Harga Jual di atas. Tambahkan tier grosir beserta qty minimum dan harganya.
+            </small>
+            <div id="productPricesContainer">
+              <!-- rows will be injected here -->
+            </div>
+          </div>
+
+          <!-- Satuan Jual Section (hanya tampil saat edit) -->
+          <div id="productUnitsSection" class="hidden">
+            <hr style="margin: 16px 0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <label style="font-weight:600; font-size:14px;">Satuan Jual</label>
+              <button type="button" class="btn btn-secondary btn-sm" id="btnAddProductUnit">➕ Tambah Satuan Jual</button>
+            </div>
+            <small class="form-text" style="display:block; margin-bottom:8px;">
+              Satuan dasar = satuan pada produk. Tambahkan satuan jual lain beserta konversi dan harganya.
+            </small>
+            <div id="productUnitsContainer">
+              <!-- rows will be injected here -->
+            </div>
+          </div>
+
+          <div id="productFormError" class="error-message hidden"></div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="btnCancelProduct">Batal</button>
+            <button type="submit" class="btn btn-primary" id="btnSubmitProduct">
+              <span id="btnSubmitProductText">Simpan</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Add/Edit Category -->
+  <div id="categoryModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="categoryModalTitle">Tambah Kategori</h2>
+        <button class="modal-close" id="closeCategoryModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="categoryForm">
+          <input type="hidden" id="categoryId">
+          
+          <div class="form-group">
+            <label for="categoryName">Nama Kategori <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="categoryName" 
+              placeholder="Masukkan nama kategori"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="categoryDescription">Deskripsi</label>
+            <textarea 
+              id="categoryDescription" 
+              placeholder="Deskripsi kategori (opsional)"
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div id="categoryFormError" class="error-message hidden"></div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="btnCancelCategory">Batal</button>
+            <button type="submit" class="btn btn-primary" id="btnSubmitCategory">
+              <span id="btnSubmitCategoryText">Simpan</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Add/Edit Unit -->
+  <div id="unitModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="unitModalTitle">Tambah Satuan</h2>
+        <button class="modal-close" id="closeUnitModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="unitForm">
+          <input type="hidden" id="unitId">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="unitName">Nama Satuan <span class="required">*</span></label>
+              <input type="text" id="unitName" placeholder="Contoh: Dus, Lusin, Karton" required>
+            </div>
+            <div class="form-group">
+              <label for="unitAbbreviation">Singkatan <span class="required">*</span></label>
+              <input type="text" id="unitAbbreviation" placeholder="Contoh: dus, lsn, ktn" required>
+            </div>
+          </div>
+
+          <div id="unitFormError" class="error-message hidden"></div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="btnCancelUnit">Batal</button>
+            <button type="submit" class="btn btn-primary">
+              <span id="btnSubmitUnitText">Simpan</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Add/Edit Product Unit -->
+  <div id="productUnitModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="productUnitModalTitle">Tambah Satuan Jual</h2>
+        <button class="modal-close" id="closeProductUnitModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="productUnitForm">
+          <input type="hidden" id="puEditIndex">
+
+          <div class="form-group">
+            <label for="puUnitId">Satuan <span class="required">*</span></label>
+            <select id="puUnitId" required>
+              <option value="">Pilih Satuan</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="puConversionQty">Isi / Konversi ke Satuan Dasar <span class="required">*</span></label>
+            <input type="number" id="puConversionQty" placeholder="Contoh: 24 (1 dus = 24 botol)" min="1" step="1" required>
+            <small class="form-text" id="puConversionHint">Berapa satuan dasar dalam 1 satuan ini</small>
+          </div>
+
+          <div class="form-group">
+            <label for="puSellingPrice">Harga Jual <span class="required">*</span></label>
+            <input type="number" id="puSellingPrice" placeholder="0" min="0" step="100" required>
+            <small class="form-text" id="puPriceHint"></small>
+          </div>
+
+          <div id="productUnitFormError" class="error-message hidden"></div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="btnCancelProductUnit">Batal</button>
+            <button type="submit" class="btn btn-primary">
+              <span id="btnSubmitProductUnitText">Simpan</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Add/Edit Product Price Tier -->
+  <div id="productPriceModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="productPriceModalTitle">Tambah Tier Harga</h2>
+        <button class="modal-close" id="closeProductPriceModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="productPriceForm">
+          <input type="hidden" id="ppEditIndex">
+
+          <div class="form-group">
+            <label for="ppTierName">Nama Tier <span class="required">*</span></label>
+            <input type="text" id="ppTierName" placeholder="Contoh: Harga Grosir 1" required>
+          </div>
+
+          <div class="form-group">
+            <label for="ppMinQty">Qty Minimum <span class="required">*</span></label>
+            <input type="number" id="ppMinQty" placeholder="Contoh: 12" min="1" step="1" required>
+            <small class="form-text">Tier harga ini berlaku mulai qty ini</small>
+          </div>
+
+          <div class="form-group">
+            <label for="ppPrice">Harga per Satuan <span class="required">*</span></label>
+            <input type="number" id="ppPrice" placeholder="0" min="0" step="100" required>
+          </div>
+
+          <div id="productPriceFormError" class="error-message hidden"></div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="btnCancelProductPrice">Batal</button>
+            <button type="submit" class="btn btn-primary">
+              <span id="btnSubmitProductPriceText">Simpan</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Cetak Label Barcode -->
+  <div id="labelPrintModal" class="modal">
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h2>🏷️ Cetak Label Barcode</h2>
+        <button class="modal-close" id="closeLabelPrintModal">&times;</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Konfigurasi -->
+        <div class="form-row" style="margin-bottom:16px;">
+          <div class="form-group">
+            <label>Ukuran Label</label>
+            <select id="labelSize" class="filter-select" style="width:100%;">
+              <option value="3x2">3 × 2 cm (kecil)</option>
+              <option value="4x2.5" selected>4 × 2.5 cm (standar)</option>
+              <option value="5x3">5 × 3 cm (sedang)</option>
+              <option value="6x4">6 × 4 cm (besar)</option>
+              <option value="8x5">8 × 5 cm (jumbo)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Printer</label>
+            <select id="labelPrinter" class="filter-select" style="width:100%;">
+              <option value="">— Gunakan printer default —</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Tabel produk + qty -->
+        <div class="table-container" style="max-height:320px;overflow-y:auto;margin-bottom:16px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Barcode</th>
+                <th>Nama Produk</th>
+                <th>Harga Jual</th>
+                <th style="width:110px;">Jumlah Label</th>
+              </tr>
+            </thead>
+            <tbody id="labelPrintProductsBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Preview area -->
+        <div style="margin-bottom:8px;">
+          <label style="font-weight:600;font-size:13px;">Preview Label</label>
+          <div id="labelPreviewArea" style="
+            border:1px solid #ddd;
+            border-radius:6px;
+            padding:12px;
+            background:#f9f9f9;
+            display:flex;
+            flex-wrap:wrap;
+            gap:8px;
+            min-height:100px;
+            max-height:200px;
+            overflow-y:auto;
+          ">
+            <p style="color:#888;font-size:13px;margin:auto;">Preview akan muncul setelah klik "Refresh Preview"</p>
+          </div>
+        </div>
+
+        <div id="labelPrintError" class="error-message hidden"></div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btnRefreshLabelPreview">🔄 Refresh Preview</button>
+          <button type="button" class="btn btn-secondary" id="btnCancelLabelPrint">Batal</button>
+          <button type="button" class="btn btn-primary" id="btnDoLabelPrint">🖨️ Cetak Label</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Import Produk -->
+  <div id="importProductModal" class="modal">
+    <div class="modal-content modal-large" style="max-width:900px;">
+      <div class="modal-header">
+        <h2>Import Produk via Excel / CSV</h2>
+        <button class="modal-close" id="closeImportProductModal">&times;</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Step 1: Upload -->
+        <div id="importStep1">
+          <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+            <button type="button" class="btn btn-secondary" id="btnDownloadTemplate">
+              📄 Download Template Excel
+            </button>
+            <span style="color:#888;font-size:13px;">Download template, isi data, lalu upload kembali.</span>
+          </div>
+
+          <div class="form-group">
+            <label>Upload File Excel (.xlsx) atau CSV (.csv)</label>
+            <input type="file" id="importFileInput" accept=".xlsx,.csv" class="form-control" style="padding:8px;">
+          </div>
+
+          <div id="importFileError" class="error-message hidden"></div>
+
+          <div class="modal-footer" style="padding-top:12px;">
+            <button type="button" class="btn btn-secondary" id="btnCancelImport">Batal</button>
+            <button type="button" class="btn btn-primary" id="btnParseImport">Lanjut &rarr; Preview</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Preview & Validasi -->
+        <div id="importStep2" class="hidden">
+          <div id="importSummaryBar" style="margin-bottom:12px;padding:10px 14px;border-radius:6px;background:#f0f9ff;border:1px solid #bae6fd;font-size:13px;"></div>
+
+          <div style="margin-bottom:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <label style="font-size:13px;font-weight:600;">Tampilkan:</label>
+            <label style="font-size:13px;cursor:pointer;">
+              <input type="radio" name="importFilter" value="all" checked> Semua
+            </label>
+            <label style="font-size:13px;cursor:pointer;">
+              <input type="radio" name="importFilter" value="valid"> Valid saja
+            </label>
+            <label style="font-size:13px;cursor:pointer;">
+              <input type="radio" name="importFilter" value="error"> Error saja
+            </label>
+          </div>
+
+          <div class="table-container" style="max-height:340px;overflow-y:auto;">
+            <table class="data-table" id="importPreviewTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Nama</th>
+                  <th>Barcode</th>
+                  <th>Kategori</th>
+                  <th>Harga Beli</th>
+                  <th>Harga Jual</th>
+                  <th>Stok</th>
+                  <th>Stok Min</th>
+                  <th>Satuan</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="importPreviewBody"></tbody>
+            </table>
+          </div>
+
+          <div style="margin-top:14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+            <label style="font-size:13px;cursor:pointer;">
+              <input type="checkbox" id="importSkipErrors" checked>
+              Skip baris error, proses yang valid saja
+            </label>
+            <span style="font-size:12px;color:#888;">(Hilangkan centang untuk batalkan semua jika ada error)</span>
+          </div>
+
+          <div id="importProcessError" class="error-message hidden"></div>
+
+          <div class="modal-footer" style="padding-top:12px;">
+            <button type="button" class="btn btn-secondary" id="btnBackImport">&larr; Kembali</button>
+            <button type="button" class="btn btn-secondary" id="btnCancelImport2">Batal</button>
+            <button type="button" class="btn btn-primary" id="btnProcessImport">✅ Proses Import</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Hasil -->
+        <div id="importStep3" class="hidden">
+          <div id="importResultContent" style="font-size:14px;"></div>
+          <div class="modal-footer" style="padding-top:12px;">
+            <button type="button" class="btn btn-primary" id="btnCloseImportResult">Tutup</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/menu.js"></script>
+  <script src="../js/notification.js"></script>
+  <script src="../js/products.js"></script>
+</body>
+</html>

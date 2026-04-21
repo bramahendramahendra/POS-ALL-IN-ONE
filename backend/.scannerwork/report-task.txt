@@ -1,0 +1,6 @@
+projectKey=PERMENT_API_V2
+serverUrl=https://sonarqube-enterprise.bri.co.id
+serverVersion=2025.4.4.119049
+dashboardUrl=https://sonarqube-enterprise.bri.co.id/dashboard?id=PERMENT_API_V2
+ceTaskId=33948b32-65f6-41e5-b099-f2c014f7c6db
+ceTaskUrl=https://sonarqube-enterprise.bri.co.id/api/ce/task?id=33948b32-65f6-41e5-b099-f2c014f7c6db

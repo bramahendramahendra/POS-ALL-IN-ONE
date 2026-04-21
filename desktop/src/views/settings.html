@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pengaturan - POS Retail</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="dashboard-page">
+  <!-- Navbar -->
+  <nav class="navbar"></nav>
+
+  <div class="dashboard-container">
+    <!-- Sidebar -->
+    <aside class="sidebar"></aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="content-header">
+        <h1>⚙️ Pengaturan</h1>
+        <div class="header-actions">
+          <button class="btn btn-danger btn-sm" id="btnResetSettings">🔄 Reset Default</button>
+          <button class="btn btn-primary" id="btnSaveSettings">💾 Simpan Pengaturan</button>
+        </div>
+      </div>
+
+      <div class="settings-layout">
+
+        <!-- ========================
+             SECTION: INFO TOKO
+             ======================== -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <span class="settings-card-icon">🏪</span>
+            <h3>Informasi Toko</h3>
+          </div>
+          <div class="settings-card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Nama Toko <span class="required">*</span></label>
+                <input type="text" id="storeName" class="form-control"
+                  placeholder="Nama toko Anda" maxlength="100">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nomor Telepon</label>
+                <input type="text" id="storePhone" class="form-control"
+                  placeholder="021-12345678" maxlength="30">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Alamat Toko</label>
+              <textarea id="storeAddress" class="form-control" rows="2"
+                placeholder="Alamat lengkap toko" maxlength="255"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Toko</label>
+              <input type="email" id="storeEmail" class="form-control"
+                placeholder="info@toko.com" maxlength="100">
+            </div>
+
+            <!-- Logo Upload -->
+            <div class="form-group">
+              <label class="form-label">Logo Toko</label>
+              <div class="logo-upload-area">
+                <div id="logoPreview" class="logo-preview">
+                  <span class="logo-placeholder">🏪</span>
+                </div>
+                <div class="logo-upload-controls">
+                  <label class="btn btn-secondary btn-sm" for="logoFileInput">
+                    📁 Pilih Gambar
+                  </label>
+                  <input type="file" id="logoFileInput" accept="image/*" class="hidden">
+                  <button class="btn btn-danger btn-sm" id="btnRemoveLogo">🗑️ Hapus Logo</button>
+                  <p class="form-text">
+                    Format: JPG, PNG, GIF. Maks 500KB. Digunakan di struk.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================
+             SECTION: PAJAK
+             ======================== -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <span class="settings-card-icon">🧾</span>
+            <h3>Pengaturan Pajak</h3>
+          </div>
+          <div class="settings-card-body">
+            <div class="form-group">
+              <label class="toggle-label">
+                <div class="toggle-switch">
+                  <input type="checkbox" id="taxEnabled">
+                  <span class="toggle-slider"></span>
+                </div>
+                <div class="toggle-text">
+                  <strong>Aktifkan Pajak</strong>
+                  <small>Pajak akan diterapkan pada setiap transaksi</small>
+                </div>
+              </label>
+            </div>
+            <div class="form-group hidden" id="taxPercentGroup">
+              <label class="form-label">Persentase Pajak (%)</label>
+              <div class="input-with-hint">
+                <input type="number" id="taxPercent" class="form-control input-sm"
+                  placeholder="0" min="0" max="100" step="0.1">
+                <span class="input-hint">
+                  Contoh: 11 = PPN 11%
+                </span>
+              </div>
+            </div>
+            <div class="info-box hidden" id="taxInfoBox">
+              <span>ℹ️</span>
+              Pajak akan otomatis dihitung di halaman Kasir saat membuat transaksi baru.
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================
+             SECTION: STRUK
+             ======================== -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <span class="settings-card-icon">🖨️</span>
+            <h3>Pengaturan Struk</h3>
+          </div>
+          <div class="settings-card-body">
+            <div class="form-group">
+              <label class="form-label">Footer / Pesan Struk</label>
+              <textarea id="receiptFooter" class="form-control" rows="3"
+                placeholder="Pesan yang tampil di bawah struk..."
+                maxlength="255"></textarea>
+              <small class="form-text">Contoh: Terima kasih atas kunjungan Anda</small>
+            </div>
+
+            <!-- Receipt Preview -->
+            <div class="form-group">
+              <label class="form-label">Preview Struk</label>
+              <div class="receipt-preview">
+                <div class="receipt-preview-header">
+                  <div id="previewStoreName" class="receipt-preview-store-name">TOKO RETAIL</div>
+                  <div id="previewStoreAddress" class="receipt-preview-text">Jl. Contoh No. 123</div>
+                  <div id="previewStorePhone" class="receipt-preview-text">021-12345678</div>
+                </div>
+                <div class="receipt-divider-dashed"></div>
+                <div class="receipt-preview-text">
+                  <div class="receipt-preview-row">
+                    <span>Produk A × 2</span><span>Rp 20.000</span>
+                  </div>
+                  <div class="receipt-preview-row">
+                    <span>Produk B × 1</span><span>Rp 15.000</span>
+                  </div>
+                </div>
+                <div class="receipt-divider-dashed"></div>
+                <div class="receipt-preview-total">
+                  <span>TOTAL</span><span>Rp 35.000</span>
+                </div>
+                <div class="receipt-divider-dashed"></div>
+                <div id="previewFooter" class="receipt-preview-footer">
+                  Terima kasih atas kunjungan Anda
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================
+             SECTION: NOTIFIKASI STOK
+             ======================== -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <span class="settings-card-icon">🔔</span>
+            <h3>Notifikasi Stok</h3>
+          </div>
+          <div class="settings-card-body">
+            <div class="form-group">
+              <label class="toggle-label">
+                <div class="toggle-switch">
+                  <input type="checkbox" id="stockNotificationEnabled" checked>
+                  <span class="toggle-slider"></span>
+                </div>
+                <div class="toggle-text">
+                  <strong>Aktifkan Notifikasi Stok Otomatis</strong>
+                  <small>Tampilkan peringatan saat ada produk dengan stok di bawah minimum</small>
+                </div>
+              </label>
+            </div>
+            <div class="info-box" id="stockNotifInfoBox">
+              <span>ℹ️</span>
+              Notifikasi akan muncul saat login ke dashboard dan setiap transaksi selesai jika ada produk yang stoknya di bawah minimum.
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================
+             SECTION: BACKUP
+             ======================== -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <span class="settings-card-icon">💾</span>
+            <h3>Backup & Restore Database</h3>
+          </div>
+          <div class="settings-card-body">
+
+            <div class="form-group">
+              <label class="toggle-label">
+                <div class="toggle-switch">
+                  <input type="checkbox" id="autoBackup" checked>
+                  <span class="toggle-slider"></span>
+                </div>
+                <div class="toggle-text">
+                  <strong>Auto Backup Harian</strong>
+                  <small>Backup otomatis setiap aplikasi dibuka (1x/hari)</small>
+                </div>
+              </label>
+            </div>
+
+            <div class="form-group" id="backupDaysGroup">
+              <label class="form-label">Simpan Backup Selama (hari)</label>
+              <div class="input-with-hint">
+                <input type="number" id="backupDays" class="form-control input-xs"
+                  value="7" min="1" max="365">
+                <span class="input-hint">hari</span>
+              </div>
+              <small class="form-text">
+                Backup lebih lama dari nilai ini akan otomatis dihapus.
+              </small>
+            </div>
+
+            <div class="section-divider">
+              <div class="backup-actions">
+                <div class="backup-action-item">
+                  <div>
+                    <strong>Backup Manual</strong>
+                    <p class="backup-desc">
+                      Simpan backup database ke lokasi pilihan Anda
+                    </p>
+                  </div>
+                  <button class="btn btn-primary" id="btnBackupNow">
+                    💾 Backup Sekarang
+                  </button>
+                </div>
+
+                <div class="backup-action-item">
+                  <div>
+                    <strong>Restore Database</strong>
+                    <p class="backup-desc">
+                      Pulihkan database dari file backup.
+                      <strong class="text-danger">Aplikasi akan restart!</strong>
+                    </p>
+                  </div>
+                  <button class="btn btn-danger" id="btnRestoreBackup">
+                    🔄 Restore dari Backup
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Backup status -->
+            <div id="backupStatusBox" class="info-box hidden mt-20">
+              <span id="backupStatusText"></span>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ========================
+             SECTION: LABEL BARCODE
+             ======================== -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <span class="settings-card-icon">🏷️</span>
+            <h3>Label Barcode</h3>
+          </div>
+          <div class="settings-card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Ukuran Label Default</label>
+                <select id="labelSizeDefault" class="form-control">
+                  <option value="3x2">3 × 2 cm (kecil)</option>
+                  <option value="4x2.5">4 × 2.5 cm (standar)</option>
+                  <option value="5x3">5 × 3 cm (sedang)</option>
+                  <option value="6x4">6 × 4 cm (besar)</option>
+                  <option value="8x5">8 × 5 cm (jumbo)</option>
+                </select>
+                <small class="form-text">Ukuran ini akan dipilih secara otomatis saat membuka dialog cetak label.</small>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Printer Label Default</label>
+                <select id="labelPrinterDefault" class="form-control">
+                  <option value="">— Gunakan printer default sistem —</option>
+                </select>
+                <small class="form-text">Printer yang dipilih otomatis saat mencetak label barcode.</small>
+              </div>
+            </div>
+            <div class="info-box">
+              <span>ℹ️</span>
+              Cetak label barcode tersedia di menu <strong>Manajemen Produk</strong>. Klik ikon 🏷️ pada baris produk untuk cetak 1 label, atau centang beberapa produk lalu klik "Cetak Label Terpilih" untuk cetak massal.
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================
+             SECTION: INFO APLIKASI
+             ======================== -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <span class="settings-card-icon">ℹ️</span>
+            <h3>Informasi Aplikasi</h3>
+          </div>
+          <div class="settings-card-body">
+            <div class="app-info-grid">
+              <div class="app-info-item">
+                <span class="app-info-label">Nama Aplikasi</span>
+                <span class="app-info-value">POS Retail</span>
+              </div>
+              <div class="app-info-item">
+                <span class="app-info-label">Versi</span>
+                <span class="app-info-value">1.0.0</span>
+              </div>
+              <div class="app-info-item">
+                <span class="app-info-label">Framework</span>
+                <span class="app-info-value">Electron + Vanilla JS</span>
+              </div>
+              <div class="app-info-item">
+                <span class="app-info-label">Database</span>
+                <span class="app-info-value">SQLite (sql.js)</span>
+              </div>
+              <div class="app-info-item">
+                <span class="app-info-label">Login Default</span>
+                <span class="app-info-value">admin / admin123</span>
+              </div>
+            </div>
+
+            <div class="shortcuts-section">
+              <p class="shortcuts-label">Keyboard Shortcuts:</p>
+              <div class="shortcuts-grid">
+                <div class="shortcut-item"><kbd>Ctrl+N</kbd> Kasir</div>
+                <div class="shortcut-item"><kbd>Ctrl+P</kbd> Produk</div>
+                <div class="shortcut-item"><kbd>Ctrl+T</kbd> Transaksi</div>
+                <div class="shortcut-item"><kbd>Ctrl+F</kbd> Keuangan</div>
+                <div class="shortcut-item"><kbd>Ctrl+Shift+R</kbd> Laporan</div>
+                <div class="shortcut-item"><kbd>Ctrl+U</kbd> Pengguna</div>
+                <div class="shortcut-item"><kbd>Ctrl+Shift+S</kbd> Pengaturan</div>
+                <div class="shortcut-item"><kbd>Ctrl+L</kbd> Logout</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- end settings-layout -->
+    </main>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="loading-overlay hidden">
+    <div class="loading-spinner-box">
+      <div class="spinner"></div>
+      <p id="loadingText">Menyimpan pengaturan...</p>
+    </div>
+  </div>
+
+  <!-- Confirm Modal -->
+  <div id="confirmModal" class="modal hidden">
+    <div class="modal-content modal-small">
+      <div class="modal-header">
+        <h3 id="confirmModalTitle">Konfirmasi</h3>
+      </div>
+      <div class="modal-body">
+        <p id="confirmModalMessage"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btnConfirmCancel">Batal</button>
+        <button class="btn btn-danger" id="btnConfirmOk">Ya, Lanjutkan</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/utils.js"></script>
+  <script src="../js/menu.js"></script>
+  <script src="../js/notification.js"></script>
+  <script src="../js/settings.js"></script>
+</body>
+</html>
