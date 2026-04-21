@@ -1,85 +1,32 @@
 {
-	"SecretKey": "My secret key",
-	"TLSMode" : true,
-	"SecretCost": 10,
-	"RateLimiterExp": 5,
-	"logsPathPrefix": ".",
-	"CacheSeperator": "|-_-|",
-	"TokenExpire": 7200,
-	"FormatTime": "2006-01-02 15:04:05",
-	"FormatDate": "2006-01-02",
-	"Timezone": "Asia/Jakarta",
-	"MaxTimeoutGracefulShutdown": 5,
-	"Branch": ["229"],
-	"Kostl": ["PS83000", "PS85000"],
-	"BrigateBaseUrl": "https://api.close.dev.bri.co.id:5556/gateway",
-	"EsbBaseUrl": "https://apiesb.dev.bri.co.id:5556/gateway",
-	"EsbMonolithBaseUrl": "https://ccp13.dev.bri.co.id/esb-monolith",
-	"EsbMonolithBaseUrla": "https://ccp13.dev.bri.co.id/esb-monolith",
-	"RestClientTO": 29,
-	"ESBConf": {
-		"Username": "britax",
-		"Password": "BR!t4XP@ss2023",
-		"SubfixTellerId": "891",
-		"ServiceIdNpwp": "000K7",
-		"ServiceIdFunTransBRIFaktur": "00015",
-		"ServiceIdInquiryCASAVA": "0002D",
-		"ServiceIdInquiryGL": "0003K",
-		"ChannelId": "BRTX"
-	},
-	"BRIgateConf": {
-		"Username": "britax",
-		"Password": "BR!t4XP@ss2023",
-		"EMaterai": {
-			"NoDoc": "00001",
-			"EndpointUpload": "/apiEMeterai/1.0/uploadDokumenAsync",
-			"TemplateCode": "FMAINVOICE",
-			"Check": false,
-			"Kopur": 10000,
-			"JenisIdentitas": "NIK"
-		}
-	},
-	"EsbMonolithConf": {
-		"000F5ServiceID": "000F5",
-		"000FBServiceId": "000FB",
-		"000H4ServiceId": "000H4",
-		"ChannelID": "EINV"
-	},
-	"Database": {
-		"Host": "172.18.135.223",
-		"Port": "3306",
-		"User": "root",
-		"Password": "P@ssw0rd",
-		"Database": "briperment",
-		"MaxOpenConns": 100,
-		"MaxIdleConns": 5,
-		"MaxLifeTime": 3600,
-		"MaxIdleTime": 1800
-	},
+  "AppName": "POS Retail API",
+  "AppVersion": "1.0.0",
+  "AppPort": "8080",
+  "Timezone": "Asia/Jakarta",
+  "ReleaseMode": "dev",
 
-	"RedisLocal": {
-		"Host": "127.0.0.1",
-		"Port": "6379",
-		"Password": "P@ssw0rd",
-		"Db": 0,
-		"PoolSize": 10,
-		"MinIdleConns": 5
-	},
+  "SecretKey": "pos-retail-secret-key-dev",
+  "TokenExpire": 28800,
+  "RefreshTokenExpire": 604800,
 
-	"Janitor": {
-		"MaxSizeBytes": "1GB",
-		"NumShards": 64,
-		"DefaultExpiration": "30m",
-		"CleanupInterval": "1m"
-	},
+  "Database": {
+    "Type": "mysql",
+    "Host": "127.0.0.1",
+    "Port": "3306",
+    "User": "root",
+    "Password": "",
+    "Database": "pos_retail_db",
+    "MaxOpenConns": 50,
+    "MaxIdleConns": 10,
+    "MaxLifetime": 300
+  },
 
-	"Minio": {
-		"Endpoint": "minio.dev.bri.co.id:9000",
-		"AccesKeyID": "britaxs",
-		"SecretKey": "P@ssw0rd",
-		"UseSSL": 1,
-		"BucketName": "britaxs",
-		"PreSignedURLExpire": "7200",
-		"PPNWapuPrefixPath": "reg_ppn_wapu/"
-	}
+  "CorsAllowOrigins": [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:8080"
+  ],
+
+  "LogPath": "logs",
+  "MaxLogAge": 30
 }

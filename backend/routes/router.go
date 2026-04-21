@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"permen_api/config"
 	"permen_api/errors"
 	error_helper "permen_api/helper/error"
 	log_helper "permen_api/helper/log"
@@ -25,7 +26,7 @@ func Router(r *gin.Engine) {
 	repository.LogRequestRepo = repository.NewLogRequestRepository(database.DB)
 	// Security: Add security headers first (including HSTS)
 	r.Use(middleware.SecurityHeaders())
-	r.Use(middleware.Cors())
+	r.Use(middleware.Cors(config.Cfg.CorsAllowOrigins))
 	r.Use(middleware.LogRequestMiddleware())
 	r.Use(middleware.ErrorHandlerMiddleware())
 	r.NoRoute(notFoundHandler)
