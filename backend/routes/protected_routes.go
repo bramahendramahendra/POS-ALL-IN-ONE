@@ -7,6 +7,9 @@ import (
 	cash_drawer_handler "permen_api/domain/cash_drawer/handler"
 	cash_drawer_repo "permen_api/domain/cash_drawer/repo"
 	cash_drawer_service "permen_api/domain/cash_drawer/service"
+	expense_handler "permen_api/domain/expense/handler"
+	expense_repo "permen_api/domain/expense/repo"
+	expense_service "permen_api/domain/expense/service"
 	master_handler "permen_api/domain/master/handler"
 	master_repo "permen_api/domain/master/repo"
 	master_service "permen_api/domain/master/service"
@@ -146,6 +149,20 @@ func protectedRoutes(r *gin.RouterGroup) {
 	cashDrawerRepo := cash_drawer_repo.NewCashDrawerRepo(pkgdatabase.DB)
 	cashDrawerSvc := cash_drawer_service.NewCashDrawerService(cashDrawerRepo)
 	cashDrawerHand := cash_drawer_handler.NewCashDrawerHandler(cashDrawerSvc)
+
+	// Expenses
+	expenseRepo := expense_repo.NewExpenseRepo(pkgdatabase.DB)
+	expenseSvc := expense_service.NewExpenseService(expenseRepo, cashDrawerRepo)
+	expenseHand := expense_handler.NewExpenseHandler(expenseSvc)
+
+	expenseGroup := r.Group("/expenses")
+	{
+		expenseGroup.GET("", expenseHand.GetAll)
+		expenseGroup.GET("/:id", expenseHand.GetByID)
+		expenseGroup.POST("", expenseHand.Create)
+		expenseGroup.PUT("/:id", middleware.RoleMiddleware("owner", "admin"), expenseHand.Update)
+		expenseGroup.DELETE("/:id", middleware.RoleMiddleware("owner", "admin"), expenseHand.Delete)
+	}
 
 	cashGroup := r.Group("/cash-drawer")
 	{
