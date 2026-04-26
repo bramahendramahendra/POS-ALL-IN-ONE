@@ -13,6 +13,9 @@ import (
 	product_handler "permen_api/domain/product/handler"
 	product_repo "permen_api/domain/product/repo"
 	product_service "permen_api/domain/product/service"
+	transaction_handler "permen_api/domain/transaction/handler"
+	transaction_repo "permen_api/domain/transaction/repo"
+	transaction_service "permen_api/domain/transaction/service"
 	user_handler "permen_api/domain/user/handler"
 	user_repo "permen_api/domain/user/repo"
 	user_service "permen_api/domain/user/service"
@@ -121,5 +124,18 @@ func protectedRoutes(r *gin.RouterGroup) {
 		// Product Prices
 		productRoutes.GET("/:product_id/prices", productPriceHand.GetByProduct)
 		productRoutes.POST("/:product_id/prices", middleware.RoleMiddleware("owner", "admin"), productPriceHand.Save)
+	}
+
+	// Transactions
+	transactionRepo := transaction_repo.NewTransactionRepo(pkgdatabase.DB)
+	transactionSvc := transaction_service.NewTransactionService(transactionRepo)
+	transactionHand := transaction_handler.NewTransactionHandler(transactionSvc)
+
+	transGroup := r.Group("/transactions")
+	{
+		transGroup.GET("", transactionHand.GetAll)
+		transGroup.GET("/:id", transactionHand.GetByID)
+		transGroup.POST("", transactionHand.Create)
+		transGroup.PATCH("/:id/void", middleware.RoleMiddleware("owner", "admin"), transactionHand.Void)
 	}
 }
