@@ -1,6 +1,9 @@
 package routes
 
 import (
+	report_handler "permen_api/domain/report/handler"
+	report_repo "permen_api/domain/report/repo"
+	report_service "permen_api/domain/report/service"
 	stock_mutation_handler "permen_api/domain/stock_mutation/handler"
 	stock_mutation_repo "permen_api/domain/stock_mutation/repo"
 	stock_mutation_service "permen_api/domain/stock_mutation/service"
@@ -298,5 +301,23 @@ func protectedRoutes(r *gin.RouterGroup) {
 		cashGroup.POST("/:id/close", cashDrawerHand.Close)
 		cashGroup.PATCH("/:id/update-sales", cashDrawerHand.UpdateSales)
 		cashGroup.PATCH("/:id/update-expenses", cashDrawerHand.UpdateExpenses)
+	}
+
+	// Reports
+	reportRepoInst := report_repo.NewReportRepo(pkgdatabase.DB)
+	reportSvc := report_service.NewReportService(reportRepoInst)
+	reportHand := report_handler.NewReportHandler(reportSvc)
+
+	reportGroup := r.Group("/reports")
+	{
+		reportGroup.GET("/sales", reportHand.GetSalesReport)
+		reportGroup.GET("/sales/chart", reportHand.GetSalesChart)
+		reportGroup.GET("/sales/export", middleware.RoleMiddleware("owner", "admin"), reportHand.ExportSalesReport)
+		reportGroup.GET("/profit-loss", middleware.RoleMiddleware("owner", "admin"), reportHand.GetProfitLoss)
+		reportGroup.GET("/profit-loss/export", middleware.RoleMiddleware("owner", "admin"), reportHand.ExportProfitLoss)
+		reportGroup.GET("/stock", reportHand.GetStockReport)
+		reportGroup.GET("/stock/export", middleware.RoleMiddleware("owner", "admin"), reportHand.ExportStockReport)
+		reportGroup.GET("/cashier", middleware.RoleMiddleware("owner", "admin"), reportHand.GetCashierReport)
+		reportGroup.GET("/cashier/export", middleware.RoleMiddleware("owner", "admin"), reportHand.ExportCashierReport)
 	}
 }
