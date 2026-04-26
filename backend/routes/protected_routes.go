@@ -1,6 +1,9 @@
 package routes
 
 import (
+	setting_handler "permen_api/domain/setting/handler"
+	setting_repo "permen_api/domain/setting/repo"
+	setting_service "permen_api/domain/setting/service"
 	dashboard_handler "permen_api/domain/dashboard/handler"
 	dashboard_repo "permen_api/domain/dashboard/repo"
 	dashboard_service "permen_api/domain/dashboard/service"
@@ -304,6 +307,19 @@ func protectedRoutes(r *gin.RouterGroup) {
 		cashGroup.POST("/:id/close", cashDrawerHand.Close)
 		cashGroup.PATCH("/:id/update-sales", cashDrawerHand.UpdateSales)
 		cashGroup.PATCH("/:id/update-expenses", cashDrawerHand.UpdateExpenses)
+	}
+
+	// Settings
+	settingRepoInst := setting_repo.NewSettingRepo(pkgdatabase.DB)
+	settingSvc := setting_service.NewSettingService(settingRepoInst)
+	settingHand := setting_handler.NewSettingHandler(settingSvc)
+
+	settingGroup := r.Group("/settings")
+	{
+		settingGroup.GET("", settingHand.GetAll)
+		settingGroup.GET("/:key", settingHand.GetByKey)
+		settingGroup.POST("", middleware.RoleMiddleware("owner", "admin"), settingHand.Save)
+		settingGroup.POST("/reset", middleware.RoleMiddleware("admin"), settingHand.Reset)
 	}
 
 	// Dashboard
