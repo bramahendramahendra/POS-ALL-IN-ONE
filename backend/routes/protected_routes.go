@@ -1,6 +1,9 @@
 package routes
 
 import (
+	receivable_handler "permen_api/domain/receivable/handler"
+	receivable_repo "permen_api/domain/receivable/repo"
+	receivable_service "permen_api/domain/receivable/service"
 	auth_handler "permen_api/domain/auth/handler"
 	auth_repo "permen_api/domain/auth/repo"
 	auth_service "permen_api/domain/auth/service"
@@ -236,6 +239,20 @@ func protectedRoutes(r *gin.RouterGroup) {
 		customerGroup.PUT("/:id", middleware.RoleMiddleware("owner", "admin"), customerHand.Update)
 		customerGroup.DELETE("/:id", middleware.RoleMiddleware("owner", "admin"), customerHand.Delete)
 		customerGroup.PATCH("/:id/toggle-status", middleware.RoleMiddleware("owner", "admin"), customerHand.ToggleStatus)
+	}
+
+	// Receivables
+	receivableRepoInst := receivable_repo.NewReceivableRepo(pkgdatabase.DB)
+	receivableSvc := receivable_service.NewReceivableService(receivableRepoInst)
+	receivableHand := receivable_handler.NewReceivableHandler(receivableSvc)
+
+	receivableGroup := r.Group("/receivables")
+	{
+		receivableGroup.GET("", receivableHand.GetAll)
+		receivableGroup.GET("/summary", middleware.RoleMiddleware("owner", "admin"), receivableHand.GetSummary)
+		receivableGroup.GET("/:id", receivableHand.GetByID)
+		receivableGroup.GET("/:id/payments", receivableHand.GetPayments)
+		receivableGroup.POST("/:id/pay", receivableHand.Pay)
 	}
 
 	cashGroup := r.Group("/cash-drawer")
