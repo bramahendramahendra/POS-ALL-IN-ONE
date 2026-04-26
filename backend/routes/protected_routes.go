@@ -5,6 +5,9 @@ import (
 	auth_repo "permen_api/domain/auth/repo"
 	auth_service "permen_api/domain/auth/service"
 	cash_drawer_handler "permen_api/domain/cash_drawer/handler"
+	customer_handler "permen_api/domain/customer/handler"
+	customer_repo "permen_api/domain/customer/repo"
+	customer_service "permen_api/domain/customer/service"
 	cash_drawer_repo "permen_api/domain/cash_drawer/repo"
 	cash_drawer_service "permen_api/domain/cash_drawer/service"
 	expense_handler "permen_api/domain/expense/handler"
@@ -217,6 +220,22 @@ func protectedRoutes(r *gin.RouterGroup) {
 		returnGroup.POST("", middleware.RoleMiddleware("owner", "admin"), supplierReturnHand.Create)
 		returnGroup.PATCH("/:id/status", middleware.RoleMiddleware("owner", "admin"), supplierReturnHand.UpdateStatus)
 		returnGroup.DELETE("/:id", middleware.RoleMiddleware("owner", "admin"), supplierReturnHand.Delete)
+	}
+
+	// Customers
+	customerRepoInst := customer_repo.NewCustomerRepo(pkgdatabase.DB)
+	customerSvc := customer_service.NewCustomerService(customerRepoInst)
+	customerHand := customer_handler.NewCustomerHandler(customerSvc)
+
+	customerGroup := r.Group("/customers")
+	{
+		customerGroup.GET("", customerHand.GetAll)
+		customerGroup.GET("/active", customerHand.GetActiveList)
+		customerGroup.GET("/:id", customerHand.GetByID)
+		customerGroup.POST("", middleware.RoleMiddleware("owner", "admin"), customerHand.Create)
+		customerGroup.PUT("/:id", middleware.RoleMiddleware("owner", "admin"), customerHand.Update)
+		customerGroup.DELETE("/:id", middleware.RoleMiddleware("owner", "admin"), customerHand.Delete)
+		customerGroup.PATCH("/:id/toggle-status", middleware.RoleMiddleware("owner", "admin"), customerHand.ToggleStatus)
 	}
 
 	cashGroup := r.Group("/cash-drawer")
