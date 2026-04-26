@@ -4,6 +4,9 @@ import (
 	auth_handler "permen_api/domain/auth/handler"
 	auth_repo "permen_api/domain/auth/repo"
 	auth_service "permen_api/domain/auth/service"
+	master_handler "permen_api/domain/master/handler"
+	master_repo "permen_api/domain/master/repo"
+	master_service "permen_api/domain/master/service"
 	pin_handler "permen_api/domain/pin/handler"
 	pin_repo "permen_api/domain/pin/repo"
 	pin_service "permen_api/domain/pin/service"
@@ -50,5 +53,35 @@ func protectedRoutes(r *gin.RouterGroup) {
 		userRoutes.PUT("/:id", userHand.Update)
 		userRoutes.DELETE("/:id", userHand.Delete)
 		userRoutes.PATCH("/:id/toggle-status", userHand.ToggleStatus)
+	}
+
+	// Categories
+	categoryRepo := master_repo.NewCategoryRepo(pkgdatabase.DB)
+	categorySvc := master_service.NewCategoryService(categoryRepo)
+	categoryHand := master_handler.NewCategoryHandler(categorySvc)
+
+	categoryRoutes := r.Group("/categories")
+	{
+		categoryRoutes.GET("", categoryHand.GetAll)
+		categoryRoutes.GET("/:id", categoryHand.GetByID)
+		categoryRoutes.POST("", middleware.RoleMiddleware("owner", "admin"), categoryHand.Create)
+		categoryRoutes.PUT("/:id", middleware.RoleMiddleware("owner", "admin"), categoryHand.Update)
+		categoryRoutes.DELETE("/:id", middleware.RoleMiddleware("owner", "admin"), categoryHand.Delete)
+	}
+
+	// Units
+	unitRepo := master_repo.NewUnitRepo(pkgdatabase.DB)
+	unitSvc := master_service.NewUnitService(unitRepo)
+	unitHand := master_handler.NewUnitHandler(unitSvc)
+
+	unitRoutes := r.Group("/units")
+	{
+		unitRoutes.GET("", unitHand.GetAll)
+		unitRoutes.GET("/active", unitHand.GetActive)
+		unitRoutes.GET("/:id", unitHand.GetByID)
+		unitRoutes.POST("", middleware.RoleMiddleware("owner", "admin"), unitHand.Create)
+		unitRoutes.PUT("/:id", middleware.RoleMiddleware("owner", "admin"), unitHand.Update)
+		unitRoutes.DELETE("/:id", middleware.RoleMiddleware("owner", "admin"), unitHand.Delete)
+		unitRoutes.PATCH("/:id/toggle-status", middleware.RoleMiddleware("owner", "admin"), unitHand.ToggleStatus)
 	}
 }
