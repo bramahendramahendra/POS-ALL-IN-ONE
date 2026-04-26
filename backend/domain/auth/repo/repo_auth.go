@@ -9,8 +9,8 @@ import (
 const (
 	getUserByUsernameQuery       = `SELECT id, username, password, full_name, role, is_active FROM users WHERE username = ? LIMIT 1`
 	getUserByIDQuery             = `SELECT id, username, full_name, role, is_active FROM users WHERE id = ? LIMIT 1`
-	createSessionQuery           = `INSERT INTO sessions (user_id, token, refresh_token, device_info, ip_address, expires_at) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE token=VALUES(token), refresh_token=VALUES(refresh_token), device_info=VALUES(device_info), ip_address=VALUES(ip_address), expires_at=VALUES(expires_at), created_at=NOW()`
-	getSessionByTokenQuery       = `SELECT id, user_id, token, device_info, expires_at FROM sessions WHERE token = ? LIMIT 1`
+	createSessionQuery           = `INSERT INTO sessions (user_id, user_role, token, refresh_token, device_info, ip_address, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE user_role=VALUES(user_role), token=VALUES(token), refresh_token=VALUES(refresh_token), device_info=VALUES(device_info), ip_address=VALUES(ip_address), expires_at=VALUES(expires_at), created_at=NOW()`
+	getSessionByTokenQuery       = `SELECT id, user_id, user_role, token, device_info, expires_at FROM sessions WHERE token = ? LIMIT 1`
 	getSessionByRefreshTokenQuery = `SELECT id, user_id, refresh_token, expires_at FROM sessions WHERE refresh_token = ? LIMIT 1`
 	deleteSessionByUserIDQuery   = `DELETE FROM sessions WHERE user_id = ?`
 	deleteSessionByTokenQuery    = `DELETE FROM sessions WHERE token = ?`
@@ -51,6 +51,7 @@ func (r *authRepo) GetUserByID(id int) (*model_auth.User, error) {
 func (r *authRepo) CreateSession(session *model_auth.Session) error {
 	return r.db.Exec(createSessionQuery,
 		session.UserID,
+		session.UserRole,
 		session.Token,
 		session.RefreshToken,
 		session.DeviceInfo,

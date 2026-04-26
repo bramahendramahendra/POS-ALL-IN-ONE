@@ -15,6 +15,7 @@ type User struct {
 type Session struct {
 	ID           int       `db:"id"`
 	UserID       int       `db:"user_id"`
+	UserRole     string    `db:"user_role"`
 	Token        string    `db:"token"`
 	RefreshToken string    `db:"refresh_token"`
 	DeviceInfo   string    `db:"device_info"`

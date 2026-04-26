@@ -63,6 +63,7 @@ func (s *authService) Login(req *dto_auth.LoginRequest, ip string) (*dto_auth.Lo
 
 	session := &model_auth.Session{
 		UserID:       user.ID,
+		UserRole:     user.Role,
 		Token:        token,
 		RefreshToken: refreshToken,
 		DeviceInfo:   req.DeviceInfo,
@@ -137,6 +138,7 @@ func (s *authService) RefreshToken(refreshToken string) (*dto_auth.RefreshRespon
 
 	newSession := &model_auth.Session{
 		UserID:       user.ID,
+		UserRole:     user.Role,
 		Token:        newToken,
 		RefreshToken: newRefreshToken,
 		DeviceInfo:   session.DeviceInfo,

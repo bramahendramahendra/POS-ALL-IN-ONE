@@ -11,11 +11,11 @@ import (
 )
 
 func protectedRoutes(r *gin.RouterGroup) {
-	r.Use(pos_middleware.POSBearerAuthMiddleware())
-
 	authRepo := auth_repo.NewAuthRepo(pkgdatabase.DB)
 	authSvc := auth_service.NewAuthService(authRepo)
 	authHand := auth_handler.NewAuthHandler(authSvc)
+
+	r.Use(pos_middleware.POSBearerAuthMiddleware(authSvc))
 
 	r.GET("/auth/me", authHand.GetMe)
 	r.POST("/auth/logout", authHand.Logout)
