@@ -1,6 +1,8 @@
 package routes
 
 import (
+	backup_handler "permen_api/domain/backup/handler"
+	backup_service "permen_api/domain/backup/service"
 	setting_handler "permen_api/domain/setting/handler"
 	setting_repo "permen_api/domain/setting/repo"
 	setting_service "permen_api/domain/setting/service"
@@ -321,6 +323,19 @@ func protectedRoutes(r *gin.RouterGroup) {
 		settingGroup.POST("", middleware.RoleMiddleware("owner", "admin"), settingHand.Save)
 		settingGroup.POST("/reset", middleware.RoleMiddleware("admin"), settingHand.Reset)
 	}
+
+	// Backup & Restore
+	backupSvc := backup_service.NewBackupService()
+	backupHand := backup_handler.NewBackupHandler(backupSvc)
+
+	backupGroup := r.Group("/backup", middleware.RoleMiddleware("owner", "admin"))
+	{
+		backupGroup.POST("", backupHand.Create)
+		backupGroup.GET("/list", backupHand.GetList)
+		backupGroup.GET("/download/:filename", backupHand.Download)
+	}
+
+	r.POST("/restore", middleware.RoleMiddleware("admin"), backupHand.Restore)
 
 	// Dashboard
 	dashboardRepoInst := dashboard_repo.NewDashboardRepo(pkgdatabase.DB)
