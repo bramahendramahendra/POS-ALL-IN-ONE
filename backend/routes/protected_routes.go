@@ -13,6 +13,9 @@ import (
 	purchase_handler "permen_api/domain/purchase/handler"
 	purchase_repo "permen_api/domain/purchase/repo"
 	purchase_service "permen_api/domain/purchase/service"
+	supplier_return_handler "permen_api/domain/supplier_return/handler"
+	supplier_return_repo "permen_api/domain/supplier_return/repo"
+	supplier_return_service "permen_api/domain/supplier_return/service"
 	master_handler "permen_api/domain/master/handler"
 	master_repo "permen_api/domain/master/repo"
 	master_service "permen_api/domain/master/service"
@@ -181,6 +184,20 @@ func protectedRoutes(r *gin.RouterGroup) {
 		purchaseGroup.PUT("/:id", middleware.RoleMiddleware("owner", "admin"), purchaseHand.Update)
 		purchaseGroup.DELETE("/:id", middleware.RoleMiddleware("owner", "admin"), purchaseHand.Delete)
 		purchaseGroup.POST("/:id/pay", middleware.RoleMiddleware("owner", "admin"), purchaseHand.Pay)
+	}
+
+	// Supplier Returns
+	supplierReturnRepo := supplier_return_repo.NewSupplierReturnRepo(pkgdatabase.DB)
+	supplierReturnSvc := supplier_return_service.NewSupplierReturnService(supplierReturnRepo)
+	supplierReturnHand := supplier_return_handler.NewSupplierReturnHandler(supplierReturnSvc)
+
+	returnGroup := r.Group("/supplier-returns")
+	{
+		returnGroup.GET("", supplierReturnHand.GetAll)
+		returnGroup.GET("/:id", supplierReturnHand.GetByID)
+		returnGroup.POST("", middleware.RoleMiddleware("owner", "admin"), supplierReturnHand.Create)
+		returnGroup.PATCH("/:id/status", middleware.RoleMiddleware("owner", "admin"), supplierReturnHand.UpdateStatus)
+		returnGroup.DELETE("/:id", middleware.RoleMiddleware("owner", "admin"), supplierReturnHand.Delete)
 	}
 
 	cashGroup := r.Group("/cash-drawer")
