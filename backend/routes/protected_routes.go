@@ -93,6 +93,14 @@ func protectedRoutes(r *gin.RouterGroup) {
 	productSvc := product_service.NewProductService(productRepo, categoryRepo)
 	productHand := product_handler.NewProductHandler(productSvc)
 
+	productUnitRepo := product_repo.NewProductUnitRepo(pkgdatabase.DB)
+	productUnitSvc := product_service.NewProductUnitService(productUnitRepo, productRepo)
+	productUnitHand := product_handler.NewProductUnitHandler(productUnitSvc)
+
+	productPriceRepo := product_repo.NewProductPriceRepo(pkgdatabase.DB)
+	productPriceSvc := product_service.NewProductPriceService(productPriceRepo, productRepo)
+	productPriceHand := product_handler.NewProductPriceHandler(productPriceSvc)
+
 	productRoutes := r.Group("/products")
 	{
 		productRoutes.GET("", productHand.GetAll)
@@ -104,5 +112,14 @@ func protectedRoutes(r *gin.RouterGroup) {
 		productRoutes.PUT("/:id", middleware.RoleMiddleware("owner", "admin"), productHand.Update)
 		productRoutes.DELETE("/:id", middleware.RoleMiddleware("owner", "admin"), productHand.Delete)
 		productRoutes.PATCH("/:id/toggle-status", middleware.RoleMiddleware("owner", "admin"), productHand.ToggleStatus)
+
+		// Product Units
+		productRoutes.GET("/:product_id/units", productUnitHand.GetByProduct)
+		productRoutes.POST("/:product_id/units", middleware.RoleMiddleware("owner", "admin"), productUnitHand.Save)
+		productRoutes.DELETE("/:product_id/units/:unit_id", middleware.RoleMiddleware("owner", "admin"), productUnitHand.Delete)
+
+		// Product Prices
+		productRoutes.GET("/:product_id/prices", productPriceHand.GetByProduct)
+		productRoutes.POST("/:product_id/prices", middleware.RoleMiddleware("owner", "admin"), productPriceHand.Save)
 	}
 }
