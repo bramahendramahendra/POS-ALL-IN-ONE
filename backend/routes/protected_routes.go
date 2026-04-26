@@ -1,6 +1,9 @@
 package routes
 
 import (
+	version_handler "permen_api/domain/version/handler"
+	version_repo "permen_api/domain/version/repo"
+	version_service "permen_api/domain/version/service"
 	backup_handler "permen_api/domain/backup/handler"
 	backup_service "permen_api/domain/backup/service"
 	sync_handler "permen_api/domain/sync/handler"
@@ -339,6 +342,13 @@ func protectedRoutes(r *gin.RouterGroup) {
 	}
 
 	r.POST("/restore", middleware.RoleMiddleware("admin"), backupHand.Restore)
+
+	// Version — update (admin only)
+	versionRepoInst := version_repo.NewVersionRepo(pkgdatabase.DB)
+	versionSvc := version_service.NewVersionService(versionRepoInst)
+	versionHand := version_handler.NewVersionHandler(versionSvc)
+
+	r.POST("/version/android", middleware.RoleMiddleware("admin"), versionHand.UpdateAndroidVersion)
 
 	// Sync Center
 	syncRepoInst := sync_repo.NewSyncRepo(pkgdatabase.DB)
