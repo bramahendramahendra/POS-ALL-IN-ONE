@@ -10,6 +10,9 @@ import (
 	expense_handler "permen_api/domain/expense/handler"
 	expense_repo "permen_api/domain/expense/repo"
 	expense_service "permen_api/domain/expense/service"
+	purchase_handler "permen_api/domain/purchase/handler"
+	purchase_repo "permen_api/domain/purchase/repo"
+	purchase_service "permen_api/domain/purchase/service"
 	master_handler "permen_api/domain/master/handler"
 	master_repo "permen_api/domain/master/repo"
 	master_service "permen_api/domain/master/service"
@@ -162,6 +165,22 @@ func protectedRoutes(r *gin.RouterGroup) {
 		expenseGroup.POST("", expenseHand.Create)
 		expenseGroup.PUT("/:id", middleware.RoleMiddleware("owner", "admin"), expenseHand.Update)
 		expenseGroup.DELETE("/:id", middleware.RoleMiddleware("owner", "admin"), expenseHand.Delete)
+	}
+
+	// Purchase Orders
+	purchaseRepo := purchase_repo.NewPurchaseRepo(pkgdatabase.DB)
+	purchaseSvc := purchase_service.NewPurchaseService(purchaseRepo)
+	purchaseHand := purchase_handler.NewPurchaseHandler(purchaseSvc)
+
+	purchaseGroup := r.Group("/purchases")
+	{
+		purchaseGroup.GET("", purchaseHand.GetAll)
+		purchaseGroup.GET("/:id", purchaseHand.GetByID)
+		purchaseGroup.GET("/:id/items", purchaseHand.GetItems)
+		purchaseGroup.POST("", middleware.RoleMiddleware("owner", "admin"), purchaseHand.Create)
+		purchaseGroup.PUT("/:id", middleware.RoleMiddleware("owner", "admin"), purchaseHand.Update)
+		purchaseGroup.DELETE("/:id", middleware.RoleMiddleware("owner", "admin"), purchaseHand.Delete)
+		purchaseGroup.POST("/:id/pay", middleware.RoleMiddleware("owner", "admin"), purchaseHand.Pay)
 	}
 
 	cashGroup := r.Group("/cash-drawer")
