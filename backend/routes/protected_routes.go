@@ -10,6 +10,9 @@ import (
 	pin_handler "permen_api/domain/pin/handler"
 	pin_repo "permen_api/domain/pin/repo"
 	pin_service "permen_api/domain/pin/service"
+	product_handler "permen_api/domain/product/handler"
+	product_repo "permen_api/domain/product/repo"
+	product_service "permen_api/domain/product/service"
 	user_handler "permen_api/domain/user/handler"
 	user_repo "permen_api/domain/user/repo"
 	user_service "permen_api/domain/user/service"
@@ -83,5 +86,23 @@ func protectedRoutes(r *gin.RouterGroup) {
 		unitRoutes.PUT("/:id", middleware.RoleMiddleware("owner", "admin"), unitHand.Update)
 		unitRoutes.DELETE("/:id", middleware.RoleMiddleware("owner", "admin"), unitHand.Delete)
 		unitRoutes.PATCH("/:id/toggle-status", middleware.RoleMiddleware("owner", "admin"), unitHand.ToggleStatus)
+	}
+
+	// Products
+	productRepo := product_repo.NewProductRepo(pkgdatabase.DB)
+	productSvc := product_service.NewProductService(productRepo)
+	productHand := product_handler.NewProductHandler(productSvc)
+
+	productRoutes := r.Group("/products")
+	{
+		productRoutes.GET("", productHand.GetAll)
+		productRoutes.GET("/search", productHand.Search)
+		productRoutes.GET("/barcode/:barcode", productHand.GetByBarcode)
+		productRoutes.GET("/:id", productHand.GetByID)
+		productRoutes.POST("", middleware.RoleMiddleware("owner", "admin"), productHand.Create)
+		productRoutes.POST("/import", middleware.RoleMiddleware("owner", "admin"), productHand.Import)
+		productRoutes.PUT("/:id", middleware.RoleMiddleware("owner", "admin"), productHand.Update)
+		productRoutes.DELETE("/:id", middleware.RoleMiddleware("owner", "admin"), productHand.Delete)
+		productRoutes.PATCH("/:id/toggle-status", middleware.RoleMiddleware("owner", "admin"), productHand.ToggleStatus)
 	}
 }
