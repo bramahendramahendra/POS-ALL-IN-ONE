@@ -4,6 +4,9 @@ import (
 	auth_handler "permen_api/domain/auth/handler"
 	auth_repo "permen_api/domain/auth/repo"
 	auth_service "permen_api/domain/auth/service"
+	cash_drawer_handler "permen_api/domain/cash_drawer/handler"
+	cash_drawer_repo "permen_api/domain/cash_drawer/repo"
+	cash_drawer_service "permen_api/domain/cash_drawer/service"
 	master_handler "permen_api/domain/master/handler"
 	master_repo "permen_api/domain/master/repo"
 	master_service "permen_api/domain/master/service"
@@ -137,5 +140,21 @@ func protectedRoutes(r *gin.RouterGroup) {
 		transGroup.GET("/:id", transactionHand.GetByID)
 		transGroup.POST("", transactionHand.Create)
 		transGroup.PATCH("/:id/void", middleware.RoleMiddleware("owner", "admin"), transactionHand.Void)
+	}
+
+	// Cash Drawer
+	cashDrawerRepo := cash_drawer_repo.NewCashDrawerRepo(pkgdatabase.DB)
+	cashDrawerSvc := cash_drawer_service.NewCashDrawerService(cashDrawerRepo)
+	cashDrawerHand := cash_drawer_handler.NewCashDrawerHandler(cashDrawerSvc)
+
+	cashGroup := r.Group("/cash-drawer")
+	{
+		cashGroup.GET("/current", cashDrawerHand.GetCurrent)
+		cashGroup.GET("", middleware.RoleMiddleware("owner", "admin"), cashDrawerHand.GetHistory)
+		cashGroup.GET("/:id", cashDrawerHand.GetByID)
+		cashGroup.POST("/open", cashDrawerHand.Open)
+		cashGroup.POST("/:id/close", cashDrawerHand.Close)
+		cashGroup.PATCH("/:id/update-sales", cashDrawerHand.UpdateSales)
+		cashGroup.PATCH("/:id/update-expenses", cashDrawerHand.UpdateExpenses)
 	}
 }
