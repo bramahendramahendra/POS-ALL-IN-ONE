@@ -1,6 +1,9 @@
 package routes
 
 import (
+	dashboard_handler "permen_api/domain/dashboard/handler"
+	dashboard_repo "permen_api/domain/dashboard/repo"
+	dashboard_service "permen_api/domain/dashboard/service"
 	report_handler "permen_api/domain/report/handler"
 	report_repo "permen_api/domain/report/repo"
 	report_service "permen_api/domain/report/service"
@@ -301,6 +304,20 @@ func protectedRoutes(r *gin.RouterGroup) {
 		cashGroup.POST("/:id/close", cashDrawerHand.Close)
 		cashGroup.PATCH("/:id/update-sales", cashDrawerHand.UpdateSales)
 		cashGroup.PATCH("/:id/update-expenses", cashDrawerHand.UpdateExpenses)
+	}
+
+	// Dashboard
+	dashboardRepoInst := dashboard_repo.NewDashboardRepo(pkgdatabase.DB)
+	dashboardSvc := dashboard_service.NewDashboardService(dashboardRepoInst)
+	dashboardHand := dashboard_handler.NewDashboardHandler(dashboardSvc)
+
+	dashGroup := r.Group("/dashboard")
+	{
+		dashGroup.GET("/stats", dashboardHand.GetStats)
+		dashGroup.GET("/sales-trend", dashboardHand.GetSalesTrend)
+		dashGroup.GET("/top-products", dashboardHand.GetTopProducts)
+		dashGroup.GET("/top-categories", dashboardHand.GetTopCategories)
+		dashGroup.GET("/payment-methods", dashboardHand.GetPaymentMethods)
 	}
 
 	// Reports
