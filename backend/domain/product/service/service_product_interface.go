@@ -1,6 +1,10 @@
 package service_product
 
-import dto_product "permen_api/domain/product/dto"
+import (
+	"mime/multipart"
+
+	dto_product "permen_api/domain/product/dto"
+)
 
 type ProductService interface {
 	GetAll(filter *dto_product.ProductFilter) ([]*dto_product.ProductResponse, int, error)
@@ -12,4 +16,5 @@ type ProductService interface {
 	Update(id int, req *dto_product.ProductRequest) error
 	Delete(id int) error
 	ToggleStatus(id int) error
+	ImportFromFile(file *multipart.FileHeader) (*dto_product.ImportResult, error)
 }

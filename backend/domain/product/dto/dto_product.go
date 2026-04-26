@@ -42,6 +42,17 @@ type LowStockProduct struct {
 	Unit     string  `json:"unit"`
 }
 
+type ImportResult struct {
+	Success int                 `json:"success"`
+	Failed  int                 `json:"failed"`
+	Errors  []ImportErrorDetail `json:"errors"`
+}
+
+type ImportErrorDetail struct {
+	Row     int    `json:"row"`
+	Message string `json:"message"`
+}
+
 type ProductFilter struct {
 	Search     string
 	CategoryID *int

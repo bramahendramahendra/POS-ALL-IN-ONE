@@ -1,18 +1,27 @@
 package service_product
 
 import (
+	"fmt"
+	"mime/multipart"
+	"strconv"
+	"strings"
+
 	dto_product "permen_api/domain/product/dto"
 	model_product "permen_api/domain/product/model"
+	repo_category "permen_api/domain/master/repo"
 	repo_product "permen_api/domain/product/repo"
 	"permen_api/errors"
+
+	"github.com/xuri/excelize/v2"
 )
 
 type productService struct {
-	repo repo_product.ProductRepo
+	repo     repo_product.ProductRepo
+	catRepo  repo_category.CategoryRepo
 }
 
-func NewProductService(repo repo_product.ProductRepo) ProductService {
-	return &productService{repo: repo}
+func NewProductService(repo repo_product.ProductRepo, catRepo repo_category.CategoryRepo) ProductService {
+	return &productService{repo: repo, catRepo: catRepo}
 }
 
 func (s *productService) GetAll(filter *dto_product.ProductFilter) ([]*dto_product.ProductResponse, int, error) {
@@ -138,6 +147,152 @@ func (s *productService) ToggleStatus(id int) error {
 		return &errors.NotFoundError{Message: "Produk tidak ditemukan"}
 	}
 	return s.repo.ToggleStatus(id)
+}
+
+func (s *productService) ImportFromFile(file *multipart.FileHeader) (*dto_product.ImportResult, error) {
+	src, err := file.Open()
+	if err != nil {
+		return nil, &errors.InternalServerError{Message: "Gagal membuka file"}
+	}
+	defer src.Close()
+
+	f, err := excelize.OpenReader(src)
+	if err != nil {
+		return nil, &errors.BadRequestError{Message: "File tidak dapat dibaca sebagai Excel"}
+	}
+	defer f.Close()
+
+	sheets := f.GetSheetList()
+	if len(sheets) == 0 {
+		return nil, &errors.BadRequestError{Message: "File tidak memiliki sheet"}
+	}
+
+	rows, err := f.GetRows(sheets[0])
+	if err != nil {
+		return nil, &errors.InternalServerError{Message: "Gagal membaca baris file"}
+	}
+
+	result := &dto_product.ImportResult{Errors: []dto_product.ImportErrorDetail{}}
+
+	if len(rows) <= 1 {
+		return result, nil
+	}
+
+	for i, row := range rows[1:] {
+		rowNum := i + 2
+
+		getCol := func(idx int) string {
+			if idx < len(row) {
+				return strings.TrimSpace(row[idx])
+			}
+			return ""
+		}
+
+		name := getCol(1)
+		sellingPriceStr := getCol(4)
+
+		if name == "" || sellingPriceStr == "" {
+			result.Failed++
+			result.Errors = append(result.Errors, dto_product.ImportErrorDetail{
+				Row:     rowNum,
+				Message: "Kolom name dan selling_price wajib diisi",
+			})
+			continue
+		}
+
+		sellingPrice, err := strconv.ParseFloat(sellingPriceStr, 64)
+		if err != nil {
+			result.Failed++
+			result.Errors = append(result.Errors, dto_product.ImportErrorDetail{
+				Row:     rowNum,
+				Message: fmt.Sprintf("selling_price tidak valid: %s", sellingPriceStr),
+			})
+			continue
+		}
+
+		req := &dto_product.ProductRequest{
+			Barcode:      getCol(0),
+			Name:         name,
+			SellingPrice: sellingPrice,
+			Unit:         getCol(7),
+		}
+
+		if v := getCol(3); v != "" {
+			if pp, err := strconv.ParseFloat(v, 64); err == nil {
+				req.PurchasePrice = pp
+			}
+		}
+		if v := getCol(5); v != "" {
+			if st, err := strconv.ParseFloat(v, 64); err == nil {
+				req.Stock = st
+			}
+		}
+		if v := getCol(6); v != "" {
+			if ms, err := strconv.ParseFloat(v, 64); err == nil {
+				req.MinStock = ms
+			}
+		}
+
+		if categoryName := getCol(2); categoryName != "" {
+			cat, err := s.catRepo.GetByName(categoryName)
+			if err != nil {
+				result.Failed++
+				result.Errors = append(result.Errors, dto_product.ImportErrorDetail{
+					Row:     rowNum,
+					Message: fmt.Sprintf("Gagal mencari kategori: %s", categoryName),
+				})
+				continue
+			}
+			if cat == nil {
+				newID, err := s.catRepo.Create(categoryName, "")
+				if err != nil {
+					result.Failed++
+					result.Errors = append(result.Errors, dto_product.ImportErrorDetail{
+						Row:     rowNum,
+						Message: fmt.Sprintf("Gagal membuat kategori: %s", categoryName),
+					})
+					continue
+				}
+				id := int(newID)
+				req.CategoryID = &id
+			} else {
+				req.CategoryID = &cat.ID
+			}
+		}
+
+		if req.Barcode != "" {
+			exists, err := s.repo.CheckBarcodeExists(req.Barcode, 0)
+			if err != nil {
+				result.Failed++
+				result.Errors = append(result.Errors, dto_product.ImportErrorDetail{
+					Row:     rowNum,
+					Message: "Gagal memeriksa barcode",
+				})
+				continue
+			}
+			if exists {
+				result.Failed++
+				result.Errors = append(result.Errors, dto_product.ImportErrorDetail{
+					Row:     rowNum,
+					Message: fmt.Sprintf("Barcode sudah digunakan: %s", req.Barcode),
+				})
+				continue
+			}
+		}
+
+		if _, err := s.repo.Create(req); err != nil {
+			result.Failed++
+			result.Errors = append(result.Errors, dto_product.ImportErrorDetail{
+				Row:     rowNum,
+				Message: "Gagal menyimpan produk",
+			})
+			continue
+		}
+
+		result.Success++
+	}
+
+	return result, nil
 }
 
 func toProductResponse(p *model_product.Product, categoryName string) *dto_product.ProductResponse {

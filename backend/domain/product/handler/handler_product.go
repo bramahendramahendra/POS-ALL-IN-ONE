@@ -1,6 +1,7 @@
 package handler_product
 
 import (
+	"path/filepath"
 	"strconv"
 
 	global_dto "permen_api/dto"
@@ -163,33 +164,26 @@ func (h *ProductHandler) Create(c *gin.Context) {
 
 // POST /api/products/import
 func (h *ProductHandler) Import(c *gin.Context) {
-	var items []dto_product.ProductRequest
-	if err := c.ShouldBindJSON(&items); err != nil {
-		c.Error(&errors.BadRequestError{Message: err.Error()})
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.Error(&errors.BadRequestError{Message: "File tidak ditemukan"})
 		return
 	}
 
-	var imported, failed int
-	for i := range items {
-		if err := validation.Validate.Struct(items[i]); err != nil {
-			failed++
-			continue
-		}
-		if _, err := h.service.Create(&items[i]); err != nil {
-			failed++
-			continue
-		}
-		imported++
+	ext := filepath.Ext(file.Filename)
+	if ext != ".xlsx" && ext != ".xls" && ext != ".csv" {
+		c.Error(&errors.BadRequestError{Message: "Format file harus .xlsx atau .csv"})
+		return
+	}
+
+	result, err := h.service.ImportFromFile(file)
+	if err != nil {
+		c.Error(err)
+		return
 	}
 
 	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
-		Code:    helper.StatusOk,
-		Status:  true,
-		Message: "Import selesai",
-		Data: gin.H{
-			"imported": imported,
-			"failed":   failed,
-		},
+		Code: helper.StatusOk, Status: true, Message: "Import selesai", Data: result,
 	})
 }
 

@@ -90,7 +90,7 @@ func protectedRoutes(r *gin.RouterGroup) {
 
 	// Products
 	productRepo := product_repo.NewProductRepo(pkgdatabase.DB)
-	productSvc := product_service.NewProductService(productRepo)
+	productSvc := product_service.NewProductService(productRepo, categoryRepo)
 	productHand := product_handler.NewProductHandler(productSvc)
 
 	productRoutes := r.Group("/products")

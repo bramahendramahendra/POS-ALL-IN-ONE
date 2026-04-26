@@ -7,9 +7,10 @@ import (
 )
 
 const (
-	getAllCategoriesQuery  = `SELECT id, name, description, created_at FROM categories ORDER BY name`
-	getCategoryByIDQuery  = `SELECT id, name, description, created_at FROM categories WHERE id = ? LIMIT 1`
-	checkCategoryNameQuery = `SELECT id FROM categories WHERE name = ? AND id != ? LIMIT 1`
+	getAllCategoriesQuery    = `SELECT id, name, description, created_at FROM categories ORDER BY name`
+	getCategoryByIDQuery    = `SELECT id, name, description, created_at FROM categories WHERE id = ? LIMIT 1`
+	getCategoryByNameQuery  = `SELECT id, name, description, created_at FROM categories WHERE name = ? LIMIT 1`
+	checkCategoryNameQuery  = `SELECT id FROM categories WHERE name = ? AND id != ? LIMIT 1`
 	checkCategoryUsedQuery = `SELECT COUNT(*) FROM products WHERE category_id = ?`
 	createCategoryQuery   = `INSERT INTO categories (name, description) VALUES (?, ?)`
 	updateCategoryQuery   = `UPDATE categories SET name = ?, description = ?, updated_at = NOW() WHERE id = ?`
@@ -40,6 +41,18 @@ func (r *categoryRepo) GetAll() ([]*model_master.Category, error) {
 		categories = append(categories, &c)
 	}
 	return categories, nil
+}
+
+func (r *categoryRepo) GetByName(name string) (*model_master.Category, error) {
+	var c model_master.Category
+	result := r.db.Raw(getCategoryByNameQuery, name).Scan(&c)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return nil, nil
+	}
+	return &c, nil
 }
 
 func (r *categoryRepo) GetByID(id int) (*model_master.Category, error) {
