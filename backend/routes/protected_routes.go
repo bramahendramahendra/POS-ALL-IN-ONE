@@ -4,6 +4,9 @@ import (
 	receivable_handler "permen_api/domain/receivable/handler"
 	receivable_repo "permen_api/domain/receivable/repo"
 	receivable_service "permen_api/domain/receivable/service"
+	shift_handler "permen_api/domain/shift/handler"
+	shift_repo "permen_api/domain/shift/repo"
+	shift_service "permen_api/domain/shift/service"
 	auth_handler "permen_api/domain/auth/handler"
 	auth_repo "permen_api/domain/auth/repo"
 	auth_service "permen_api/domain/auth/service"
@@ -253,6 +256,23 @@ func protectedRoutes(r *gin.RouterGroup) {
 		receivableGroup.GET("/:id", receivableHand.GetByID)
 		receivableGroup.GET("/:id/payments", receivableHand.GetPayments)
 		receivableGroup.POST("/:id/pay", receivableHand.Pay)
+	}
+
+	// Shifts
+	shiftRepoInst := shift_repo.NewShiftRepo(pkgdatabase.DB)
+	shiftSvc := shift_service.NewShiftService(shiftRepoInst)
+	shiftHand := shift_handler.NewShiftHandler(shiftSvc)
+
+	shiftGroup := r.Group("/shifts")
+	{
+		shiftGroup.GET("", shiftHand.GetAll)
+		shiftGroup.GET("/active", shiftHand.GetActive)
+		shiftGroup.GET("/summary", middleware.RoleMiddleware("owner", "admin"), shiftHand.GetSummary)
+		shiftGroup.GET("/:id", shiftHand.GetByID)
+		shiftGroup.POST("", middleware.RoleMiddleware("owner", "admin"), shiftHand.Create)
+		shiftGroup.PUT("/:id", middleware.RoleMiddleware("owner", "admin"), shiftHand.Update)
+		shiftGroup.DELETE("/:id", middleware.RoleMiddleware("owner", "admin"), shiftHand.Delete)
+		shiftGroup.PATCH("/:id/toggle-status", middleware.RoleMiddleware("owner", "admin"), shiftHand.ToggleStatus)
 	}
 
 	cashGroup := r.Group("/cash-drawer")
