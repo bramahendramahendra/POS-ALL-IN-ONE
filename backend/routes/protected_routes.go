@@ -3,6 +3,9 @@ package routes
 import (
 	backup_handler "permen_api/domain/backup/handler"
 	backup_service "permen_api/domain/backup/service"
+	sync_handler "permen_api/domain/sync/handler"
+	sync_repo "permen_api/domain/sync/repo"
+	sync_service "permen_api/domain/sync/service"
 	setting_handler "permen_api/domain/setting/handler"
 	setting_repo "permen_api/domain/setting/repo"
 	setting_service "permen_api/domain/setting/service"
@@ -336,6 +339,20 @@ func protectedRoutes(r *gin.RouterGroup) {
 	}
 
 	r.POST("/restore", middleware.RoleMiddleware("admin"), backupHand.Restore)
+
+	// Sync Center
+	syncRepoInst := sync_repo.NewSyncRepo(pkgdatabase.DB)
+	syncSvc := sync_service.NewSyncService(syncRepoInst)
+	syncHand := sync_handler.NewSyncHandler(syncSvc)
+
+	syncGroup := r.Group("/sync")
+	{
+		syncGroup.GET("/conflicts", middleware.RoleMiddleware("owner", "admin"), syncHand.GetConflicts)
+		syncGroup.POST("/conflicts/:id/resolve", middleware.RoleMiddleware("owner", "admin"), syncHand.ResolveConflict)
+		syncGroup.GET("/queue", middleware.RoleMiddleware("owner", "admin"), syncHand.GetQueue)
+		syncGroup.GET("/history", middleware.RoleMiddleware("owner", "admin"), syncHand.GetHistory)
+		syncGroup.POST("/push", syncHand.PushSync)
+	}
 
 	// Dashboard
 	dashboardRepoInst := dashboard_repo.NewDashboardRepo(pkgdatabase.DB)
