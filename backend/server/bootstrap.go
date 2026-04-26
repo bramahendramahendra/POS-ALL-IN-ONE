@@ -2,7 +2,8 @@ package bootstrap
 
 import (
 	error_helper "permen_api/helper/error"
-	"permen_api/pkg/database"
+	"permen_api/database"
+	pkgdatabase "permen_api/pkg/database"
 	"permen_api/pkg/logger"
 	"permen_api/routes"
 	_ "permen_api/validation"
@@ -38,15 +39,20 @@ func Initialized() *gin.Engine {
 }
 
 func InitializedDB() {
-	dbManager := database.New()
-	database.DbManager = dbManager
+	dbManager := pkgdatabase.New()
+	pkgdatabase.DbManager = dbManager
 	err := dbManager.Register(config.Db.Database, config.Db)
 	if err != nil {
 		errData := error_helper.SetError(nil, "DB Initialization", err.Error(), error_helper.GetStackTrace(1), nil)
 		panic(errData)
 	}
 
-	database.DB = dbManager.GetDatabase(config.Db.Database)
+	pkgdatabase.DB = dbManager.GetDatabase(config.Db.Database)
+
+	if err := database.RunMigrations(pkgdatabase.DB); err != nil {
+		errData := error_helper.SetError(nil, "Migration", err.Error(), error_helper.GetStackTrace(1), nil)
+		panic(errData)
+	}
 }
 
 func initializedLogger() {
