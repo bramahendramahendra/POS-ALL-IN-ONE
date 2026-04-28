@@ -179,8 +179,8 @@ function switchTab(tabName) {
 
 async function loadCategories() {
   try {
-    const result = await window.api.categories.getAll();
-    
+    const result = await apiClient.get('/categories');
+
     if (result.success) {
       allCategories = result.categories;
       renderCategoriesTable(allCategories);
@@ -263,7 +263,7 @@ function openAddCategoryModal() {
 
 async function editCategory(categoryId) {
   try {
-    const result = await window.api.categories.getById(categoryId);
+    const result = await apiClient.get(`/categories/${categoryId}`);
     
     if (result.success) {
       const category = result.category;
@@ -331,9 +331,9 @@ async function saveCategory(formData) {
     let result;
     
     if (editingCategoryId) {
-      result = await window.api.categories.update(editingCategoryId, formData);
+      result = await apiClient.put(`/categories/${editingCategoryId}`, formData);
     } else {
-      result = await window.api.categories.create(formData);
+      result = await apiClient.post('/categories', formData);
     }
 
     if (result.success) {
@@ -373,7 +373,7 @@ function confirmDeleteCategory(categoryId, categoryName, productCount) {
 
 async function deleteCategory(categoryId) {
   try {
-    const result = await window.api.categories.delete(categoryId);
+    const result = await apiClient.delete(`/categories/${categoryId}`);
     
     if (result.success) {
       await loadCategories();
@@ -756,7 +756,7 @@ function showProductFormError(message) {
 
 async function loadUnits() {
   try {
-    const result = await window.api.units.getAll();
+    const result = await apiClient.get('/units');
     if (result.success) {
       allUnits = result.units;
       renderUnitsTable(allUnits);
@@ -810,7 +810,7 @@ function openAddUnitModal() {
 
 async function editUnit(unitId) {
   try {
-    const result = await window.api.units.getById(unitId);
+    const result = await apiClient.get(`/units/${unitId}`);
     if (result.success) {
       const unit = result.unit;
       editingUnitId = unitId;
@@ -861,8 +861,8 @@ async function handleUnitFormSubmit(e) {
 
       try {
         const result = editingUnitId
-          ? await window.api.units.update(editingUnitId, formData)
-          : await window.api.units.create(formData);
+          ? await apiClient.put(`/units/${editingUnitId}`, formData)
+          : await apiClient.post('/units', formData);
 
         if (result.success) {
           closeUnitModal();
@@ -883,7 +883,7 @@ async function handleUnitFormSubmit(e) {
 
 async function toggleUnitStatus(unitId, currentStatus) {
   try {
-    const result = await window.api.units.toggleStatus(unitId);
+    const result = await apiClient.patch(`/units/${unitId}/toggle-status`);
     if (result.success) {
       await loadUnits();
       showToast(`Satuan berhasil ${currentStatus ? 'dinonaktifkan' : 'diaktifkan'}`, 'success');
@@ -898,7 +898,7 @@ async function toggleUnitStatus(unitId, currentStatus) {
 function confirmDeleteUnit(unitId, unitName) {
   showConfirm('Konfirmasi Hapus', `Yakin ingin menghapus satuan "${unitName}"?`, async () => {
     try {
-      const result = await window.api.units.delete(unitId);
+      const result = await apiClient.delete(`/units/${unitId}`);
       if (result.success) {
         await loadUnits();
         showToast('Satuan berhasil dihapus', 'success');

@@ -16,13 +16,6 @@ contextBridge.exposeInMainWorld('api', {
     getSummaryExtra: (period) => ipcRenderer.invoke('dashboard:getSummaryExtra', period)
   },
 
-  categories: {
-    getAll: () => ipcRenderer.invoke('categories:getAll'),
-    getById: (id) => ipcRenderer.invoke('categories:getById', id),
-    create: (categoryData) => ipcRenderer.invoke('categories:create', categoryData),
-    update: (id, categoryData) => ipcRenderer.invoke('categories:update', id, categoryData),
-    delete: (id) => ipcRenderer.invoke('categories:delete', id)
-  },
   products: {
     getAll: () => ipcRenderer.invoke('products:getAll'),
     getById: (id) => ipcRenderer.invoke('products:getById', id),
@@ -82,15 +75,6 @@ contextBridge.exposeInMainWorld('api', {
     updateStatus: (id, status) => ipcRenderer.invoke('supplierReturns:updateStatus', id, status),
     delete: (id) => ipcRenderer.invoke('supplierReturns:delete', id),
     getPurchaseItems: (purchaseId) => ipcRenderer.invoke('supplierReturns:getPurchaseItems', purchaseId)
-  },
-  units: {
-    getAll: () => ipcRenderer.invoke('units:getAll'),
-    getById: (id) => ipcRenderer.invoke('units:getById', id),
-    getActive: () => ipcRenderer.invoke('units:getActive'),
-    create: (data) => ipcRenderer.invoke('units:create', data),
-    update: (id, data) => ipcRenderer.invoke('units:update', id, data),
-    delete: (id) => ipcRenderer.invoke('units:delete', id),
-    toggleStatus: (id) => ipcRenderer.invoke('units:toggleStatus', id)
   },
   productUnits: {
     getByProduct: (productId) => ipcRenderer.invoke('productUnits:getByProduct', productId),
