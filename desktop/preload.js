@@ -16,14 +16,6 @@ contextBridge.exposeInMainWorld('api', {
     getSummaryExtra: (period) => ipcRenderer.invoke('dashboard:getSummaryExtra', period)
   },
 
-  users: {
-    getAll: () => ipcRenderer.invoke('users:getAll'),
-    getById: (id) => ipcRenderer.invoke('users:getById', id),
-    create: (userData) => ipcRenderer.invoke('users:create', userData),
-    update: (id, userData) => ipcRenderer.invoke('users:update', id, userData),
-    delete: (id) => ipcRenderer.invoke('users:delete', id),
-    toggleStatus: (id) => ipcRenderer.invoke('users:toggleStatus', id)
-  },
   categories: {
     getAll: () => ipcRenderer.invoke('categories:getAll'),
     getById: (id) => ipcRenderer.invoke('categories:getById', id),

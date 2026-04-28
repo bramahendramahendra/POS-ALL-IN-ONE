@@ -88,8 +88,8 @@ function setupEventListeners() {
 // Load all users
 async function loadUsers() {
   try {
-    const result = await window.api.users.getAll();
-    
+    const result = await apiClient.get('/users');
+
     if (result.success) {
       allUsers = result.users;
       renderUsersTable(allUsers);
@@ -185,7 +185,7 @@ function openAddModal() {
 // Edit user
 async function editUser(userId) {
   try {
-    const result = await window.api.users.getById(userId);
+    const result = await apiClient.get(`/users/${userId}`);
     
     if (result.success) {
       const user = result.user;
@@ -282,9 +282,9 @@ async function saveUser(formData) {
     let result;
     
     if (editingUserId) {
-      result = await window.api.users.update(editingUserId, formData);
+      result = await apiClient.put(`/users/${editingUserId}`, formData);
     } else {
-      result = await window.api.users.create(formData);
+      result = await apiClient.post('/users', formData);
     }
 
     if (result.success) {
@@ -359,7 +359,7 @@ async function toggleUserStatus(userId, currentStatus) {
   }
 
   try {
-    const result = await window.api.users.toggleStatus(userId);
+    const result = await apiClient.patch(`/users/${userId}/toggle-status`);
     
     if (result.success) {
       await loadUsers();
@@ -396,7 +396,7 @@ function confirmDeleteUser(userId, userName) {
 // Delete user (dipanggil setelah konfirmasi)
 async function deleteUser(userId) {
   try {
-    const result = await window.api.users.delete(userId);
+    const result = await apiClient.delete(`/users/${userId}`);
     
     if (result.success) {
       await loadUsers();
