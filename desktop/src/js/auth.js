@@ -1,43 +1,42 @@
-// Auth utility functions (used in login.html)
+// Auth utility functions (used in login.html and other pages)
+// Uses apiClient (HTTP fetch) — no IPC
 
 async function login(username, password) {
-  try {
-    const result = await window.api.auth.login(username, password);
-    return result;
-  } catch (error) {
-    console.error('Login error:', error);
-    return { success: false, message: 'Terjadi kesalahan saat login' };
-  }
+    try {
+        const data = await apiClient.post('/auth/login', {
+            username,
+            password,
+            device_info: 'desktop'
+        });
+
+        apiClient.setToken(data.token);
+        localStorage.setItem('refresh_token', data.refresh_token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        window.location.href = 'dashboard.html';
+    } catch (error) {
+        showError(error.message);
+    }
 }
 
 async function logout() {
-  try {
-    await window.api.auth.logout();
-    localStorage.removeItem('currentUser');
-    window.location.href = 'login.html';
-  } catch (error) {
-    console.error('Logout error:', error);
-  }
+    try {
+        await apiClient.post('/auth/logout');
+    } finally {
+        apiClient.clearToken();
+        window.location.href = 'login.html';
+    }
 }
 
 function getCurrentUser() {
-  const userStr = localStorage.getItem('currentUser');
-  if (userStr) {
-    try {
-      return JSON.parse(userStr);
-    } catch (error) {
-      console.error('Error parsing user data:', error);
-      return null;
-    }
-  }
-  return null;
+    return JSON.parse(localStorage.getItem('user') || 'null');
 }
 
 function checkAuth() {
-  const user = getCurrentUser();
-  if (!user) {
-    window.location.href = 'login.html';
-    return false;
-  }
-  return true;
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = 'login.html';
+        return false;
+    }
+    return true;
 }

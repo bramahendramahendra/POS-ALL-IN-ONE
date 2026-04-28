@@ -245,61 +245,6 @@ ipcMain.on('load-login-page', (event) => {
 });
 
 // ============================================
-// AUTHENTICATION IPC HANDLERS
-// ============================================
-
-ipcMain.handle('auth:login', async (event, username, password) => {
-  try {
-    console.log('Login attempt for username:', username);
-
-    const user = dbModule.get('SELECT * FROM users WHERE username = ? AND is_active = 1', [username]);
-
-    if (!user) {
-      console.log('User not found or inactive');
-      return { success: false, message: 'Username atau password salah' };
-    }
-
-    const isValidPassword = await bcrypt.compare(password, user.password);
-
-    if (!isValidPassword) {
-      console.log('Invalid password');
-      return { success: false, message: 'Username atau password salah' };
-    }
-
-    delete user.password;
-    currentUser = user;
-
-    console.log('Login successful for user:', user.username);
-    return { success: true, user: currentUser };
-
-  } catch (error) {
-    console.error('Login error:', error);
-    return { success: false, message: 'Terjadi kesalahan saat login' };
-  }
-});
-
-ipcMain.handle('auth:logout', async (event) => {
-  try {
-    console.log('Logout user:', currentUser?.username);
-    currentUser = null;
-    
-    // Reload login page from main process
-    if (mainWindow) {
-      mainWindow.loadFile(path.join(__dirname, 'src/views/login.html'));
-    }
-    
-    return { success: true };
-  } catch (error) {
-    console.error('Logout error:', error);
-    return { success: false, message: 'Terjadi kesalahan saat logout' };
-  }
-});
-
-ipcMain.handle('auth:getCurrentUser', async (event) => {
-  return currentUser;
-});
-
-// ============================================
 // PIN LOCK IPC HANDLERS
 // ============================================
 

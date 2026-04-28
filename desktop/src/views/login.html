@@ -98,23 +98,20 @@
         hideError();
 
         try {
-          const result = await window.api.auth.login(username, password);
+          const data = await apiClient.post('/auth/login', {
+            username,
+            password,
+            device_info: 'desktop'
+          });
 
-          if (result.success) {
-            console.log('Login successful');
-            localStorage.setItem('currentUser', JSON.stringify(result.user));
-            window.location.href = 'dashboard.html';
-          } else {
-            console.log('Login failed:', result.message);
-            showError(result.message || 'Login gagal');
-            loginBtn.disabled = false;
-            loginBtn.textContent = 'Login';
-            passwordInput.value = '';
-            usernameInput.focus();
-          }
+          console.log('Login successful');
+          apiClient.setToken(data.token);
+          localStorage.setItem('refresh_token', data.refresh_token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          window.location.href = 'dashboard.html';
         } catch (error) {
           console.error('Login error:', error);
-          showError('Terjadi kesalahan saat login');
+          showError(error.message || 'Terjadi kesalahan saat login');
           loginBtn.disabled = false;
           loginBtn.textContent = 'Login';
           passwordInput.value = '';
