@@ -113,8 +113,17 @@ async function loadTransactions() {
 
     currentFilters = filters;
 
-    const result = await window.api.transactions.getAll(filters);
-    
+    const result = await apiClient.get('/transactions', {
+      start_date: filters.startDate,
+      end_date: filters.endDate,
+      search: filters.transactionCode,
+      user_id: filters.userId,
+      payment_method: filters.paymentMethod,
+      status: filters.status,
+      page: currentPage,
+      limit: filters.limit
+    });
+
     if (result.success) {
       allTransactions = result.transactions;
       renderTransactionsTable(allTransactions);
@@ -202,7 +211,7 @@ async function openTransactionDetail(transactionId) {
   try {
     currentTransactionId = transactionId;
     
-    const result = await window.api.transactions.getById(transactionId);
+    const result = await apiClient.get(`/transactions/${transactionId}`);
     
     if (result.success) {
       const transaction = result.transaction;
@@ -330,7 +339,7 @@ function confirmVoidTransaction() {
 
 async function voidTransaction(transactionId) {
   try {
-    const result = await window.api.transactions.void(transactionId);
+    const result = await apiClient.patch(`/transactions/${transactionId}/void`);
     
     if (result.success) {
       showToast('Transaksi berhasil di-void', 'success');

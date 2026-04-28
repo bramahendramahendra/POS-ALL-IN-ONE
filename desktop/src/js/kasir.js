@@ -59,7 +59,7 @@ function setupEventListeners() {
       const keyword = e.target.value.trim();
 
       if (keyword) {
-        const result = await window.api.products.getByBarcode(keyword);
+        const result = await apiClient.get(`/products/barcode/${encodeURIComponent(keyword)}`);
         if (result.success && result.product) {
           document.getElementById('productSearch').value = '';
           hideSuggestions();
@@ -135,8 +135,8 @@ function setupEventListeners() {
 
 async function searchProduct(keyword) {
   try {
-    const result = await window.api.products.search(keyword);
-    
+    const result = await apiClient.get('/products/search', { q: keyword, limit: 10 });
+
     if (result.success && result.products.length > 0) {
       showProductSuggestions(result.products);
     } else {
@@ -818,7 +818,10 @@ async function processTransaction() {
   btnProcess.textContent = 'Memproses...';
 
   try {
-    const result = await window.api.transactions.create(transactionData);
+    const result = await apiClient.post('/transactions', {
+      ...transactionData,
+      device_source: 'desktop'
+    });
 
     if (result.success) {
       // Update cash drawer if payment is cash

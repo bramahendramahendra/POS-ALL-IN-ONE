@@ -16,12 +16,6 @@ contextBridge.exposeInMainWorld('api', {
     getSummaryExtra: (period) => ipcRenderer.invoke('dashboard:getSummaryExtra', period)
   },
 
-  transactions: {
-    create: (transactionData) => ipcRenderer.invoke('transactions:create', transactionData),
-    getAll: (filters) => ipcRenderer.invoke('transactions:getAll', filters),
-    getById: (id) => ipcRenderer.invoke('transactions:getById', id),
-    void: (id) => ipcRenderer.invoke('transactions:void', id)
-  },
   cashDrawer: {
     getCurrent: () => ipcRenderer.invoke('cashDrawer:getCurrent'),
     open: (data) => ipcRenderer.invoke('cashDrawer:open', data),
