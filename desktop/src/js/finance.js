@@ -1147,7 +1147,11 @@ async function loadPurchases() {
       filters.endDate = monthRange.endDate;
     }
 
-    const result = await window.api.purchases.getAll(filters);
+    const result = await apiClient.get('/purchases', {
+      start_date: filters.startDate,
+      end_date: filters.endDate,
+      payment_status: filters.paymentStatus || undefined
+    });
 
     if (result.success) {
       allPurchases = result.purchases;
@@ -1484,7 +1488,7 @@ async function savePurchase(formData) {
   btnSubmit.textContent = 'Menyimpan...';
 
   try {
-    const result = await window.api.purchases.create(formData);
+    const result = await apiClient.post('/purchases', formData);
 
     if (result.success) {
       closePurchaseModal();
@@ -1510,7 +1514,7 @@ function showPurchaseFormError(message) {
 // Pay Purchase
 async function openPayPurchaseModal(purchaseId) {
   try {
-    const result = await window.api.purchases.getById(purchaseId);
+    const result = await apiClient.get(`/purchases/${purchaseId}`);
 
     if (result.success) {
       const purchase = result.purchase;
@@ -1577,7 +1581,7 @@ async function handlePayPurchase(e) {
 
 async function processPurchasePayment(purchaseId, amount) {
   try {
-    const result = await window.api.purchases.pay(purchaseId, amount);
+    const result = await apiClient.post(`/purchases/${purchaseId}/pay`, { amount });
 
     if (result.success) {
       closePayPurchaseModal();
@@ -1601,7 +1605,7 @@ function showPayPurchaseError(message) {
 // Detail Purchase
 async function openDetailPurchase(purchaseId) {
   try {
-    const result = await window.api.purchases.getById(purchaseId);
+    const result = await apiClient.get(`/purchases/${purchaseId}`);
 
     if (result.success) {
       displayPurchaseDetail(result.purchase);
@@ -1723,7 +1727,7 @@ function confirmDeletePurchase(purchaseId, purchaseCode) {
 
 async function deletePurchase(purchaseId) {
   try {
-    const result = await window.api.purchases.delete(purchaseId);
+    const result = await apiClient.delete(`/purchases/${purchaseId}`);
 
     if (result.success) {
       await loadPurchases();
@@ -1815,7 +1819,7 @@ function updateReturnsSummary(returns) {
 
 async function loadPurchasesForReturn() {
   try {
-    const result = await window.api.purchases.getAll({});
+    const result = await apiClient.get('/purchases', {});
     if (result.success) {
       purchasesForReturn = result.purchases;
       const select = document.getElementById('returnPurchaseId');
