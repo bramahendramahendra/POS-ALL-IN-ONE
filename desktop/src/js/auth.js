@@ -40,3 +40,21 @@ function checkAuth() {
     }
     return true;
 }
+
+// PIN Lock functions
+async function hasPin() {
+    const data = await apiClient.get('/pin/check');
+    return data.has_pin;
+}
+
+async function setPin(pin) {
+    return await apiClient.post('/pin/set', { pin });
+}
+
+async function verifyPin(pin) {
+    return await apiClient.post('/pin/verify', { pin });
+}
+
+async function changePin(oldPin, newPin) {
+    return await apiClient.post('/pin/change', { old_pin: oldPin, new_pin: newPin });
+}

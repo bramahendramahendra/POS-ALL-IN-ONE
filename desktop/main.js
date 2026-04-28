@@ -245,66 +245,6 @@ ipcMain.on('load-login-page', (event) => {
 });
 
 // ============================================
-// PIN LOCK IPC HANDLERS
-// ============================================
-
-ipcMain.handle('pinlock:hasPin', async (event, userId) => {
-  try {
-    const user = dbModule.get('SELECT pin_hash FROM users WHERE id = ?', [userId]);
-    return { success: true, hasPin: !!(user && user.pin_hash) };
-  } catch (error) {
-    console.error('pinlock:hasPin error:', error);
-    return { success: false, hasPin: false };
-  }
-});
-
-ipcMain.handle('pinlock:setPin', async (event, userId, pin) => {
-  try {
-    const pinHash = await bcrypt.hash(pin, 10);
-    dbModule.run('UPDATE users SET pin_hash = ? WHERE id = ?', [pinHash, userId]);
-    dbModule.saveDb();
-    return { success: true };
-  } catch (error) {
-    console.error('pinlock:setPin error:', error);
-    return { success: false, message: 'Gagal menyimpan PIN' };
-  }
-});
-
-ipcMain.handle('pinlock:verifyPin', async (event, userId, pin) => {
-  try {
-    const user = dbModule.get('SELECT pin_hash FROM users WHERE id = ?', [userId]);
-    if (!user || !user.pin_hash) {
-      return { success: false, message: 'PIN belum diset' };
-    }
-    const valid = await bcrypt.compare(pin, user.pin_hash);
-    return { success: valid, message: valid ? 'OK' : 'PIN salah' };
-  } catch (error) {
-    console.error('pinlock:verifyPin error:', error);
-    return { success: false, message: 'Terjadi kesalahan' };
-  }
-});
-
-ipcMain.handle('pinlock:changePin', async (event, userId, oldPin, newPin) => {
-  try {
-    const user = dbModule.get('SELECT pin_hash FROM users WHERE id = ?', [userId]);
-    if (!user || !user.pin_hash) {
-      return { success: false, message: 'PIN lama tidak ditemukan' };
-    }
-    const valid = await bcrypt.compare(oldPin, user.pin_hash);
-    if (!valid) {
-      return { success: false, message: 'PIN lama salah' };
-    }
-    const newHash = await bcrypt.hash(newPin, 10);
-    dbModule.run('UPDATE users SET pin_hash = ? WHERE id = ?', [newHash, userId]);
-    dbModule.saveDb();
-    return { success: true };
-  } catch (error) {
-    console.error('pinlock:changePin error:', error);
-    return { success: false, message: 'Gagal mengubah PIN' };
-  }
-});
-
-// ============================================
 // USERS MANAGEMENT IPC HANDLERS
 // ============================================
 

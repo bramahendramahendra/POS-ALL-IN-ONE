@@ -189,10 +189,6 @@ contextBridge.exposeInMainWorld('api', {
     onRestore: (cb) => ipcRenderer.on('menu:restore', () => cb())
   },
   pinLock: {
-    hasPin:    (userId) => ipcRenderer.invoke('pinlock:hasPin', userId),
-    setPin:    (userId, pin) => ipcRenderer.invoke('pinlock:setPin', userId, pin),
-    verifyPin: (userId, pin) => ipcRenderer.invoke('pinlock:verifyPin', userId, pin),
-    changePin: (userId, oldPin, newPin) => ipcRenderer.invoke('pinlock:changePin', userId, oldPin, newPin),
     onLockScreen: (cb) => ipcRenderer.on('pinlock:lock', () => cb())
   }
 });
