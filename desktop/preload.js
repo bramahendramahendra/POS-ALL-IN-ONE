@@ -16,18 +16,6 @@ contextBridge.exposeInMainWorld('api', {
     getSummaryExtra: (period) => ipcRenderer.invoke('dashboard:getSummaryExtra', period)
   },
 
-  products: {
-    getAll: () => ipcRenderer.invoke('products:getAll'),
-    getById: (id) => ipcRenderer.invoke('products:getById', id),
-    getByBarcode: (barcode) => ipcRenderer.invoke('products:getByBarcode', barcode),
-    search: (keyword) => ipcRenderer.invoke('products:search', keyword),
-    create: (productData) => ipcRenderer.invoke('products:create', productData),
-    update: (id, productData) => ipcRenderer.invoke('products:update', id, productData),
-    delete: (id) => ipcRenderer.invoke('products:delete', id),
-    toggleStatus: (id) => ipcRenderer.invoke('products:toggleStatus', id),
-    getLowStock: () => ipcRenderer.invoke('products:getLowStock'),
-    importBulk: (rows) => ipcRenderer.invoke('products:importBulk', rows)
-  },
   transactions: {
     create: (transactionData) => ipcRenderer.invoke('transactions:create', transactionData),
     getAll: (filters) => ipcRenderer.invoke('transactions:getAll', filters),
@@ -75,15 +63,6 @@ contextBridge.exposeInMainWorld('api', {
     updateStatus: (id, status) => ipcRenderer.invoke('supplierReturns:updateStatus', id, status),
     delete: (id) => ipcRenderer.invoke('supplierReturns:delete', id),
     getPurchaseItems: (purchaseId) => ipcRenderer.invoke('supplierReturns:getPurchaseItems', purchaseId)
-  },
-  productUnits: {
-    getByProduct: (productId) => ipcRenderer.invoke('productUnits:getByProduct', productId),
-    save: (productId, units) => ipcRenderer.invoke('productUnits:save', productId, units),
-    delete: (id) => ipcRenderer.invoke('productUnits:delete', id)
-  },
-  productPrices: {
-    getByProduct: (productId) => ipcRenderer.invoke('productPrices:getByProduct', productId),
-    save: (productId, prices) => ipcRenderer.invoke('productPrices:save', productId, prices)
   },
   customers: {
     getAll: (filters) => ipcRenderer.invoke('customers:getAll', filters),

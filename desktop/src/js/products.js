@@ -399,8 +399,8 @@ function showCategoryFormError(message) {
 
 async function loadProducts() {
   try {
-    const result = await window.api.products.getAll();
-    
+    const result = await apiClient.get('/products');
+
     if (result.success) {
       allProducts = result.products;
       renderProductsTable(allProducts);
@@ -548,7 +548,7 @@ function openAddProductModal() {
 
 async function editProduct(productId) {
   try {
-    const result = await window.api.products.getById(productId);
+    const result = await apiClient.get(`/products/${productId}`);
 
     if (result.success) {
       const product = result.product;
@@ -665,16 +665,16 @@ async function saveProduct(formData) {
     let result;
     
     if (editingProductId) {
-      result = await window.api.products.update(editingProductId, formData);
+      result = await apiClient.put(`/products/${editingProductId}`, formData);
     } else {
-      result = await window.api.products.create(formData);
+      result = await apiClient.post('/products', formData);
     }
 
     if (result.success) {
       // Save product units if any
       const savedProductId = editingProductId || result.productId;
       if (savedProductId && productUnitRows.length > 0) {
-        await window.api.productUnits.save(savedProductId, productUnitRows);
+        await apiClient.post(`/products/${savedProductId}/units`, { units: productUnitRows });
       }
 
       closeProductModal();
@@ -701,7 +701,7 @@ async function saveProduct(formData) {
 
 async function toggleProductStatus(productId, currentStatus) {
   try {
-    const result = await window.api.products.toggleStatus(productId);
+    const result = await apiClient.patch(`/products/${productId}/toggle-status`);
     
     if (result.success) {
       await loadProducts();
@@ -730,7 +730,7 @@ function confirmDeleteProduct(productId, productName) {
 
 async function deleteProduct(productId) {
   try {
-    const result = await window.api.products.delete(productId);
+    const result = await apiClient.delete(`/products/${productId}`);
     
     if (result.success) {
       await loadProducts();
@@ -923,7 +923,7 @@ function showUnitFormError(message) {
 
 async function loadProductUnitsForEdit(productId, baseUnit, basePrice) {
   try {
-    const result = await window.api.productUnits.getByProduct(productId);
+    const result = await apiClient.get(`/products/${productId}/units`);
     if (result.success) {
       productUnitRows = result.units.map(u => ({
         id: u.id,
@@ -1129,13 +1129,13 @@ async function handleProductUnitFormSubmit(e) {
 
   // Persist immediately if editing existing product
   if (editingProductId) {
-    const saveResult = await window.api.productUnits.save(editingProductId, productUnitRows);
+    const saveResult = await apiClient.post(`/products/${editingProductId}/units`, { units: productUnitRows });
     if (!saveResult.success) {
       showToast('Gagal menyimpan satuan jual', 'error');
       return;
     }
     // Reload from DB to get IDs
-    const fresh = await window.api.productUnits.getByProduct(editingProductId);
+    const fresh = await apiClient.get(`/products/${editingProductId}/units`);
     if (fresh.success) {
       productUnitRows = fresh.units.map(u => ({
         id: u.id,
@@ -1171,7 +1171,7 @@ let ppEditIndex = null;
 
 async function loadProductPricesForEdit(productId) {
   try {
-    const result = await window.api.productPrices.getByProduct(productId);
+    const result = await apiClient.get(`/products/${productId}/prices`);
     productPriceRows = result.success ? result.prices.map(p => ({
       tier_name: p.tier_name,
       min_qty: p.min_qty,
@@ -1255,7 +1255,7 @@ function deleteProductPriceRow(idx) {
   showConfirm('Konfirmasi Hapus', 'Yakin ingin menghapus tier harga ini?', async () => {
     productPriceRows.splice(idx, 1);
     if (editingProductId) {
-      await window.api.productPrices.save(editingProductId, productPriceRows);
+      await apiClient.post(`/products/${editingProductId}/prices`, { prices: productPriceRows });
     }
     renderProductPricesRows();
     showToast('Tier harga dihapus', 'success');
@@ -1300,13 +1300,13 @@ async function handleProductPriceFormSubmit(e) {
   productPriceRows.sort((a, b) => a.min_qty - b.min_qty);
 
   if (editingProductId) {
-    const saveResult = await window.api.productPrices.save(editingProductId, productPriceRows);
+    const saveResult = await apiClient.post(`/products/${editingProductId}/prices`, { prices: productPriceRows });
     if (!saveResult.success) {
       showToast('Gagal menyimpan tier harga', 'error');
       return;
     }
     // Refresh from DB
-    const fresh = await window.api.productPrices.getByProduct(editingProductId);
+    const fresh = await apiClient.get(`/products/${editingProductId}/prices`);
     if (fresh.success) {
       productPriceRows = fresh.prices.map(p => ({ tier_name: p.tier_name, min_qty: p.min_qty, price: p.price }));
     }
@@ -1755,7 +1755,7 @@ async function processImport() {
   btn.textContent = 'Memproses...';
 
   try {
-    const result = await window.api.products.importBulk(validRows);
+    const result = await apiClient.post('/products/import-bulk', { rows: validRows });
     btn.disabled = false;
     btn.textContent = '✅ Proses Import';
 
