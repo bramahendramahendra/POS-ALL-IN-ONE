@@ -867,7 +867,11 @@ async function loadExpenses() {
       filters.endDate = monthRange.endDate;
     }
 
-    const result = await window.api.expenses.getAll(filters);
+    const result = await apiClient.get('/expenses', {
+      start_date: filters.startDate,
+      end_date: filters.endDate,
+      category: filters.category || undefined
+    });
 
     if (result.success) {
       allExpenses = result.expenses;
@@ -961,7 +965,7 @@ function openAddExpenseModal() {
 
 async function editExpense(expenseId) {
   try {
-    const result = await window.api.expenses.getById(expenseId);
+    const result = await apiClient.get(`/expenses/${expenseId}`);
 
     if (result.success) {
       const expense = result.expense;
@@ -1042,9 +1046,9 @@ async function saveExpense(formData) {
     let result;
 
     if (editingExpenseId) {
-      result = await window.api.expenses.update(editingExpenseId, formData);
+      result = await apiClient.put(`/expenses/${editingExpenseId}`, formData);
     } else {
-      result = await window.api.expenses.create(formData);
+      result = await apiClient.post('/expenses', formData);
     }
 
     if (result.success) {
@@ -1075,7 +1079,7 @@ function confirmDeleteExpense(expenseId, description) {
 
 async function deleteExpense(expenseId) {
   try {
-    const result = await window.api.expenses.delete(expenseId);
+    const result = await apiClient.delete(`/expenses/${expenseId}`);
 
     if (result.success) {
       await loadExpenses();

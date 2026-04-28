@@ -20,13 +20,6 @@ contextBridge.exposeInMainWorld('api', {
     updateSales: (amount) => ipcRenderer.invoke('cashDrawer:updateSales', amount),
     updateExpenses: (amount) => ipcRenderer.invoke('cashDrawer:updateExpenses', amount)
   },
-  expenses: {
-    getAll: (filters) => ipcRenderer.invoke('expenses:getAll', filters),
-    getById: (id) => ipcRenderer.invoke('expenses:getById', id),
-    create: (expenseData) => ipcRenderer.invoke('expenses:create', expenseData),
-    update: (id, expenseData) => ipcRenderer.invoke('expenses:update', id, expenseData),
-    delete: (id) => ipcRenderer.invoke('expenses:delete', id)
-  },
   purchases: {
     getAll: (filters) => ipcRenderer.invoke('purchases:getAll', filters),
     getById: (id) => ipcRenderer.invoke('purchases:getById', id),
