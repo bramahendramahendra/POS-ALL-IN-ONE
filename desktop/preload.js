@@ -17,11 +17,6 @@ contextBridge.exposeInMainWorld('api', {
   },
 
   cashDrawer: {
-    getCurrent: () => ipcRenderer.invoke('cashDrawer:getCurrent'),
-    open: (data) => ipcRenderer.invoke('cashDrawer:open', data),
-    close: (id, data) => ipcRenderer.invoke('cashDrawer:close', id, data),
-    getHistory: (filters) => ipcRenderer.invoke('cashDrawer:getHistory', filters),
-    getById: (id) => ipcRenderer.invoke('cashDrawer:getById', id),
     updateSales: (amount) => ipcRenderer.invoke('cashDrawer:updateSales', amount),
     updateExpenses: (amount) => ipcRenderer.invoke('cashDrawer:updateExpenses', amount)
   },

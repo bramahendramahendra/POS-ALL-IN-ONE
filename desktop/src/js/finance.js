@@ -280,7 +280,7 @@ function renderSalesExpensesChart(data) {
 
 async function checkCurrentCashDrawer() {
   try {
-    const result = await window.api.cashDrawer.getCurrent();
+    const result = await apiClient.get('/cash-drawer/current');
 
     if (result.success) {
       currentCashDrawer = result.cashDrawer;
@@ -365,7 +365,11 @@ async function loadCashDrawerHistory() {
       filters.endDate = range.endDate;
     }
 
-    const result = await window.api.cashDrawer.getHistory(filters);
+    const result = await apiClient.get('/cash-drawer', {
+      start_date: filters.startDate,
+      end_date: filters.endDate,
+      shift_id: filters.shiftId
+    });
 
     if (result.success) {
       allCashDrawers = result.history;
@@ -464,7 +468,7 @@ async function handleOpenCash(e) {
 
 async function openCashDrawer(data) {
   try {
-    const result = await window.api.cashDrawer.open(data);
+    const result = await apiClient.post('/cash-drawer/open', data);
 
     if (result.success) {
       showToast('Kas berhasil dibuka', 'success');
@@ -555,7 +559,7 @@ async function handleCloseCash(e) {
 
 async function closeCashDrawer(cashDrawerId, data) {
   try {
-    const result = await window.api.cashDrawer.close(cashDrawerId, data);
+    const result = await apiClient.post(`/cash-drawer/${cashDrawerId}/close`, data);
 
     if (result.success) {
       showToast('Kas berhasil ditutup', 'success');
@@ -580,7 +584,7 @@ function showCloseCashError(message) {
 // Detail Cash Drawer
 async function openDetailCashDrawer(cashDrawerId) {
   try {
-    const result = await window.api.cashDrawer.getById(cashDrawerId);
+    const result = await apiClient.get(`/cash-drawer/${cashDrawerId}`);
 
     if (result.success) {
       displayCashDrawerDetail(result.cashDrawer);
