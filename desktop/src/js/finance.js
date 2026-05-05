@@ -1762,7 +1762,7 @@ async function loadReturns() {
     // Remove undefined keys
     Object.keys(filters).forEach(k => filters[k] === undefined && delete filters[k]);
 
-    const result = await window.api.supplierReturns.getAll(filters);
+    const result = await apiClient.get('/supplier-returns', filters);
 
     if (result.success) {
       allReturns = result.returns;
@@ -1884,7 +1884,7 @@ async function handleReturnPurchaseChange() {
   }
 
   try {
-    const result = await window.api.supplierReturns.getPurchaseItems(parseInt(purchaseId));
+    const result = await apiClient.get(`/purchases/${parseInt(purchaseId)}/items`);
     if (result.success) {
       const purchase = result.purchase;
       returnPurchaseItems = result.items;
@@ -2022,7 +2022,7 @@ async function handleReturnFormSubmit(e) {
   }
 
   try {
-    const result = await window.api.supplierReturns.create({
+    const result = await apiClient.post('/supplier-returns', {
       purchase_id: purchaseId,
       return_date: returnDate,
       reason,
@@ -2048,7 +2048,7 @@ async function handleReturnFormSubmit(e) {
 async function openDetailReturnModal(id) {
   currentReturnId = id;
   try {
-    const result = await window.api.supplierReturns.getById(id);
+    const result = await apiClient.get(`/supplier-returns/${id}`);
     if (!result.success) {
       showToast(result.message || 'Gagal memuat detail retur', 'error');
       return;
@@ -2100,7 +2100,7 @@ function closeDetailReturnModal() {
 async function markReturnDone() {
   if (!currentReturnId) return;
   try {
-    const result = await window.api.supplierReturns.updateStatus(currentReturnId, 'selesai');
+    const result = await apiClient.patch(`/supplier-returns/${currentReturnId}/status`, { status: 'selesai' });
     if (result.success) {
       closeDetailReturnModal();
       await loadReturns();
@@ -2126,7 +2126,7 @@ function confirmDeleteReturn(id, code) {
 
 async function deleteReturn(id) {
   try {
-    const result = await window.api.supplierReturns.delete(id);
+    const result = await apiClient.delete(`/supplier-returns/${id}`);
     if (result.success) {
       await loadReturns();
       showToast('Retur berhasil dihapus', 'success');

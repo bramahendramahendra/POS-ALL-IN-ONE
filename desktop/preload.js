@@ -30,14 +30,6 @@ contextBridge.exposeInMainWorld('api', {
     getDetail: (id) => ipcRenderer.invoke('suppliers:getDetail', id),
     getActiveList: () => ipcRenderer.invoke('suppliers:getActiveList')
   },
-  supplierReturns: {
-    getAll: (filters) => ipcRenderer.invoke('supplierReturns:getAll', filters),
-    getById: (id) => ipcRenderer.invoke('supplierReturns:getById', id),
-    create: (data) => ipcRenderer.invoke('supplierReturns:create', data),
-    updateStatus: (id, status) => ipcRenderer.invoke('supplierReturns:updateStatus', id, status),
-    delete: (id) => ipcRenderer.invoke('supplierReturns:delete', id),
-    getPurchaseItems: (purchaseId) => ipcRenderer.invoke('supplierReturns:getPurchaseItems', purchaseId)
-  },
   customers: {
     getAll: (filters) => ipcRenderer.invoke('customers:getAll', filters),
     getById: (id) => ipcRenderer.invoke('customers:getById', id),
