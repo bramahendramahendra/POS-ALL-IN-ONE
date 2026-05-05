@@ -1,4 +1,5 @@
 // customers.js - Master Data Pelanggan
+const { apiClient } = window;
 let currentUser = null;
 let deleteTargetId = null;
 
@@ -40,12 +41,11 @@ async function loadCustomers() {
   const search = document.getElementById('searchCustomer').value.trim();
   const is_active = document.getElementById('filterStatus').value;
 
-  const filters = {};
-  if (search) filters.search = search;
-  if (is_active !== '') filters.is_active = parseInt(is_active);
-
   try {
-    const result = await window.api.customers.getAll(filters);
+    const params = {};
+    if (search) params.search = search;
+    if (is_active !== '') params.is_active = parseInt(is_active);
+    const result = await apiClient.get('/customers', params);
     if (result.success) {
       renderTable(result.customers);
     } else {
@@ -104,7 +104,7 @@ function openAddModal() {
 
 async function openEditModal(id) {
   try {
-    const result = await window.api.customers.getById(id);
+    const result = await apiClient.get(`/customers/${id}`);
     if (!result.success) { showToast(result.message, 'error'); return; }
 
     const c = result.customer;
@@ -129,7 +129,7 @@ function closeCustomerModal() {
 
 async function generateCustomerCode() {
   try {
-    const result = await window.api.customers.getAll({});
+    const result = await apiClient.get('/customers');
     const count = result.success ? result.customers.length + 1 : 1;
     document.getElementById('customerCode').value = `PLG-${String(count).padStart(3, '0')}`;
   } catch (e) {
@@ -161,8 +161,8 @@ async function saveCustomer(e) {
 
   try {
     const result = id
-      ? await window.api.customers.update(parseInt(id), data)
-      : await window.api.customers.create(data);
+      ? await apiClient.put(`/customers/${parseInt(id)}`, data)
+      : await apiClient.post('/customers', data);
 
     if (result.success) {
       showToast(id ? 'Pelanggan berhasil diupdate' : 'Pelanggan berhasil ditambahkan', 'success');
@@ -182,7 +182,7 @@ async function saveCustomer(e) {
 
 async function toggleStatus(id) {
   try {
-    const result = await window.api.customers.toggleStatus(id);
+    const result = await apiClient.patch(`/customers/${id}/toggle-status`);
     if (result.success) {
       showToast('Status pelanggan berhasil diubah', 'success');
       loadCustomers();
@@ -209,7 +209,7 @@ function closeDeleteModal() {
 async function confirmDelete() {
   if (!deleteTargetId) return;
   try {
-    const result = await window.api.customers.delete(deleteTargetId);
+    const result = await apiClient.delete(`/customers/${deleteTargetId}`);
     if (result.success) {
       showToast('Pelanggan berhasil dihapus', 'success');
       closeDeleteModal();
