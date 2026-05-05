@@ -228,6 +228,38 @@ ipcMain.handle('syncQueue:retryFailed', async () => {
     return true;
 });
 
+// Reset semua item SYNCING → PENDING (item yang terputus saat proses berlangsung)
+ipcMain.handle('syncQueue:resetSyncing', async () => {
+    const now   = new Date().toISOString();
+    localDbRun(
+        `UPDATE sync_queue SET status = 'PENDING', updated_at = ? WHERE status = 'SYNCING'`,
+        [now]
+    );
+    const row   = localDbGet(`SELECT changes() AS n`);
+    const count = row?.n ?? 0;
+    if (count > 0) {
+        console.log(`[SyncEngine] Reset ${count} item SYNCING → PENDING (interrupted)`);
+    }
+    return count;
+});
+
+// ============================================
+// RESET STUCK SYNC ITEMS — dijalankan sekali saat startup
+// ============================================
+function resetStuckSyncItems() {
+    if (!localDb) return;
+    const now = new Date().toISOString();
+    localDbRun(
+        `UPDATE sync_queue SET status = 'PENDING', updated_at = ? WHERE status = 'SYNCING'`,
+        [now]
+    );
+    const row   = localDbGet(`SELECT changes() AS n`);
+    const count = row?.n ?? 0;
+    if (count > 0) {
+        console.log(`[SyncEngine] Startup: reset ${count} item SYNCING → PENDING (interrupted)`);
+    }
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -342,6 +374,7 @@ app.whenReady().then(async () => {
 
   try {
     await initLocalDb();
+    resetStuckSyncItems();
   } catch (error) {
     console.error('Local SQLite initialization error:', error);
   }

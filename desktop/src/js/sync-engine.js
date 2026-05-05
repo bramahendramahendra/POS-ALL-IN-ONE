@@ -25,6 +25,11 @@ class SyncEngine {
         if (this.isRunning) return;
         if (!connectionMonitor.isOnline) return;
 
+        // Reset item yang tertinggal di SYNCING dari sesi sebelumnya yang terputus
+        if (typeof window.syncQueue !== 'undefined') {
+            await window.syncQueue.resetSyncing();
+        }
+
         this.isRunning = true;
         window.dispatchEvent(new CustomEvent('sync:started'));
 

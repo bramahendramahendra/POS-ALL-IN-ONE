@@ -66,4 +66,5 @@ contextBridge.exposeInMainWorld('syncQueue', {
     updateStatus: (params) => ipcRenderer.invoke('syncQueue:updateStatus', params),
     getAll:       (params) => ipcRenderer.invoke('syncQueue:getAll', params || {}),
     retryFailed:  ()       => ipcRenderer.invoke('syncQueue:retryFailed'),
+    resetSyncing: ()       => ipcRenderer.invoke('syncQueue:resetSyncing'),
 });
