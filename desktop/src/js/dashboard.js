@@ -5,6 +5,8 @@
 
 'use strict';
 
+const { apiClient } = window;
+
 // ---- Chart instances ----
 let chartSalesTrend    = null;
 let chartTopCategories = null;
@@ -75,7 +77,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadDashboardStats() {
   try {
-    const res = await window.api.dashboard.getStats();
+    const res = await apiClient.get('/dashboard/stats');
     if (!res.success) return;
 
     const s = res.stats;
@@ -186,7 +188,7 @@ async function loadAllCharts() {
 
 async function loadChartSalesTrend() {
   try {
-    const res = await window.api.dashboard.getSalesTrend(currentPeriod);
+    const res = await apiClient.get('/dashboard/sales-trend', { period: currentPeriod });
     if (!res.success) return;
 
     const { labels, currentTotals, previousTotals, currentCounts } = res;
@@ -285,7 +287,7 @@ async function loadChartSalesTrend() {
 
 async function loadChartTopCategories() {
   try {
-    const res = await window.api.dashboard.getTopCategories(currentPeriod);
+    const res = await apiClient.get('/dashboard/top-categories', { period: currentPeriod });
     if (!res.success) return;
 
     const rows = res.rows || [];
@@ -341,7 +343,7 @@ async function loadChartTopCategories() {
 
 async function loadChartTopProducts() {
   try {
-    const res = await window.api.dashboard.getTopProducts(currentPeriod, productMode);
+    const res = await apiClient.get('/dashboard/top-products', { period: currentPeriod, mode: productMode });
     if (!res.success) return;
 
     const rows = res.rows || [];
@@ -413,7 +415,7 @@ async function loadChartTopProducts() {
 
 async function loadChartPaymentMethods() {
   try {
-    const res = await window.api.dashboard.getPaymentMethods(currentPeriod);
+    const res = await apiClient.get('/dashboard/payment-methods', { period: currentPeriod });
     if (!res.success) return;
 
     const rows = res.rows || [];
@@ -472,7 +474,7 @@ async function loadChartPaymentMethods() {
 
 async function loadSummaryExtra() {
   try {
-    const res = await window.api.dashboard.getSummaryExtra(currentPeriod);
+    const res = await apiClient.get('/dashboard/summary-extra', { period: currentPeriod });
     if (!res.success) return;
 
     const { highest, peakHour, avg } = res;

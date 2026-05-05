@@ -7,15 +7,6 @@ contextBridge.exposeInMainWorld('api', {
     getCurrentUser: () => ipcRenderer.invoke('auth:getCurrentUser')
   },
 
-  dashboard: {
-    getStats:        () => ipcRenderer.invoke('dashboard:getStats'),
-    getSalesTrend:   (period) => ipcRenderer.invoke('dashboard:getSalesTrend', period),
-    getTopCategories:(period) => ipcRenderer.invoke('dashboard:getTopCategories', period),
-    getTopProducts:  (period, mode) => ipcRenderer.invoke('dashboard:getTopProducts', period, mode),
-    getPaymentMethods:(period) => ipcRenderer.invoke('dashboard:getPaymentMethods', period),
-    getSummaryExtra: (period) => ipcRenderer.invoke('dashboard:getSummaryExtra', period)
-  },
-
   cashDrawer: {
     updateSales: (amount) => ipcRenderer.invoke('cashDrawer:updateSales', amount),
     updateExpenses: (amount) => ipcRenderer.invoke('cashDrawer:updateExpenses', amount)
