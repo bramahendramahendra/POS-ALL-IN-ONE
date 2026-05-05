@@ -21,13 +21,9 @@ contextBridge.exposeInMainWorld('api', {
   printer: {
     getAll: () => ipcRenderer.invoke('printer:getAll')
   },
-  labelPrint: {
-    getData: () => ipcRenderer.invoke('labelPrint:getData')
-  },
   window: {
     loadLoginPage: () => ipcRenderer.send('load-login-page'),
-    openReceipt: (transactionId) => ipcRenderer.send('window:openReceipt', transactionId),
-    openBarcodeLabel: (data) => ipcRenderer.send('window:openBarcodeLabel', data)
+    openReceipt: (transactionId) => ipcRenderer.send('window:openReceipt', transactionId)
   },
   shortcuts: {
     onNavigate: (callback) => {

@@ -1396,25 +1396,9 @@ function closeLabelPrintModal() {
 }
 
 async function loadPrinterList() {
+  // Printer selection not needed — printing via browser print dialog (window.print())
   const select = document.getElementById('labelPrinter');
-  select.innerHTML = '<option value="">— Gunakan printer default —</option>';
-  try {
-    const res = await window.api.printer.getAll();
-    if (res.success && res.printers.length > 0) {
-      res.printers.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.name;
-        opt.textContent = p.name + (p.isDefault ? ' (default)' : '');
-        select.appendChild(opt);
-      });
-    }
-
-    // Apply saved default printer
-    const settRes = await window.api.settings.getAll();
-    if (settRes.success && settRes.settings.label_printer_default) {
-      select.value = settRes.settings.label_printer_default;
-    }
-  } catch (e) { /* ignore */ }
+  if (select) select.innerHTML = '<option value="">— Gunakan dialog print browser —</option>';
 }
 
 function renderLabelProductRows() {
@@ -1531,32 +1515,73 @@ function renderLabelPreview() {
 
 function doLabelPrint() {
   const size = document.getElementById('labelSize').value;
-  const printer = document.getElementById('labelPrinter').value;
   const qtyMap = getLabelQtyMap();
 
   const errEl = document.getElementById('labelPrintError');
   errEl.classList.add('hidden');
 
-  const products = labelPrintProducts.map(p => ({
-    id: p.id,
-    barcode: p.barcode,
-    name: p.name,
-    selling_price: p.selling_price
-  }));
-
-  if (products.length === 0) {
+  if (labelPrintProducts.length === 0) {
     errEl.textContent = 'Tidak ada produk yang dipilih.';
     errEl.classList.remove('hidden');
     return;
   }
 
-  window.api.window.openBarcodeLabel({
-    products,
-    qty: qtyMap,
-    size,
-    printer: printer || null,
-    autoPrint: false
+  const SIZE_MM = {
+    '3x2':   { w: '30mm', h: '20mm' },
+    '4x2.5': { w: '40mm', h: '25mm' },
+    '5x3':   { w: '50mm', h: '30mm' },
+    '6x4':   { w: '60mm', h: '40mm' },
+    '8x5':   { w: '80mm', h: '50mm' }
+  };
+  const sz = SIZE_MM[size] || SIZE_MM['4x2.5'];
+
+  // Build flat list of labels (one per copy)
+  const items = [];
+  labelPrintProducts.forEach(p => {
+    const qty = qtyMap[p.id] || 1;
+    for (let i = 0; i < qty; i++) items.push(p);
   });
+
+  const labels = items.map((p, idx) => `
+    <div class="label">
+      <div class="product-name">${p.name.length > 24 ? p.name.slice(0, 23) + '…' : escapeHtml(p.name)}</div>
+      <svg data-barcode="${escapeHtml(p.barcode)}" id="bc-${idx}"></svg>
+      <div class="price">Rp ${Number(p.selling_price).toLocaleString('id-ID')}</div>
+    </div>
+  `).join('');
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <title>Print Label Barcode</title>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
+  <style>
+    body { margin: 0; display: flex; flex-wrap: wrap; gap: 2px; }
+    .label {
+      display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+      width: ${sz.w}; height: ${sz.h};
+      border: 1px dashed #ccc; padding: 2px; box-sizing: border-box; text-align: center;
+    }
+    .product-name { font-size: 8px; font-weight: bold; line-height: 1.2; word-break: break-word; max-width: 100%; }
+    .label svg { width: 90%; max-height: 55%; }
+    .price { font-size: 9px; font-weight: bold; }
+    @media print { body { gap: 0; } .label { border: none; page-break-inside: avoid; } }
+  </style>
+</head>
+<body>
+  ${labels}
+  <script>
+    document.querySelectorAll('svg[data-barcode]').forEach(function(el) {
+      try {
+        JsBarcode(el, el.dataset.barcode, { format: 'CODE128', displayValue: true, fontSize: 9, margin: 1, textMargin: 1 });
+      } catch(e) {}
+    });
+    window.onload = function() { window.print(); window.close(); };
+  <\/script>
+</body>
+</html>`);
+  printWindow.document.close();
 
   closeLabelPrintModal();
   showToast('Window cetak label dibuka', 'success');
