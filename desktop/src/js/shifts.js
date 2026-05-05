@@ -1,4 +1,5 @@
 // Shifts Management Page
+const { apiClient } = window;
 let currentUser = null;
 let allShifts = [];
 let editingShiftId = null;
@@ -40,7 +41,7 @@ function setupEventListeners() {
 
 async function loadShifts() {
   try {
-    const result = await window.api.shifts.getAll();
+    const result = await apiClient.get('/shifts');
     if (result.success) {
       allShifts = result.shifts;
       renderShiftsTable(allShifts);
@@ -98,7 +99,7 @@ function openAddShiftModal() {
 
 async function openEditShiftModal(id) {
   try {
-    const result = await window.api.shifts.getById(id);
+    const result = await apiClient.get(`/shifts/${id}`);
     if (!result.success) {
       showToast('Gagal memuat data shift', 'error');
       return;
@@ -141,9 +142,9 @@ async function handleShiftFormSubmit(e) {
   try {
     let result;
     if (editingShiftId) {
-      result = await window.api.shifts.update(editingShiftId, data);
+      result = await apiClient.put(`/shifts/${editingShiftId}`, data);
     } else {
-      result = await window.api.shifts.create(data);
+      result = await apiClient.post('/shifts', data);
     }
 
     if (result.success) {
@@ -183,7 +184,7 @@ async function toggleShiftStatus(id, currentStatus) {
     `Yakin ingin ${label} shift ini?`,
     async () => {
       try {
-        const result = await window.api.shifts.toggleStatus(id);
+        const result = await apiClient.patch(`/shifts/${id}/toggle-status`);
         if (result.success) {
           showToast(`Shift berhasil di${label}kan`, 'success');
           await loadShifts();
@@ -204,7 +205,7 @@ async function deleteShift(id) {
     'Yakin ingin menghapus shift ini? Aksi ini tidak dapat dibatalkan.',
     async () => {
       try {
-        const result = await window.api.shifts.delete(id);
+        const result = await apiClient.delete(`/shifts/${id}`);
         if (result.success) {
           showToast('Shift berhasil dihapus', 'success');
           await loadShifts();
