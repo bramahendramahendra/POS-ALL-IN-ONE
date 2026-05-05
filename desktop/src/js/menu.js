@@ -165,6 +165,7 @@ function renderNavbar() {
       <h2>POS Retail</h2>
     </div>
     <div class="navbar-user">
+      <span id="connection-indicator" class="status-online">● Online</span>
       <span class="user-info">
         <strong id="userName">${escapeHtml(currentUser.full_name)}</strong>
         <span class="user-role" id="userRole">(${currentUser.role})</span>

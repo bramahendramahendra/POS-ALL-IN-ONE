@@ -20,6 +20,13 @@ class ApiClient {
     }
 
     async request(method, endpoint, data = null, options = {}) {
+        // Cek status koneksi dari ConnectionMonitor sebelum melakukan request
+        if (typeof connectionMonitor !== 'undefined' && !connectionMonitor.isOnline) {
+            const err = new Error('Tidak ada koneksi internet');
+            err.offline = true;
+            throw err;
+        }
+
         const url = `${this.baseURL}${endpoint}`;
         const headers = {
             'Content-Type': 'application/json',

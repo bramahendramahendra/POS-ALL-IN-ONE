@@ -973,6 +973,16 @@ textarea:focus {
   gap: 20px;
 }
 
+#connection-indicator,
+.status-online,
+.status-offline {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.status-online  { color: #22c55e; }
+.status-offline { color: #ef4444; }
+
 .user-info {
   display: flex;
   flex-direction: column;
