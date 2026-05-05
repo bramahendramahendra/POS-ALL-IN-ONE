@@ -5,6 +5,8 @@
 
 'use strict';
 
+const { apiClient } = window;
+
 let currentSettings = {};
 let logoBase64 = '';
 
@@ -35,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadSettings() {
   showLoading('Memuat pengaturan...');
   try {
-    const res = await window.api.settings.getAll();
+    const res = await apiClient.get('/settings');
     if (!res.success) {
       Toast.error(res.message || 'Gagal memuat pengaturan');
       return;
@@ -118,7 +120,7 @@ function setupEventListeners() {
       async () => {
         showLoading('Mereset pengaturan...');
         try {
-          const res = await window.api.settings.reset();
+          const res = await apiClient.post('/settings/reset');
           if (res.success) {
             await loadSettings();
             Toast.success('Pengaturan berhasil direset ke default');
@@ -295,7 +297,7 @@ async function handleSaveSettings() {
 
   showLoading('Menyimpan pengaturan...');
   try {
-    const res = await window.api.settings.save(data);
+    const res = await apiClient.put('/settings', data);
     if (res.success) {
       currentSettings = { ...currentSettings, ...data };
       Toast.success('Pengaturan berhasil disimpan');
