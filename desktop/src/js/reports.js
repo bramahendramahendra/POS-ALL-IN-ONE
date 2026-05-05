@@ -5,6 +5,8 @@
 
 'use strict';
 
+const { apiClient } = window;
+
 // ---- State ----
 let salesData       = { transactions: [], summary: {}, chartData: [] };
 let stockData       = { products: [], summary: {}, categories: [] };
@@ -94,7 +96,7 @@ function getDateRangeFromPeriod(period) {
 
 async function loadUserDropdowns() {
   try {
-    const res = await window.api.reports.getUsers();
+    const res = await apiClient.get('/users');
     if (!res.success) return;
 
     ['salesUserFilter', 'cashierUserFilter'].forEach(id => {
@@ -167,7 +169,12 @@ async function filterSalesReport() {
 
   showLoading('Memuat laporan penjualan...');
   try {
-    const res = await window.api.reports.getSalesReport(filters);
+    const res = await apiClient.get('/reports/sales', {
+      start_date: filters.startDate,
+      end_date: filters.endDate,
+      user_id: filters.userId || undefined,
+      payment_method: filters.paymentMethod || undefined
+    });
     if (!res.success) {
       Toast.error(res.message || 'Gagal memuat laporan');
       return;
@@ -312,7 +319,7 @@ async function filterPLReport() {
 
   showLoading('Menghitung laba rugi...');
   try {
-    const res = await window.api.reports.getProfitLossReport({ startDate, endDate });
+    const res = await apiClient.get('/reports/profit-loss', { start_date: startDate, end_date: endDate });
     if (!res.success) {
       Toast.error(res.message || 'Gagal memuat laporan laba rugi');
       return;
@@ -433,7 +440,10 @@ async function filterStockReport() {
 
   showLoading('Memuat laporan stok...');
   try {
-    const res = await window.api.reports.getStockReport(filters);
+    const res = await apiClient.get('/reports/stock', {
+      category_id: filters.categoryId || undefined,
+      stock_status: filters.stockStatus || undefined
+    });
     if (!res.success) {
       Toast.error(res.message || 'Gagal memuat laporan stok');
       return;
@@ -549,7 +559,11 @@ async function filterCashierReport() {
 
   showLoading('Memuat laporan kasir...');
   try {
-    const res = await window.api.reports.getCashierReport(filters);
+    const res = await apiClient.get('/reports/cashier', {
+      start_date: filters.startDate,
+      end_date: filters.endDate,
+      user_id: filters.userId || undefined
+    });
     if (!res.success) {
       Toast.error(res.message || 'Gagal memuat laporan kasir');
       return;
@@ -687,16 +701,17 @@ async function loadCashierShiftBreakdown(startDate, endDate, userId) {
   if (!container) return;
 
   try {
-    const result = await window.api.shifts.getSummary({ startDate, endDate });
+    const result = await apiClient.get('/shifts/summary', { start_date: startDate, end_date: endDate });
     if (!result.success || !result.summary.length) {
       container.innerHTML = '';
       return;
     }
 
     // Also get cash history for this user/period to match
-    const cashResult = await window.api.cashDrawer.getHistory({
-      startDate, endDate,
-      userId: userId || null
+    const cashResult = await apiClient.get('/cash-drawer/history', {
+      start_date: startDate,
+      end_date: endDate,
+      user_id: userId || undefined
     });
 
     const sessions = cashResult.success ? cashResult.history : [];

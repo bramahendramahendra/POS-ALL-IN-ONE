@@ -24,13 +24,6 @@ contextBridge.exposeInMainWorld('api', {
     getDashboard: (filters) => ipcRenderer.invoke('finance:getDashboard', filters),
     getTopProducts: (filters) => ipcRenderer.invoke('finance:getTopProducts', filters)
   },
-  reports: {
-    getSalesReport: (filters) => ipcRenderer.invoke('reports:getSalesReport', filters),
-    getProfitLossReport: (filters) => ipcRenderer.invoke('reports:getProfitLossReport', filters),
-    getStockReport: (filters) => ipcRenderer.invoke('reports:getStockReport', filters),
-    getCashierReport: (filters) => ipcRenderer.invoke('reports:getCashierReport', filters),
-    getUsers: () => ipcRenderer.invoke('reports:getUsers')
-  },
   settings: {
     getAll: () => ipcRenderer.invoke('settings:getAll'),
     get: (key) => ipcRenderer.invoke('settings:get', key),
