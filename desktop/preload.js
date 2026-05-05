@@ -56,3 +56,14 @@ contextBridge.exposeInMainWorld('localDB', {
     getCachedProducts:       ()         => ipcRenderer.invoke('local:getCachedProducts'),
     markTransactionSynced:   (localId)  => ipcRenderer.invoke('local:markTransactionSynced', localId),
 });
+
+// ============================================
+// SYNC QUEUE — Antrian sinkronisasi offline via IPC
+// ============================================
+contextBridge.exposeInMainWorld('syncQueue', {
+    add:          (item)   => ipcRenderer.invoke('syncQueue:add', item),
+    getPending:   ()       => ipcRenderer.invoke('syncQueue:getPending'),
+    updateStatus: (params) => ipcRenderer.invoke('syncQueue:updateStatus', params),
+    getAll:       (params) => ipcRenderer.invoke('syncQueue:getAll', params || {}),
+    retryFailed:  ()       => ipcRenderer.invoke('syncQueue:retryFailed'),
+});

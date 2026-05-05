@@ -57,6 +57,24 @@ async function initLocalDb() {
             updated_at TEXT NOT NULL
         )
     `);
+    localDb.run(`
+        CREATE TABLE IF NOT EXISTS sync_queue (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            entity      TEXT NOT NULL,
+            action      TEXT NOT NULL,
+            local_id    TEXT,
+            server_id   INTEGER,
+            payload     TEXT NOT NULL,
+            status      TEXT NOT NULL DEFAULT 'PENDING',
+            retry_count INTEGER DEFAULT 0,
+            error_msg   TEXT,
+            created_at  TEXT NOT NULL,
+            updated_at  TEXT NOT NULL
+        )
+    `);
+    localDb.run(`CREATE INDEX IF NOT EXISTS idx_sync_queue_status  ON sync_queue(status)`);
+    localDb.run(`CREATE INDEX IF NOT EXISTS idx_sync_queue_entity  ON sync_queue(entity)`);
+    localDb.run(`CREATE INDEX IF NOT EXISTS idx_sync_queue_created ON sync_queue(created_at)`);
 
     saveLocalDb();
     console.log('Local SQLite DB initialized:', localDbPath);
@@ -133,6 +151,72 @@ ipcMain.handle('local:markTransactionSynced', async (event, localId) => {
     localDbRun(
         `UPDATE local_transactions SET sync_status = 'SYNCED' WHERE local_id = ?`,
         [localId]
+    );
+    return true;
+});
+
+// ============================================
+// SYNC QUEUE IPC HANDLERS
+// ============================================
+
+// Tambah item ke antrian
+ipcMain.handle('syncQueue:add', async (event, { entity, action, localId, serverId, payload }) => {
+    const now = new Date().toISOString();
+    localDbRun(
+        `INSERT INTO sync_queue (entity, action, local_id, server_id, payload, status, retry_count, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, 'PENDING', 0, ?, ?)`,
+        [entity, action, localId || null, serverId || null, JSON.stringify(payload), now, now]
+    );
+    // Kembalikan lastInsertRowid lewat query (sql.js tidak expose langsung)
+    const row = localDbGet(`SELECT last_insert_rowid() AS id`);
+    return row ? row.id : null;
+});
+
+// Ambil semua item PENDING
+ipcMain.handle('syncQueue:getPending', async () => {
+    return localDbQuery(
+        `SELECT * FROM sync_queue WHERE status = 'PENDING' ORDER BY created_at ASC`
+    );
+});
+
+// Update status item
+ipcMain.handle('syncQueue:updateStatus', async (event, { id, status, errorMsg, incrementRetry }) => {
+    const now = new Date().toISOString();
+    if (incrementRetry) {
+        localDbRun(
+            `UPDATE sync_queue SET status = ?, error_msg = ?, retry_count = retry_count + 1, updated_at = ? WHERE id = ?`,
+            [status, errorMsg || null, now, id]
+        );
+    } else {
+        localDbRun(
+            `UPDATE sync_queue SET status = ?, error_msg = ?, updated_at = ? WHERE id = ?`,
+            [status, errorMsg || null, now, id]
+        );
+    }
+    return true;
+});
+
+// Ambil semua antrian (untuk Sync Center UI), dengan filter status opsional
+ipcMain.handle('syncQueue:getAll', async (event, { status, limit, offset } = {}) => {
+    if (status) {
+        return localDbQuery(
+            `SELECT * FROM sync_queue WHERE status = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+            [status, limit || 50, offset || 0]
+        );
+    }
+    return localDbQuery(
+        `SELECT * FROM sync_queue ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+        [limit || 50, offset || 0]
+    );
+});
+
+// Reset item FAILED (retry_count < 3) ke PENDING agar bisa dicoba ulang
+ipcMain.handle('syncQueue:retryFailed', async () => {
+    const now = new Date().toISOString();
+    localDbRun(
+        `UPDATE sync_queue SET status = 'PENDING', error_msg = NULL, updated_at = ?
+         WHERE status = 'FAILED' AND retry_count < 3`,
+        [now]
     );
     return true;
 });
