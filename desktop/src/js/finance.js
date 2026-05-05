@@ -467,6 +467,23 @@ async function handleOpenCash(e) {
 }
 
 async function openCashDrawer(data) {
+  // Offline — antri ke sync_queue
+  if (typeof connectionMonitor !== 'undefined' && !connectionMonitor.isOnline) {
+    try {
+      await window.syncQueue.add({
+        entity:  'cash_drawer',
+        action:  'open',
+        payload: { ...data, date: new Date().toISOString().slice(0, 10) },
+      });
+      showToast('Kas harian dibuka offline. Akan disinkronkan saat online.', 'warning');
+      closeOpenCashModal();
+    } catch (err) {
+      console.error('Offline open cash drawer error:', err);
+      showOpenCashError('Gagal menyimpan kas offline');
+    }
+    return;
+  }
+
   try {
     const result = await apiClient.post('/cash-drawer/open', data);
 
@@ -1035,12 +1052,37 @@ async function handleExpenseFormSubmit(e) {
 }
 
 async function saveExpense(formData) {
-  
+
   console.log('=== SAVING EXPENSE ===');
   console.log('Expense Data:', formData);
   console.log('Payment Method:', formData.payment_method);
   console.log('Expense Date:', formData.expense_date);
   console.log('Today:', new Date().toISOString().split('T')[0]);
+
+  // Update/delete tidak diizinkan saat offline
+  if (typeof connectionMonitor !== 'undefined' && !connectionMonitor.isOnline && editingExpenseId) {
+    showExpenseFormError('Tidak dapat mengubah pengeluaran saat offline');
+    return;
+  }
+
+  // Offline — hanya untuk create baru
+  if (typeof connectionMonitor !== 'undefined' && !connectionMonitor.isOnline && !editingExpenseId) {
+    try {
+      const localId = crypto.randomUUID();
+      await window.syncQueue.add({
+        entity:  'expense',
+        action:  'create',
+        localId: localId,
+        payload: { ...formData, local_id: localId },
+      });
+      closeExpenseModal();
+      showToast('Pengeluaran disimpan offline. Akan disinkronkan saat online.', 'warning');
+    } catch (err) {
+      console.error('Offline save expense error:', err);
+      showExpenseFormError('Gagal menyimpan pengeluaran offline');
+    }
+    return;
+  }
 
   try {
     let result;

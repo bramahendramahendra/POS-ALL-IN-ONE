@@ -341,6 +341,23 @@ async function handleOpenCash(e) {
 }
 
 async function openCashDrawer(data) {
+  // Offline — antri ke sync_queue
+  if (typeof connectionMonitor !== 'undefined' && !connectionMonitor.isOnline) {
+    try {
+      await window.syncQueue.add({
+        entity:  'cash_drawer',
+        action:  'open',
+        payload: { ...data, date: new Date().toISOString().slice(0, 10) },
+      });
+      showToast('Kas harian dibuka offline. Akan disinkronkan saat online.', 'warning');
+      closeOpenCashModal();
+    } catch (err) {
+      console.error('Offline open cash drawer error:', err);
+      showOpenCashError('Gagal menyimpan kas offline');
+    }
+    return;
+  }
+
   try {
     const result = await apiClient.post('/cash-drawer/open', data);
 

@@ -818,7 +818,7 @@ async function processTransaction() {
   btnProcess.textContent = 'Memproses...';
 
   try {
-    // Offline: simpan ke SQLite lokal
+    // Offline: simpan ke SQLite lokal + antrian sync
     if (typeof connectionMonitor !== 'undefined' && !connectionMonitor.isOnline) {
       if (!dbLocal.isAvailable()) {
         showToast('Mode offline tidak tersedia di platform ini', 'error');
@@ -826,10 +826,17 @@ async function processTransaction() {
         btnProcess.textContent = '✓ Proses Pembayaran';
         return;
       }
-      const offlineResult = await dbLocal.saveTransaction({
-        ...transactionData,
-        device_source: 'desktop'
+      const localId = crypto.randomUUID();
+      const offlineData = { ...transactionData, device_source: 'desktop', local_id: localId };
+
+      await dbLocal.saveTransaction(offlineData);
+      await window.syncQueue.add({
+        entity:  'transaction',
+        action:  'create',
+        localId: localId,
+        payload: offlineData,
       });
+
       showToast('Transaksi disimpan offline. Akan disinkronkan saat online.', 'warning');
       closePaymentModal();
       clearCart();
@@ -876,10 +883,18 @@ async function processTransaction() {
       btnProcess.textContent = '✓ Proses Pembayaran';
     }
   } catch (error) {
-    // Jika error adalah offline flag dari api-client, simpan ke lokal
+    // Jika error adalah offline flag dari api-client, simpan ke lokal + antrian
     if (error.offline && dbLocal.isAvailable()) {
       try {
-        await dbLocal.saveTransaction({ ...transactionData, device_source: 'desktop' });
+        const localId = crypto.randomUUID();
+        const offlineData = { ...transactionData, device_source: 'desktop', local_id: localId };
+        await dbLocal.saveTransaction(offlineData);
+        await window.syncQueue.add({
+          entity:  'transaction',
+          action:  'create',
+          localId: localId,
+          payload: offlineData,
+        });
         showToast('Transaksi disimpan offline. Akan disinkronkan saat online.', 'warning');
         closePaymentModal();
         clearCart();
