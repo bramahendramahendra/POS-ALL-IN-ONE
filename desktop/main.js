@@ -10,6 +10,132 @@ let pendingLabelPrintData = null;
 // Import database functions
 const dbModule = require('./database/db');
 const { initDatabase } = require('./database/init');
+const initSqlJs = require('sql.js');
+
+// ============================================
+// SQLITE LOKAL — untuk operasi offline (pakai sql.js, konsisten dengan DB utama)
+// ============================================
+let localDb = null;
+let localDbPath = null;
+
+async function initLocalDb() {
+    const SQL = await initSqlJs();
+    const userDataPath = app.getPath('userData');
+    localDbPath = path.join(userDataPath, 'offline-local.db');
+
+    if (fs.existsSync(localDbPath)) {
+        const buffer = fs.readFileSync(localDbPath);
+        localDb = new SQL.Database(buffer);
+    } else {
+        localDb = new SQL.Database();
+    }
+
+    // Buat tabel jika belum ada
+    localDb.run(`
+        CREATE TABLE IF NOT EXISTS local_transactions (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            local_id    TEXT UNIQUE NOT NULL,
+            data        TEXT NOT NULL,
+            created_at  TEXT NOT NULL,
+            sync_status TEXT DEFAULT 'PENDING'
+        )
+    `);
+    localDb.run(`
+        CREATE TABLE IF NOT EXISTS local_cash_drawer (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            date            TEXT UNIQUE NOT NULL,
+            opened_at       TEXT,
+            closed_at       TEXT,
+            opening_balance REAL DEFAULT 0,
+            data            TEXT NOT NULL
+        )
+    `);
+    localDb.run(`
+        CREATE TABLE IF NOT EXISTS cache_products (
+            id         INTEGER PRIMARY KEY,
+            data       TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+    `);
+
+    saveLocalDb();
+    console.log('Local SQLite DB initialized:', localDbPath);
+}
+
+function saveLocalDb() {
+    if (localDb && localDbPath) {
+        const data   = localDb.export();
+        const buffer = Buffer.from(data);
+        fs.writeFileSync(localDbPath, buffer);
+    }
+}
+
+function localDbQuery(sql, params = []) {
+    const stmt   = localDb.prepare(sql);
+    stmt.bind(params);
+    const result = [];
+    while (stmt.step()) result.push(stmt.getAsObject());
+    stmt.free();
+    return result;
+}
+
+function localDbRun(sql, params = []) {
+    localDb.run(sql, params);
+    saveLocalDb();
+}
+
+function localDbGet(sql, params = []) {
+    const stmt = localDb.prepare(sql);
+    stmt.bind(params);
+    const row  = stmt.step() ? stmt.getAsObject() : null;
+    stmt.free();
+    return row;
+}
+
+// IPC: Simpan transaksi offline
+ipcMain.handle('local:saveTransaction', async (event, transactionData) => {
+    const { randomUUID } = require('crypto');
+    const localId = randomUUID();
+    localDbRun(
+        `INSERT INTO local_transactions (local_id, data, created_at) VALUES (?, ?, ?)`,
+        [localId, JSON.stringify(transactionData), new Date().toISOString()]
+    );
+    return { local_id: localId };
+});
+
+// IPC: Ambil transaksi offline pending
+ipcMain.handle('local:getPendingTransactions', async () => {
+    return localDbQuery(
+        `SELECT * FROM local_transactions WHERE sync_status = 'PENDING' ORDER BY created_at`
+    );
+});
+
+// IPC: Update cache produk
+ipcMain.handle('local:cacheProducts', async (event, products) => {
+    const now = new Date().toISOString();
+    for (const p of products) {
+        localDbRun(
+            `INSERT OR REPLACE INTO cache_products (id, data, updated_at) VALUES (?, ?, ?)`,
+            [p.id, JSON.stringify(p), now]
+        );
+    }
+    return true;
+});
+
+// IPC: Baca cache produk
+ipcMain.handle('local:getCachedProducts', async () => {
+    return localDbQuery(`SELECT data FROM cache_products`)
+        .map(r => JSON.parse(r.data));
+});
+
+// IPC: Tandai transaksi lokal sudah ter-sync
+ipcMain.handle('local:markTransactionSynced', async (event, localId) => {
+    localDbRun(
+        `UPDATE local_transactions SET sync_status = 'SYNCED' WHERE local_id = ?`,
+        [localId]
+    );
+    return true;
+});
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -121,6 +247,12 @@ app.whenReady().then(async () => {
     console.log('Database initialized successfully');
   } catch (error) {
     console.error('Database initialization error:', error);
+  }
+
+  try {
+    await initLocalDb();
+  } catch (error) {
+    console.error('Local SQLite initialization error:', error);
   }
 
   createWindow();

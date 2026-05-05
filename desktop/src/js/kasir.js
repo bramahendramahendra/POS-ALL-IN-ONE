@@ -818,6 +818,25 @@ async function processTransaction() {
   btnProcess.textContent = 'Memproses...';
 
   try {
+    // Offline: simpan ke SQLite lokal
+    if (typeof connectionMonitor !== 'undefined' && !connectionMonitor.isOnline) {
+      if (!dbLocal.isAvailable()) {
+        showToast('Mode offline tidak tersedia di platform ini', 'error');
+        btnProcess.disabled = false;
+        btnProcess.textContent = '✓ Proses Pembayaran';
+        return;
+      }
+      const offlineResult = await dbLocal.saveTransaction({
+        ...transactionData,
+        device_source: 'desktop'
+      });
+      showToast('Transaksi disimpan offline. Akan disinkronkan saat online.', 'warning');
+      closePaymentModal();
+      clearCart();
+      return;
+    }
+
+    // Online: kirim ke backend
     const result = await apiClient.post('/transactions', {
       ...transactionData,
       device_source: 'desktop'
@@ -850,13 +869,25 @@ async function processTransaction() {
 
       // Open receipt
       window.api.window.openReceipt(result.transactionId);
-      
+
     } else {
       showToast(result.message || 'Gagal menyimpan transaksi', 'error');
       btnProcess.disabled = false;
       btnProcess.textContent = '✓ Proses Pembayaran';
     }
   } catch (error) {
+    // Jika error adalah offline flag dari api-client, simpan ke lokal
+    if (error.offline && dbLocal.isAvailable()) {
+      try {
+        await dbLocal.saveTransaction({ ...transactionData, device_source: 'desktop' });
+        showToast('Transaksi disimpan offline. Akan disinkronkan saat online.', 'warning');
+        closePaymentModal();
+        clearCart();
+        return;
+      } catch (localErr) {
+        console.error('Offline save error:', localErr);
+      }
+    }
     console.error('Process transaction error:', error);
     showToast('Terjadi kesalahan saat memproses transaksi', 'error');
     btnProcess.disabled = false;

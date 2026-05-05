@@ -45,3 +45,14 @@ contextBridge.exposeInMainWorld('api', {
     onLockScreen: (cb) => ipcRenderer.on('pinlock:lock', () => cb())
   }
 });
+
+// ============================================
+// LOCAL DB — SQLite offline via IPC
+// ============================================
+contextBridge.exposeInMainWorld('localDB', {
+    saveTransaction:         (data)     => ipcRenderer.invoke('local:saveTransaction', data),
+    getPendingTransactions:  ()         => ipcRenderer.invoke('local:getPendingTransactions'),
+    cacheProducts:           (products) => ipcRenderer.invoke('local:cacheProducts', products),
+    getCachedProducts:       ()         => ipcRenderer.invoke('local:getCachedProducts'),
+    markTransactionSynced:   (localId)  => ipcRenderer.invoke('local:markTransactionSynced', localId),
+});
