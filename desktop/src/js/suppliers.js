@@ -3,6 +3,8 @@
 // src/js/suppliers.js
 // ============================================
 
+const { apiClient } = window;
+
 let currentUser = null;
 let allSuppliers = [];
 let editingSupplierId = null;
@@ -64,7 +66,10 @@ async function loadSuppliers() {
       status: document.getElementById('filterStatus').value
     };
 
-    const result = await window.api.suppliers.getAll(filters);
+    const result = await apiClient.get('/suppliers', {
+      search: filters.search,
+      is_active: filters.status !== '' ? filters.status : undefined
+    });
 
     if (result.success) {
       allSuppliers = result.suppliers;
@@ -190,7 +195,7 @@ function openAddModal() {
 
 async function editSupplier(id) {
   try {
-    const result = await window.api.suppliers.getById(id);
+    const result = await apiClient.get(`/suppliers/${id}`);
 
     if (!result.success) {
       showToast('Gagal memuat data supplier', 'error');
@@ -270,9 +275,9 @@ async function saveSupplier(formData) {
   try {
     let result;
     if (editingSupplierId) {
-      result = await window.api.suppliers.update(editingSupplierId, formData);
+      result = await apiClient.put(`/suppliers/${editingSupplierId}`, formData);
     } else {
-      result = await window.api.suppliers.create(formData);
+      result = await apiClient.post('/suppliers', formData);
     }
 
     if (result.success) {
@@ -316,7 +321,7 @@ function showSupplierFormError(message) {
 
 async function toggleSupplierStatus(id, currentStatus) {
   try {
-    const result = await window.api.suppliers.toggleStatus(id);
+    const result = await apiClient.patch(`/suppliers/${id}/toggle-status`);
     if (result.success) {
       await loadSuppliers();
       showToast(
@@ -346,7 +351,7 @@ function confirmDeleteSupplier(id, name) {
 
 async function deleteSupplier(id) {
   try {
-    const result = await window.api.suppliers.delete(id);
+    const result = await apiClient.delete(`/suppliers/${id}`);
     if (result.success) {
       await loadSuppliers();
       showToast('Supplier berhasil dihapus', 'success');
@@ -369,7 +374,7 @@ async function openDetailModal(id) {
       '<tr><td colspan="6" class="text-center">Loading...</td></tr>';
     document.getElementById('supplierDetailModal').style.display = 'flex';
 
-    const result = await window.api.suppliers.getDetail(id);
+    const result = await apiClient.get(`/suppliers/${id}`);
 
     if (!result.success) {
       showToast('Gagal memuat detail supplier', 'error');
