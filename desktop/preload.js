@@ -15,12 +15,6 @@ contextBridge.exposeInMainWorld('api', {
     getDashboard: (filters) => ipcRenderer.invoke('finance:getDashboard', filters),
     getTopProducts: (filters) => ipcRenderer.invoke('finance:getTopProducts', filters)
   },
-  backup: {
-    create: () => ipcRenderer.invoke('backup:create'),
-    restore: (filePath) => ipcRenderer.invoke('backup:restore', filePath),
-    selectFile: () => ipcRenderer.invoke('backup:selectFile'),
-    selectFolder: () => ipcRenderer.invoke('backup:selectFolder')
-  },
   shell: {
     openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url)
   },

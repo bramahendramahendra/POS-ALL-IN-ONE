@@ -322,21 +322,17 @@ async function handleBackupNow() {
   btn.textContent = '⏳ Membuat backup...';
 
   try {
-    const res = await window.api.backup.create();
+    const blob = await apiClient.get('/backup/export', {}, { responseType: 'blob' });
+    const filename = `backup-${new Date().toISOString().slice(0, 10)}.sql`;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
 
-    if (res.canceled) {
-      Toast.info('Backup dibatalkan');
-      return;
-    }
-
-    if (!res.success) {
-      Toast.error(res.message || 'Gagal membuat backup');
-      return;
-    }
-
-    showBackupStatus(`✅ Backup berhasil disimpan: ${res.filename}`, 'success');
-    Toast.success(`Backup berhasil: ${res.filename}`);
-
+    showBackupStatus(`✅ Backup berhasil diunduh: ${filename}`, 'success');
+    Toast.success(`Backup berhasil: ${filename}`);
   } catch (e) {
     console.error('handleBackupNow error:', e);
     Toast.error('Terjadi kesalahan saat backup');
@@ -347,39 +343,40 @@ async function handleBackupNow() {
 }
 
 async function handleRestoreBackup() {
-  // Step 1: Pilih file
-  let fileResult;
-  try {
-    fileResult = await window.api.backup.selectFile();
-  } catch (e) {
-    Toast.error('Gagal membuka dialog file');
-    return;
-  }
+  // Step 1: Pilih file via HTML file input
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = '.sql,.zip';
 
-  if (fileResult.canceled || !fileResult.filePath) {
-    Toast.info('Restore dibatalkan');
-    return;
-  }
+  fileInput.onchange = async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
 
-  const filePath = fileResult.filePath;
-  const fileName = filePath.split(/[\\/]/).pop();
+    const fileName = file.name;
 
-  // Step 2: Konfirmasi
-  showConfirm(
-    '⚠️ Restore Database',
-    `Anda akan mengganti database aktif dengan:\n"${fileName}"\n\nData saat ini akan digantikan dan TIDAK BISA DIKEMBALIKAN.\nAplikasi akan restart otomatis setelah restore.\n\nYakin ingin melanjutkan?`,
-    async () => {
-      showLoading('Memulihkan database...');
-      try {
-        await window.api.backup.restore(filePath);
-        // App will restart, so we won't reach here normally
-      } catch (e) {
-        console.error('handleRestoreBackup error:', e);
-        Toast.error('Terjadi kesalahan saat restore database');
-        hideLoading();
+    // Step 2: Konfirmasi
+    showConfirm(
+      '⚠️ Restore Database',
+      `Anda akan mengganti database aktif dengan:\n"${fileName}"\n\nData saat ini akan digantikan dan TIDAK BISA DIKEMBALIKAN.\nAplikasi akan restart otomatis setelah restore.\n\nYakin ingin melanjutkan?`,
+      async () => {
+        showLoading('Memulihkan database...');
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          await apiClient.uploadFile('/backup/restore', formData);
+          Toast.success('Restore berhasil. Aplikasi akan dimuat ulang...');
+          setTimeout(() => window.location.reload(), 2000);
+        } catch (e) {
+          console.error('handleRestoreBackup error:', e);
+          Toast.error('Terjadi kesalahan saat restore database');
+        } finally {
+          hideLoading();
+        }
       }
-    }
-  );
+    );
+  };
+
+  fileInput.click();
 }
 
 function showBackupStatus(message, type) {
