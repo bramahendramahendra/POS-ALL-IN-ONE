@@ -54,7 +54,7 @@ contextBridge.exposeInMainWorld('localDB', {
     getPendingTransactions:  ()         => ipcRenderer.invoke('local:getPendingTransactions'),
     cacheProducts:           (products) => ipcRenderer.invoke('local:cacheProducts', products),
     getCachedProducts:       ()         => ipcRenderer.invoke('local:getCachedProducts'),
-    markTransactionSynced:   (localId)  => ipcRenderer.invoke('local:markTransactionSynced', localId),
+    markTransactionSynced:   (params)   => ipcRenderer.invoke('local:markTransactionSynced', params),
 });
 
 // ============================================

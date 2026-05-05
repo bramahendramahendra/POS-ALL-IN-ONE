@@ -146,12 +146,19 @@ ipcMain.handle('local:getCachedProducts', async () => {
         .map(r => JSON.parse(r.data));
 });
 
-// IPC: Tandai transaksi lokal sudah ter-sync
-ipcMain.handle('local:markTransactionSynced', async (event, localId) => {
+// IPC: Tandai transaksi lokal sudah ter-sync (dipanggil oleh sync-engine setelah upload berhasil)
+ipcMain.handle('local:markTransactionSynced', async (event, { localId, serverId } = {}) => {
+    if (!localId) return false;
     localDbRun(
         `UPDATE local_transactions SET sync_status = 'SYNCED' WHERE local_id = ?`,
         [localId]
     );
+    if (serverId) {
+        localDbRun(
+            `UPDATE sync_queue SET server_id = ? WHERE local_id = ?`,
+            [serverId, localId]
+        );
+    }
     return true;
 });
 

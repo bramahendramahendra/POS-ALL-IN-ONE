@@ -166,13 +166,24 @@ async function rejectAll(ids) {
 
 async function loadQueue() {
   const status = document.getElementById('queueStatusFilter').value;
-  const params = { page: state.queue.page, limit: LIMIT };
-  if (status) params.status = status;
+  const offset = (state.queue.page - 1) * LIMIT;
 
   try {
-    const res   = await apiClient.get('/sync/queue', params);
-    const items = Array.isArray(res) ? res : (res?.data ?? []);
-    const total = res?.total ?? items.length;
+    let items, total;
+
+    // Baca dari sync_queue lokal jika tersedia (Electron)
+    if (typeof window.syncQueue !== 'undefined') {
+      items = await window.syncQueue.getAll({ status: status || undefined, limit: LIMIT, offset });
+      total = items.length < LIMIT ? offset + items.length : offset + LIMIT + 1;
+    } else {
+      // Fallback: baca dari backend
+      const params = { page: state.queue.page, limit: LIMIT };
+      if (status) params.status = status;
+      const res = await apiClient.get('/sync/queue', params);
+      items = Array.isArray(res) ? res : (res?.data ?? []);
+      total = res?.total ?? items.length;
+    }
+
     state.queue.data  = items;
     state.queue.total = total;
     renderQueue(items);
@@ -236,7 +247,12 @@ function renderQueue(items) {
 
 async function retryQueueItem(itemId) {
   try {
-    await apiClient.post(`/sync/queue/${itemId}/retry`);
+    // Reset status item ke PENDING agar bisa diproses ulang oleh Sync Engine
+    if (typeof window.syncQueue !== 'undefined') {
+      await window.syncQueue.updateStatus({ id: itemId, status: 'PENDING', errorMsg: null });
+    } else {
+      await apiClient.post(`/sync/queue/${itemId}/retry`);
+    }
     showNotification('Item berhasil dimasukkan ulang ke antrian', 'success');
     loadQueue();
   } catch (err) {
@@ -249,8 +265,14 @@ async function triggerManualSync() {
   btn.disabled = true;
   btn.textContent = '⏳ Syncing...';
   try {
-    await apiClient.post('/sync/push');
-    showNotification('Sync manual berhasil dipicu', 'success');
+    // Proses antrian lokal terlebih dahulu via Sync Engine
+    if (typeof syncEngine !== 'undefined') {
+      await syncEngine.start();
+    } else {
+      // Fallback: trigger push ke backend langsung
+      await apiClient.post('/sync/push');
+    }
+    showNotification('Sync manual selesai', 'success');
     await checkConnection();
     loadQueue();
   } catch (err) {
@@ -398,5 +420,19 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('conflictModalOverlay')?.addEventListener('click', () => {
     document.getElementById('conflictModal').style.display = 'none';
+  });
+
+  // Auto-refresh tab antrian setelah sync selesai
+  window.addEventListener('sync:completed', () => {
+    const btn = document.getElementById('btnManualSync');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '☁️ Sync Manual';
+    }
+    // Refresh antrian jika tab antrian sedang aktif
+    if (document.getElementById('queue-tab')?.style.display !== 'none') {
+      state.queue.page = 1;
+      loadQueue();
+    }
   });
 });
