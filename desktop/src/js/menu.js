@@ -94,6 +94,13 @@ function renderMenu(activePage) {
       text: 'Pengguna',
       href: 'users.html',
       roles: ['owner', 'admin']
+    },
+    {
+      id: 'sync-center',
+      icon: '☁️',
+      text: 'Sync Center',
+      href: 'sync-center.html',
+      roles: ['owner', 'admin']
     }
   ];
 

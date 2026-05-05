@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sync Center - POS Retail</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="../js/config.js"></script>
+  <script src="../js/api-client.js"></script>
+  <style>
+    /* Connection status indicator */
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .connection-status.online {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .connection-status.offline {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .status-dot.online { background: #10b981; }
+    .status-dot.offline { background: #ef4444; }
+
+    /* Conflict cards */
+    .conflict-group {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .conflict-group-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: #f9fafb;
+      border-bottom: 1px solid #e5e7eb;
+      cursor: pointer;
+    }
+    .conflict-group-header h4 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+    }
+    .conflict-group-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .conflict-detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .conflict-detail-table th {
+      background: #f3f4f6;
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #6b7280;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .conflict-detail-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #f3f4f6;
+      vertical-align: middle;
+    }
+    .conflict-item-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    /* Queue badges */
+    .badge-pending  { background: #fef3c7; color: #92400e; }
+    .badge-syncing  { background: #dbeafe; color: #1e40af; }
+    .badge-synced   { background: #d1fae5; color: #065f46; }
+    .badge-failed   { background: #fee2e2; color: #991b1b; }
+
+    .sync-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .syncing-pulse {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.5; }
+    }
+
+    /* History */
+    .history-table-wrap { overflow-x: auto; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: #9ca3af;
+    }
+    .empty-state-icon { font-size: 48px; margin-bottom: 12px; }
+
+    /* Pagination */
+    .pagination-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+    }
+    .pagination-info { font-size: 13px; color: #6b7280; }
+    .pagination-buttons { display: flex; gap: 8px; }
+  </style>
+</head>
+<body class="dashboard-page">
+  <!-- Navbar -->
+  <nav class="navbar"></nav>
+
+  <div class="dashboard-container">
+    <!-- Sidebar -->
+    <aside class="sidebar"></aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="content-header" style="display:flex;align-items:center;justify-content:space-between;">
+        <h1>☁️ Sync Center</h1>
+        <div id="connectionStatus" class="connection-status offline">
+          <span class="status-dot offline" id="statusDot"></span>
+          <span id="statusText">Memeriksa koneksi...</span>
+        </div>
+      </div>
+
+      <!-- Tabs Navigation -->
+      <div class="tabs-container">
+        <div class="tabs">
+          <button class="tab-button active" data-tab="conflicts">⚠️ Konflik Transaksi</button>
+          <button class="tab-button" data-tab="queue">🔄 Antrian Sync</button>
+          <button class="tab-button" data-tab="history">📋 Riwayat Sync</button>
+        </div>
+      </div>
+
+      <!-- ==============================
+           TAB: KONFLIK TRANSAKSI
+           ============================== -->
+      <div id="conflicts-tab" class="tab-content active">
+        <div class="filters-container" style="margin-bottom:16px;">
+          <div class="filter-group">
+            <select id="conflictStatusFilter" class="filter-select">
+              <option value="pending">Pending</option>
+              <option value="resolved">Resolved</option>
+              <option value="">Semua</option>
+            </select>
+            <button class="btn btn-primary" id="btnLoadConflicts">🔍 Muat Data</button>
+          </div>
+        </div>
+
+        <div id="conflictsList">
+          <div class="empty-state">
+            <div class="empty-state-icon">⚠️</div>
+            <p>Klik "Muat Data" untuk menampilkan konflik</p>
+          </div>
+        </div>
+
+        <div class="pagination-container" id="conflictsPagination" style="display:none;">
+          <span class="pagination-info" id="conflictsPaginationInfo"></span>
+          <div class="pagination-buttons">
+            <button class="btn btn-secondary btn-sm" id="conflictsPrevBtn">← Prev</button>
+            <button class="btn btn-secondary btn-sm" id="conflictsNextBtn">Next →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==============================
+           TAB: ANTRIAN SYNC
+           ============================== -->
+      <div id="queue-tab" class="tab-content" style="display:none;">
+        <div class="filters-container" style="margin-bottom:16px;">
+          <div class="filter-group">
+            <select id="queueStatusFilter" class="filter-select">
+              <option value="">Semua Status</option>
+              <option value="pending">Pending</option>
+              <option value="syncing">Syncing</option>
+              <option value="synced">Synced</option>
+              <option value="failed">Failed</option>
+            </select>
+            <button class="btn btn-primary" id="btnLoadQueue">🔍 Muat Data</button>
+            <button class="btn btn-success" id="btnManualSync">☁️ Sync Manual</button>
+          </div>
+        </div>
+
+        <div id="queueList">
+          <div class="empty-state">
+            <div class="empty-state-icon">🔄</div>
+            <p>Klik "Muat Data" untuk menampilkan antrian</p>
+          </div>
+        </div>
+
+        <div class="pagination-container" id="queuePagination" style="display:none;">
+          <span class="pagination-info" id="queuePaginationInfo"></span>
+          <div class="pagination-buttons">
+            <button class="btn btn-secondary btn-sm" id="queuePrevBtn">← Prev</button>
+            <button class="btn btn-secondary btn-sm" id="queueNextBtn">Next →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==============================
+           TAB: RIWAYAT SYNC
+           ============================== -->
+      <div id="history-tab" class="tab-content" style="display:none;">
+        <div class="filters-container filters-container-wrap" style="margin-bottom:16px;">
+          <div class="filter-group filter-group-wrap">
+            <span class="text-separator">Dari:</span>
+            <input type="date" id="historyStartDate" class="filter-input">
+            <span class="text-separator">s/d</span>
+            <input type="date" id="historyEndDate" class="filter-input">
+            <button class="btn btn-primary" id="btnLoadHistory">🔍 Filter</button>
+          </div>
+        </div>
+
+        <div class="history-table-wrap">
+          <table class="data-table" id="historyTable">
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>Device</th>
+                <th>Jumlah Item</th>
+                <th>Status</th>
+                <th>Durasi</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody">
+              <tr>
+                <td colspan="5" class="text-center" style="padding:32px;color:#9ca3af;">
+                  Pilih rentang tanggal lalu klik Filter
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination-container" id="historyPagination" style="display:none;">
+          <span class="pagination-info" id="historyPaginationInfo"></span>
+          <div class="pagination-buttons">
+            <button class="btn btn-secondary btn-sm" id="historyPrevBtn">← Prev</button>
+            <button class="btn btn-secondary btn-sm" id="historyNextBtn">Next →</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Modal Detail Konflik -->
+  <div id="conflictModal" class="modal" style="display:none;">
+    <div class="modal-overlay" id="conflictModalOverlay"></div>
+    <div class="modal-content" style="max-width:600px;">
+      <div class="modal-header">
+        <h3>Detail Konflik</h3>
+        <button class="modal-close" id="conflictModalClose">&times;</button>
+      </div>
+      <div class="modal-body" id="conflictModalBody"></div>
+    </div>
+  </div>
+
+  <script src="../js/utils.js"></script>
+  <script src="../js/auth-check.js"></script>
+  <script src="../js/menu.js"></script>
+  <script src="../js/notification.js"></script>
+  <script src="../js/sync-center.js"></script>
+</body>
+</html>
