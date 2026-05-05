@@ -1,4 +1,5 @@
 // receivables.js - Halaman Piutang Pelanggan
+const { apiClient } = window;
 let currentUser = null;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -63,7 +64,7 @@ function setupEventListeners() {
 
 async function loadSummary() {
   try {
-    const result = await window.api.receivables.getSummaryByCustomer();
+    const result = await apiClient.get('/receivables/summary');
     if (!result.success) { showToast(result.message, 'error'); return; }
 
     const search = document.getElementById('searchSummary').value.trim().toLowerCase();
@@ -122,7 +123,7 @@ function viewCustomerDetail(customerId) {
 
 async function loadCustomerDropdown() {
   try {
-    const result = await window.api.customers.getActiveList();
+    const result = await apiClient.get('/customers/active');
     if (!result.success) return;
     const select = document.getElementById('filterDetailCustomer');
     result.customers.forEach(c => {
@@ -140,12 +141,12 @@ async function loadDetail() {
   const customer_id = document.getElementById('filterDetailCustomer').value;
   const status = document.getElementById('filterDetailStatus').value;
 
-  const filters = {};
-  if (customer_id) filters.customer_id = parseInt(customer_id);
-  if (status) filters.status = status;
+  const params = {};
+  if (customer_id) params.customer_id = parseInt(customer_id);
+  if (status) params.status = status;
 
   try {
-    const result = await window.api.receivables.getAll(filters);
+    const result = await apiClient.get('/receivables', params);
     if (!result.success) { showToast(result.message, 'error'); return; }
     renderDetail(result.receivables);
   } catch (error) {
@@ -195,7 +196,7 @@ function getStatusBadge(status) {
 
 async function openPayModal(receivableId, viewOnly = false) {
   try {
-    const result = await window.api.receivables.getById(receivableId);
+    const result = await apiClient.get(`/receivables/${receivableId}`);
     if (!result.success) { showToast(result.message, 'error'); return; }
 
     const r = result.receivable;
@@ -312,7 +313,7 @@ async function processPay() {
   btn.textContent = 'Memproses...';
 
   try {
-    const result = await window.api.receivables.pay(receivableId, paymentData);
+    const result = await apiClient.post(`/receivables/${receivableId}/pay`, paymentData);
     if (result.success) {
       showToast('Pembayaran berhasil dicatat', 'success');
       closePayModal();
