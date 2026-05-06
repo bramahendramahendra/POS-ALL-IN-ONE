@@ -5,65 +5,458 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard — POS System</title>
     <link rel="stylesheet" href="/src/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        /* ---- Layout ---- */
+        body { margin: 0; background: #f5f6fa; }
+
+        .navbar {
+            background: #2c3e50;
+            color: #fff;
+            padding: 0 30px;
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+        .navbar-brand { font-size: 20px; font-weight: 700; }
+        .navbar-user  { display: flex; align-items: center; gap: 20px; }
+        .user-info    { display: flex; flex-direction: column; align-items: flex-end; }
+        .user-info strong { font-size: 14px; }
+        .user-role    { font-size: 12px; color: #bdc3c7; text-transform: capitalize; }
+        #btn-logout-nav { padding: 6px 14px; font-size: 13px; }
+
+        .dashboard-container { display: flex; margin-top: 60px; min-height: calc(100vh - 60px); }
+
+        .sidebar {
+            width: 250px;
+            background: #fff;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+            position: fixed;
+            left: 0; top: 60px; bottom: 0;
+            overflow-y: auto;
+        }
+        .sidebar-menu { list-style: none; padding: 16px 0; margin: 0; }
+        .menu-item a {
+            display: flex;
+            align-items: center;
+            padding: 13px 22px;
+            color: #2c3e50;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .menu-item a:hover { background: #f8f9fa; }
+        .menu-item.active a { background: #3498db; color: #fff; border-right: 4px solid #2980b9; }
+        .menu-icon  { font-size: 18px; margin-right: 12px; width: 22px; text-align: center; }
+
+        .main-content { flex: 1; margin-left: 250px; padding: 30px; }
+
+        /* ---- Content ---- */
+        .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .content-header h1 { font-size: 26px; color: #2c3e50; margin: 0; }
+        .dashboard-date   { font-size: 13px; color: #7f8c8d; }
+
+        .welcome-card {
+            background: #fff;
+            padding: 24px 28px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            margin-bottom: 24px;
+        }
+        .welcome-card h2 { color: #2c3e50; font-size: 20px; margin-bottom: 6px; }
+        .welcome-card p  { color: #7f8c8d; margin: 0; font-size: 14px; }
+
+        .dashboard-section-header { margin: 20px 0 10px; }
+        .section-label { font-size: 13px; color: #7f8c8d; font-weight: 600; margin: 0; }
+
+        /* Stats */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .stat-card {
+            background: #fff;
+            padding: 20px 22px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover    { transform: translateY(-4px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+        .stat-card.clickable { cursor: pointer; }
+        .stat-card-primary  { border-left: 4px solid #3498db; }
+        .stat-card-success  { border-left: 4px solid #2ecc71; }
+        .stat-card-warning  { border-left: 4px solid #f39c12; }
+        .stat-icon { font-size: 36px; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border-radius: 10px; }
+        .stat-content h3 { font-size: 13px; color: #7f8c8d; margin: 0 0 4px; font-weight: 500; }
+        .stat-value { font-size: 22px; font-weight: 700; color: #2c3e50; margin: 0 0 4px; }
+        .stat-label { font-size: 11px; color: #95a5a6; margin: 0; }
+
+        /* Charts */
+        .charts-period-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+        .charts-period-bar span { font-size: 13px; color: #7f8c8d; font-weight: 500; }
+        .cpb-btn {
+            padding: 5px 14px;
+            font-size: 12px;
+            border: 1px solid #dde1e5;
+            border-radius: 6px;
+            background: #f8f9fa;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .cpb-btn.active, .cpb-btn:hover { background: #2c3e50; color: #fff; border-color: #2c3e50; }
+
+        .dashboard-charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+        .dashboard-chart-card { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow: hidden; }
+        .dashboard-chart-card.full-width { grid-column: 1 / -1; }
+        .dcc-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 16px; border-bottom: 1px solid #ecf0f1; flex-wrap: wrap; gap: 8px;
+        }
+        .dcc-header h3 { font-size: 13px; font-weight: 600; color: #2c3e50; margin: 0; }
+        .dcc-controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .dcc-toggle-btn {
+            padding: 4px 10px; font-size: 11px; border: 1px solid #dde1e5;
+            border-radius: 4px; background: #f8f9fa; color: #555; cursor: pointer; transition: all 0.2s;
+        }
+        .dcc-toggle-btn.active, .dcc-toggle-btn:hover { background: #8e44ad; color: #fff; border-color: #8e44ad; }
+        .dcc-body { padding: 14px 16px; position: relative; height: 260px; }
+        .dcc-body canvas { max-height: 232px; }
+
+        /* Summary Extra */
+        .summary-extra-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 24px; }
+        .summary-extra-card { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 16px 18px; display: flex; align-items: flex-start; gap: 14px; }
+        .sec-icon  { font-size: 26px; flex-shrink: 0; }
+        .sec-label { font-size: 11px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .sec-value { font-size: 15px; font-weight: 700; color: #2c3e50; margin-bottom: 2px; }
+        .sec-sub   { font-size: 11px; color: #95a5a6; }
+
+        /* Quick Actions */
+        .quick-actions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 12px; margin-bottom: 30px; }
+        .quick-action-card {
+            display: flex; align-items: center; gap: 12px;
+            background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+            padding: 14px 16px; text-decoration: none; color: inherit;
+            transition: all 0.2s ease;
+        }
+        .quick-action-card:hover { border-color: #3498db; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(52,152,219,0.15); }
+        .quick-action-icon { font-size: 24px; flex-shrink: 0; }
+        .quick-action-text strong { display: block; font-size: 14px; color: #2c3e50; margin-bottom: 2px; }
+        .quick-action-text small  { font-size: 12px; color: #95a5a6; }
+        .quick-action-shortcut { flex-shrink: 0; margin-left: auto; }
+        kbd { background: #f0f0f0; border: 1px solid #ccc; border-bottom: 3px solid #bbb; border-radius: 4px; padding: 2px 6px; font-size: 10px; }
+
+        @media (max-width: 900px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; }
+            .dashboard-charts-grid { grid-template-columns: 1fr; }
+            .dashboard-chart-card.full-width { grid-column: 1; }
+            .summary-extra-grid { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
-<div class="layout">
-    <aside class="sidebar">
-        <div class="logo">POS System</div>
-        <nav>
-            <a href="/dashboard.html" class="active">Dashboard</a>
-            <a href="/kasir.html">Kasir</a>
-            <a href="/products.html">Produk</a>
-            <a href="/transactions.html">Transaksi</a>
-            <a href="/finance.html">Keuangan</a>
-            <a href="/customers.html">Pelanggan</a>
-            <a href="/receivables.html">Piutang</a>
-            <a href="/suppliers.html">Supplier</a>
-            <a href="/shifts.html">Shift</a>
-            <a href="/reports.html">Laporan</a>
-            <a href="/sync-center.html">Sync Center</a>
-            <a href="/settings.html">Pengaturan</a>
-        </nav>
-        <div style="margin-top:auto;padding:20px;">
-            <button class="btn-secondary" id="btn-logout" style="width:100%">Logout</button>
+<!-- Navbar -->
+<nav class="navbar">
+    <div class="navbar-brand">POS System</div>
+    <div class="navbar-user">
+        <div class="user-info">
+            <strong id="navUsername">—</strong>
+            <span class="user-role" id="navUserRole"></span>
         </div>
+        <button class="btn-secondary" id="btn-logout-nav">Logout</button>
+    </div>
+</nav>
+
+<div class="dashboard-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <ul class="sidebar-menu">
+            <li class="menu-item active">
+                <a href="/dashboard.html"><span class="menu-icon">🏠</span> Dashboard</a>
+            </li>
+            <li class="menu-item">
+                <a href="/kasir.html"><span class="menu-icon">🛒</span> Kasir</a>
+            </li>
+            <li class="menu-item">
+                <a href="/products.html"><span class="menu-icon">📦</span> Produk</a>
+            </li>
+            <li class="menu-item">
+                <a href="/transactions.html"><span class="menu-icon">💳</span> Transaksi</a>
+            </li>
+            <li class="menu-item">
+                <a href="/finance.html"><span class="menu-icon">💰</span> Keuangan</a>
+            </li>
+            <li class="menu-item">
+                <a href="/customers.html"><span class="menu-icon">👥</span> Pelanggan</a>
+            </li>
+            <li class="menu-item">
+                <a href="/receivables.html"><span class="menu-icon">📋</span> Piutang</a>
+            </li>
+            <li class="menu-item">
+                <a href="/suppliers.html"><span class="menu-icon">🏭</span> Supplier</a>
+            </li>
+            <li class="menu-item">
+                <a href="/shifts.html"><span class="menu-icon">🕐</span> Shift</a>
+            </li>
+            <li class="menu-item">
+                <a href="/reports.html"><span class="menu-icon">📈</span> Laporan</a>
+            </li>
+            <li class="menu-item" id="menuSyncCenter">
+                <a href="/sync-center.html"><span class="menu-icon">🔄</span> Sync Center</a>
+            </li>
+            <li class="menu-item">
+                <a href="/settings.html"><span class="menu-icon">⚙️</span> Pengaturan</a>
+            </li>
+        </ul>
     </aside>
+
+    <!-- Main Content -->
     <main class="main-content">
-        <h1 class="page-title">Dashboard</h1>
-        <div id="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;"></div>
+        <div class="content-header">
+            <h1>Dashboard</h1>
+            <span id="dashboardDate" class="dashboard-date"></span>
+        </div>
+
+        <!-- Welcome Card -->
+        <div class="welcome-card">
+            <h2>Selamat datang, <span id="welcomeName">User</span>! 👋</h2>
+            <p>Berikut ringkasan aktivitas toko Anda hari ini.</p>
+        </div>
+
+        <!-- Stats Hari Ini -->
+        <div class="dashboard-section-header">
+            <h3 class="section-label">📅 Hari Ini</h3>
+        </div>
+        <div class="stats-container">
+            <div class="stat-card stat-card-primary">
+                <div class="stat-icon">💰</div>
+                <div class="stat-content">
+                    <h3>Total Penjualan</h3>
+                    <p class="stat-value" id="statTodaySales">Rp 0</p>
+                    <p class="stat-label">Hari ini</p>
+                </div>
+            </div>
+            <div class="stat-card stat-card-success">
+                <div class="stat-icon">🧾</div>
+                <div class="stat-content">
+                    <h3>Transaksi</h3>
+                    <p class="stat-value" id="statTodayTransactions">0</p>
+                    <p class="stat-label">Transaksi hari ini</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📦</div>
+                <div class="stat-content">
+                    <h3>Total Produk</h3>
+                    <p class="stat-value" id="statTotalProducts">0</p>
+                    <p class="stat-label">Produk aktif</p>
+                </div>
+            </div>
+            <div class="stat-card stat-card-warning clickable" id="statLowStockCard">
+                <div class="stat-icon">⚠️</div>
+                <div class="stat-content">
+                    <h3>Stok Menipis</h3>
+                    <p class="stat-value" id="statLowStock">0</p>
+                    <p class="stat-label" id="statLowStockLabel">Produk</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Bulan Ini -->
+        <div class="dashboard-section-header">
+            <h3 class="section-label">📆 Bulan Ini</h3>
+        </div>
+        <div class="stats-container" style="grid-template-columns: repeat(auto-fit, minmax(220px,1fr))">
+            <div class="stat-card">
+                <div class="stat-icon">📈</div>
+                <div class="stat-content">
+                    <h3>Total Penjualan</h3>
+                    <p class="stat-value" id="statMonthSales">Rp 0</p>
+                    <p class="stat-label">Bulan berjalan</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-content">
+                    <h3>User Aktif</h3>
+                    <p class="stat-value" id="statTotalUsers">0</p>
+                    <p class="stat-label">Total user aktif</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grafik Section -->
+        <div class="dashboard-section-header" style="margin-top: 10px">
+            <h3 class="section-label">📊 Analitik & Grafik</h3>
+        </div>
+
+        <!-- Filter Periode Global -->
+        <div class="charts-period-bar">
+            <span>Periode:</span>
+            <button class="cpb-btn active" data-period="today">Hari Ini</button>
+            <button class="cpb-btn" data-period="7days">7 Hari</button>
+            <button class="cpb-btn" data-period="30days">30 Hari</button>
+            <button class="cpb-btn" data-period="month">Bulan Ini</button>
+        </div>
+
+        <!-- Trend Penjualan (full width) -->
+        <div class="dashboard-charts-grid">
+            <div class="dashboard-chart-card full-width">
+                <div class="dcc-header">
+                    <h3>📈 Trend Penjualan — Periode Ini vs Sebelumnya</h3>
+                    <div class="dcc-controls">
+                        <button class="dcc-toggle-btn active" id="trendToggleValue">Nilai (Rp)</button>
+                        <button class="dcc-toggle-btn" id="trendToggleCount">Jumlah Transaksi</button>
+                    </div>
+                </div>
+                <div class="dcc-body" style="height: 300px">
+                    <canvas id="chartSalesTrend"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kategori + Metode Bayar -->
+        <div class="dashboard-charts-grid">
+            <div class="dashboard-chart-card">
+                <div class="dcc-header">
+                    <h3>🏷️ Top 5 Kategori Terlaris</h3>
+                </div>
+                <div class="dcc-body">
+                    <canvas id="chartTopCategories"></canvas>
+                </div>
+            </div>
+            <div class="dashboard-chart-card">
+                <div class="dcc-header">
+                    <h3>💳 Distribusi Metode Pembayaran</h3>
+                </div>
+                <div class="dcc-body">
+                    <canvas id="chartPaymentMethods"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Produk (full width horizontal bar) -->
+        <div class="dashboard-charts-grid">
+            <div class="dashboard-chart-card full-width">
+                <div class="dcc-header">
+                    <h3>🏆 Top 5 Produk Terlaris</h3>
+                    <div class="dcc-controls">
+                        <button class="dcc-toggle-btn active" id="prodToggleQty">Qty Terjual</button>
+                        <button class="dcc-toggle-btn" id="prodToggleValue">Nilai Penjualan</button>
+                    </div>
+                </div>
+                <div class="dcc-body" style="height: 260px">
+                    <canvas id="chartTopProducts"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Extra / Insight -->
+        <div class="dashboard-section-header">
+            <h3 class="section-label">💡 Insight Periode Ini</h3>
+        </div>
+        <div class="summary-extra-grid">
+            <div class="summary-extra-card">
+                <div class="sec-icon">🏅</div>
+                <div class="sec-body">
+                    <div class="sec-label">Transaksi Tertinggi</div>
+                    <div class="sec-value" id="secHighestAmount">Rp 0</div>
+                    <div class="sec-sub"   id="secHighestCode">—</div>
+                </div>
+            </div>
+            <div class="summary-extra-card">
+                <div class="sec-icon">🕐</div>
+                <div class="sec-body">
+                    <div class="sec-label">Jam Tersibuk (Peak Hour)</div>
+                    <div class="sec-value" id="secPeakHour">—</div>
+                    <div class="sec-sub"   id="secPeakCount">— transaksi</div>
+                </div>
+            </div>
+            <div class="summary-extra-card">
+                <div class="sec-icon">📊</div>
+                <div class="sec-body">
+                    <div class="sec-label">Rata-rata Nilai Transaksi</div>
+                    <div class="sec-value" id="secAvgAmount">Rp 0</div>
+                    <div class="sec-sub"   id="secTotalCount">dari — transaksi</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="dashboard-section-header">
+            <h3 class="section-label">⚡ Aksi Cepat</h3>
+        </div>
+        <div class="quick-actions-grid">
+            <a href="/kasir.html" class="quick-action-card">
+                <div class="quick-action-icon">🛒</div>
+                <div class="quick-action-text">
+                    <strong>Kasir</strong>
+                    <small>Buat transaksi baru</small>
+                </div>
+                <div class="quick-action-shortcut"><kbd>Ctrl+N</kbd></div>
+            </a>
+            <a href="/products.html" class="quick-action-card">
+                <div class="quick-action-icon">📦</div>
+                <div class="quick-action-text">
+                    <strong>Produk</strong>
+                    <small>Kelola produk &amp; stok</small>
+                </div>
+                <div class="quick-action-shortcut"><kbd>Ctrl+P</kbd></div>
+            </a>
+            <a href="/transactions.html" class="quick-action-card">
+                <div class="quick-action-icon">💳</div>
+                <div class="quick-action-text">
+                    <strong>Transaksi</strong>
+                    <small>Riwayat transaksi</small>
+                </div>
+                <div class="quick-action-shortcut"><kbd>Ctrl+T</kbd></div>
+            </a>
+            <a href="/finance.html" class="quick-action-card" id="qaFinance">
+                <div class="quick-action-icon">💰</div>
+                <div class="quick-action-text">
+                    <strong>Keuangan</strong>
+                    <small>Kas, pengeluaran, pembelian</small>
+                </div>
+                <div class="quick-action-shortcut"><kbd>Ctrl+F</kbd></div>
+            </a>
+            <a href="/reports.html" class="quick-action-card" id="qaReports">
+                <div class="quick-action-icon">📈</div>
+                <div class="quick-action-text">
+                    <strong>Laporan</strong>
+                    <small>Analisis &amp; export data</small>
+                </div>
+                <div class="quick-action-shortcut"><kbd>Ctrl+⇧+R</kbd></div>
+            </a>
+            <a href="/settings.html" class="quick-action-card" id="qaSettings">
+                <div class="quick-action-icon">⚙️</div>
+                <div class="quick-action-text">
+                    <strong>Pengaturan</strong>
+                    <small>Konfigurasi aplikasi</small>
+                </div>
+                <div class="quick-action-shortcut"><kbd>Ctrl+⇧+S</kbd></div>
+            </a>
+        </div>
     </main>
 </div>
 
 <script src="/src/js/api-client.js"></script>
 <script src="/src/js/app.js"></script>
 <script src="/src/js/auth.js"></script>
-<script src="/src/js/router.js"></script>
+<script src="/src/js/dashboard.js"></script>
 <script>
-    requireAuth();
-
-    document.getElementById('btn-logout').addEventListener('click', logout);
-
-    async function loadStats() {
-        try {
-            const data = await apiClient.get('/dashboard/summary');
-            const grid = document.getElementById('stats-grid');
-            const items = [
-                { label: 'Penjualan Hari Ini', value: 'Rp ' + (data?.sales_today ?? 0).toLocaleString('id-ID') },
-                { label: 'Transaksi Hari Ini', value: data?.transactions_today ?? 0 },
-                { label: 'Produk Aktif', value: data?.active_products ?? 0 },
-                { label: 'Pelanggan', value: data?.total_customers ?? 0 },
-            ];
-            grid.innerHTML = items.map(i => `
-                <div class="card">
-                    <div style="font-size:13px;color:#6b7280">${i.label}</div>
-                    <div style="font-size:24px;font-weight:700;margin-top:8px">${i.value}</div>
-                </div>`).join('');
-        } catch (e) {
-            console.error('Dashboard load error:', e.message);
-        }
-    }
-
-    loadStats();
+    document.getElementById('btn-logout-nav').addEventListener('click', logout);
 </script>
 </body>
 </html>
