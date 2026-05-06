@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sync Center — POS System</title>
+    <link rel="stylesheet" href="/src/css/style.css">
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="logo">POS System</div>
+        <nav>
+            <a href="/dashboard.html">Dashboard</a>
+            <a href="/kasir.html">Kasir</a>
+            <a href="/products.html">Produk</a>
+            <a href="/transactions.html">Transaksi</a>
+            <a href="/finance.html">Keuangan</a>
+            <a href="/customers.html">Pelanggan</a>
+            <a href="/receivables.html">Piutang</a>
+            <a href="/suppliers.html">Supplier</a>
+            <a href="/shifts.html">Shift</a>
+            <a href="/reports.html">Laporan</a>
+            <a href="/sync-center.html" class="active">Sync Center</a>
+            <a href="/settings.html">Pengaturan</a>
+        </nav>
+        <div style="margin-top:auto;padding:20px;">
+            <button class="btn-secondary" id="btn-logout" style="width:100%">Logout</button>
+        </div>
+    </aside>
+    <main class="main-content">
+        <h1 class="page-title">Sync Center</h1>
+        <div class="card" style="margin-bottom:16px">
+            <p style="color:#6b7280;font-size:14px">
+                Halaman ini menampilkan status sinkronisasi data dari semua perangkat (desktop dan web).<br>
+                Web tidak memiliki mode offline — semua transaksi langsung tersimpan ke server.
+            </p>
+        </div>
+        <div class="card">
+            <h3 style="margin-bottom:16px">Antrian Sync (dari Perangkat Desktop)</h3>
+            <table>
+                <thead><tr><th>Perangkat</th><th>Entitas</th><th>Aksi</th><th>Status</th><th>Waktu</th></tr></thead>
+                <tbody id="queue-body"></tbody>
+            </table>
+        </div>
+    </main>
+</div>
+<script src="/src/js/api-client.js"></script>
+<script src="/src/js/app.js"></script>
+<script src="/src/js/auth.js"></script>
+<script src="/src/js/router.js"></script>
+<script>
+    requireAuth();
+    document.getElementById('btn-logout').addEventListener('click', logout);
+
+    function fmtDate(s) { return s ? new Date(s).toLocaleString('id-ID') : '-'; }
+
+    async function load() {
+        try {
+            const data = await apiClient.get('/sync/queue', { limit: 100 }) || [];
+            document.getElementById('queue-body').innerHTML = data.map(q => `
+                <tr>
+                    <td>${q.device_id || '-'}</td>
+                    <td>${q.entity_type}</td>
+                    <td>${q.action}</td>
+                    <td>${q.status}</td>
+                    <td>${fmtDate(q.created_at)}</td>
+                </tr>`).join('') || '<tr><td colspan="5" style="color:#9ca3af;text-align:center">Tidak ada antrian</td></tr>';
+        } catch (e) { console.error(e.message); }
+    }
+
+    load();
+    setInterval(load, 30000);
+</script>
+</body>
+</html>

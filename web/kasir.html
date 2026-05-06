@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasir — POS System</title>
+    <link rel="stylesheet" href="/src/css/style.css">
+    <style>
+        .kasir-layout { display: grid; grid-template-columns: 1fr 360px; gap: 20px; height: calc(100vh - 88px); }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; overflow-y: auto; }
+        .product-card { cursor: pointer; text-align: center; padding: 14px 10px; }
+        .product-card:hover { box-shadow: 0 4px 12px rgba(37,99,235,0.15); }
+        .product-card .price { color: #2563eb; font-weight: 700; margin-top: 4px; font-size: 13px; }
+        .cart-panel { display: flex; flex-direction: column; }
+        .cart-items { flex: 1; overflow-y: auto; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
+        .cart-footer { padding-top: 12px; border-top: 2px solid #e5e7eb; }
+        .total-row { display: flex; justify-content: space-between; font-weight: 700; font-size: 18px; margin-bottom: 12px; }
+        #search-product { margin-bottom: 14px; }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="logo">POS System</div>
+        <nav>
+            <a href="/dashboard.html">Dashboard</a>
+            <a href="/kasir.html" class="active">Kasir</a>
+            <a href="/products.html">Produk</a>
+            <a href="/transactions.html">Transaksi</a>
+            <a href="/finance.html">Keuangan</a>
+            <a href="/customers.html">Pelanggan</a>
+            <a href="/receivables.html">Piutang</a>
+            <a href="/suppliers.html">Supplier</a>
+            <a href="/shifts.html">Shift</a>
+            <a href="/reports.html">Laporan</a>
+            <a href="/sync-center.html">Sync Center</a>
+            <a href="/settings.html">Pengaturan</a>
+        </nav>
+        <div style="margin-top:auto;padding:20px;">
+            <button class="btn-secondary" id="btn-logout" style="width:100%">Logout</button>
+        </div>
+    </aside>
+    <main class="main-content">
+        <h1 class="page-title">Kasir</h1>
+        <div class="kasir-layout">
+            <div>
+                <input type="text" id="search-product" placeholder="Cari produk...">
+                <div class="product-grid" id="product-grid"></div>
+            </div>
+            <div class="card cart-panel">
+                <h3 style="margin-bottom:12px">Keranjang</h3>
+                <div class="cart-items" id="cart-items"></div>
+                <div class="cart-footer">
+                    <div class="total-row">
+                        <span>Total</span>
+                        <span id="cart-total">Rp 0</span>
+                    </div>
+                    <button class="btn-primary" style="width:100%;padding:12px;font-size:15px" id="btn-checkout">Bayar</button>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="/src/js/api-client.js"></script>
+<script src="/src/js/app.js"></script>
+<script src="/src/js/auth.js"></script>
+<script src="/src/js/router.js"></script>
+<script>
+    requireAuth();
+    document.getElementById('btn-logout').addEventListener('click', logout);
+
+    let products = [];
+    let cart = [];
+
+    function fmt(n) { return 'Rp ' + Number(n).toLocaleString('id-ID'); }
+
+    async function loadProducts() {
+        try {
+            products = await apiClient.get('/products', { is_active: true, limit: 200 }) || [];
+            renderProducts(products);
+        } catch (e) { console.error(e.message); }
+    }
+
+    function renderProducts(list) {
+        document.getElementById('product-grid').innerHTML = list.map(p => `
+            <div class="card product-card" onclick="addToCart(${p.id})">
+                <div style="font-weight:600;font-size:13px">${p.name}</div>
+                <div class="price">${fmt(p.price)}</div>
+                <div style="font-size:11px;color:#9ca3af">Stok: ${p.stock}</div>
+            </div>`).join('');
+    }
+
+    function addToCart(id) {
+        const p = products.find(x => x.id === id);
+        if (!p) return;
+        const existing = cart.find(x => x.id === id);
+        if (existing) { existing.qty++; } else { cart.push({ ...p, qty: 1 }); }
+        renderCart();
+    }
+
+    function renderCart() {
+        const el = document.getElementById('cart-items');
+        el.innerHTML = cart.map((item, i) => `
+            <div class="cart-item">
+                <span>${item.name}</span>
+                <span style="display:flex;align-items:center;gap:6px">
+                    <button onclick="changeQty(${i},-1)" style="padding:2px 8px">−</button>
+                    ${item.qty}
+                    <button onclick="changeQty(${i},1)" style="padding:2px 8px">+</button>
+                    <span>${fmt(item.price * item.qty)}</span>
+                </span>
+            </div>`).join('') || '<p style="color:#9ca3af;font-size:13px">Keranjang kosong</p>';
+
+        const total = cart.reduce((s, x) => s + x.price * x.qty, 0);
+        document.getElementById('cart-total').textContent = fmt(total);
+    }
+
+    function changeQty(i, delta) {
+        cart[i].qty += delta;
+        if (cart[i].qty <= 0) cart.splice(i, 1);
+        renderCart();
+    }
+
+    document.getElementById('btn-checkout').addEventListener('click', async () => {
+        if (!cart.length) return alert('Keranjang kosong');
+        const payload = {
+            items: cart.map(x => ({ product_id: x.id, qty: x.qty, price: x.price })),
+            device_source: 'web',
+        };
+        try {
+            await apiClient.post('/transactions', payload);
+            cart = [];
+            renderCart();
+            alert('Transaksi berhasil');
+        } catch (e) { alert('Error: ' + e.message); }
+    });
+
+    document.getElementById('search-product').addEventListener('input', e => {
+        const q = e.target.value.toLowerCase();
+        renderProducts(products.filter(p => p.name.toLowerCase().includes(q)));
+    });
+
+    loadProducts();
+</script>
+</body>
+</html>

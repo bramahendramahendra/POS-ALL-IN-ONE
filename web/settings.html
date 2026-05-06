@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pengaturan — POS System</title>
+    <link rel="stylesheet" href="/src/css/style.css">
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="logo">POS System</div>
+        <nav>
+            <a href="/dashboard.html">Dashboard</a>
+            <a href="/kasir.html">Kasir</a>
+            <a href="/products.html">Produk</a>
+            <a href="/transactions.html">Transaksi</a>
+            <a href="/finance.html">Keuangan</a>
+            <a href="/customers.html">Pelanggan</a>
+            <a href="/receivables.html">Piutang</a>
+            <a href="/suppliers.html">Supplier</a>
+            <a href="/shifts.html">Shift</a>
+            <a href="/reports.html">Laporan</a>
+            <a href="/sync-center.html">Sync Center</a>
+            <a href="/settings.html" class="active">Pengaturan</a>
+        </nav>
+        <div style="margin-top:auto;padding:20px;">
+            <button class="btn-secondary" id="btn-logout" style="width:100%">Logout</button>
+        </div>
+    </aside>
+    <main class="main-content">
+        <h1 class="page-title">Pengaturan</h1>
+        <div class="card" style="max-width:520px">
+            <h3 style="margin-bottom:16px">Informasi Toko</h3>
+            <div style="display:flex;flex-direction:column;gap:12px" id="store-form"></div>
+            <button class="btn-primary" style="margin-top:16px" id="btn-save">Simpan</button>
+            <div id="msg" style="margin-top:12px"></div>
+        </div>
+    </main>
+</div>
+<script src="/src/js/api-client.js"></script>
+<script src="/src/js/app.js"></script>
+<script src="/src/js/auth.js"></script>
+<script src="/src/js/router.js"></script>
+<script>
+    requireAuth();
+    document.getElementById('btn-logout').addEventListener('click', logout);
+
+    let settings = {};
+
+    const fields = [
+        { key: 'store_name', label: 'Nama Toko' },
+        { key: 'store_address', label: 'Alamat' },
+        { key: 'store_phone', label: 'Telepon' },
+        { key: 'tax_rate', label: 'Tarif Pajak (%)' },
+    ];
+
+    async function load() {
+        try {
+            settings = await apiClient.get('/settings') || {};
+        } catch {}
+        const form = document.getElementById('store-form');
+        form.innerHTML = fields.map(f => `
+            <div>
+                <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:4px">${f.label}</label>
+                <input type="text" id="field-${f.key}" value="${settings[f.key] || ''}">
+            </div>`).join('');
+    }
+
+    document.getElementById('btn-save').addEventListener('click', async () => {
+        const payload = {};
+        fields.forEach(f => { payload[f.key] = document.getElementById('field-' + f.key).value; });
+        const msgEl = document.getElementById('msg');
+        try {
+            await apiClient.put('/settings', payload);
+            msgEl.className = 'alert-success';
+            msgEl.textContent = 'Pengaturan berhasil disimpan';
+        } catch (e) {
+            msgEl.className = 'alert-error';
+            msgEl.textContent = e.message;
+        }
+    });
+
+    load();
+</script>
+</body>
+</html>

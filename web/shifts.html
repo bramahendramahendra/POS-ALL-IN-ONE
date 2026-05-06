@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shift — POS System</title>
+    <link rel="stylesheet" href="/src/css/style.css">
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="logo">POS System</div>
+        <nav>
+            <a href="/dashboard.html">Dashboard</a>
+            <a href="/kasir.html">Kasir</a>
+            <a href="/products.html">Produk</a>
+            <a href="/transactions.html">Transaksi</a>
+            <a href="/finance.html">Keuangan</a>
+            <a href="/customers.html">Pelanggan</a>
+            <a href="/receivables.html">Piutang</a>
+            <a href="/suppliers.html">Supplier</a>
+            <a href="/shifts.html" class="active">Shift</a>
+            <a href="/reports.html">Laporan</a>
+            <a href="/sync-center.html">Sync Center</a>
+            <a href="/settings.html">Pengaturan</a>
+        </nav>
+        <div style="margin-top:auto;padding:20px;">
+            <button class="btn-secondary" id="btn-logout" style="width:100%">Logout</button>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <h1 class="page-title" style="margin:0">Shift</h1>
+            <button class="btn-primary" id="btn-open-shift">Buka Shift</button>
+        </div>
+        <div class="card">
+            <table>
+                <thead><tr><th>Kasir</th><th>Buka</th><th>Tutup</th><th>Modal Awal</th><th>Total Penjualan</th><th>Status</th></tr></thead>
+                <tbody id="table-body"></tbody>
+            </table>
+        </div>
+    </main>
+</div>
+<script src="/src/js/api-client.js"></script>
+<script src="/src/js/app.js"></script>
+<script src="/src/js/auth.js"></script>
+<script src="/src/js/router.js"></script>
+<script>
+    requireAuth();
+    document.getElementById('btn-logout').addEventListener('click', logout);
+
+    function fmt(n) { return 'Rp ' + Number(n).toLocaleString('id-ID'); }
+    function fmtDate(s) { return s ? new Date(s).toLocaleString('id-ID') : '-'; }
+
+    async function load() {
+        try {
+            const data = await apiClient.get('/shifts', { limit: 100 }) || [];
+            document.getElementById('table-body').innerHTML = data.map(s => `
+                <tr>
+                    <td>${s.cashier_name || '-'}</td>
+                    <td>${fmtDate(s.opened_at)}</td>
+                    <td>${fmtDate(s.closed_at)}</td>
+                    <td>${fmt(s.opening_cash || 0)}</td>
+                    <td>${fmt(s.total_sales || 0)}</td>
+                    <td>${s.is_open ? '<span style="color:#059669">Buka</span>' : 'Tutup'}</td>
+                </tr>`).join('');
+        } catch (e) { console.error(e.message); }
+    }
+
+    document.getElementById('btn-open-shift').addEventListener('click', async () => {
+        const modal = prompt('Modal awal (Rp):');
+        if (modal === null) return;
+        try {
+            await apiClient.post('/shifts/open', { opening_cash: Number(modal), device_source: 'web' });
+            load();
+        } catch (e) { alert('Error: ' + e.message); }
+    });
+
+    load();
+</script>
+</body>
+</html>

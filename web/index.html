@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><meta charset="UTF-8"><title>POS System</title></head>
+<body>
+<script>
+    const token = localStorage.getItem('access_token');
+    window.location.href = token ? '/dashboard.html' : '/login.html';
+</script>
+</body>
+</html>

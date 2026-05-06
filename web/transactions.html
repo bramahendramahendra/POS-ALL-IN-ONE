@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaksi — POS System</title>
+    <link rel="stylesheet" href="/src/css/style.css">
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="logo">POS System</div>
+        <nav>
+            <a href="/dashboard.html">Dashboard</a>
+            <a href="/kasir.html">Kasir</a>
+            <a href="/products.html">Produk</a>
+            <a href="/transactions.html" class="active">Transaksi</a>
+            <a href="/finance.html">Keuangan</a>
+            <a href="/customers.html">Pelanggan</a>
+            <a href="/receivables.html">Piutang</a>
+            <a href="/suppliers.html">Supplier</a>
+            <a href="/shifts.html">Shift</a>
+            <a href="/reports.html">Laporan</a>
+            <a href="/sync-center.html">Sync Center</a>
+            <a href="/settings.html">Pengaturan</a>
+        </nav>
+        <div style="margin-top:auto;padding:20px;">
+            <button class="btn-secondary" id="btn-logout" style="width:100%">Logout</button>
+        </div>
+    </aside>
+    <main class="main-content">
+        <h1 class="page-title">Riwayat Transaksi</h1>
+        <div class="card">
+            <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+                <input type="date" id="date-from" style="width:auto">
+                <input type="date" id="date-to" style="width:auto">
+                <button class="btn-primary" onclick="load()">Filter</button>
+            </div>
+            <table>
+                <thead><tr><th>No. Transaksi</th><th>Tanggal</th><th>Total</th><th>Platform</th><th>Kasir</th><th></th></tr></thead>
+                <tbody id="table-body"></tbody>
+            </table>
+        </div>
+    </main>
+</div>
+<script src="/src/js/api-client.js"></script>
+<script src="/src/js/app.js"></script>
+<script src="/src/js/auth.js"></script>
+<script src="/src/js/router.js"></script>
+<script>
+    requireAuth();
+    document.getElementById('btn-logout').addEventListener('click', logout);
+
+    function fmt(n) { return 'Rp ' + Number(n).toLocaleString('id-ID'); }
+    function fmtDate(s) { return s ? new Date(s).toLocaleString('id-ID') : '-'; }
+
+    async function load() {
+        const from = document.getElementById('date-from').value;
+        const to   = document.getElementById('date-to').value;
+        const params = {};
+        if (from) params.date_from = from;
+        if (to)   params.date_to   = to;
+        try {
+            const data = await apiClient.get('/transactions', params) || [];
+            document.getElementById('table-body').innerHTML = data.map(t => `
+                <tr>
+                    <td>${t.transaction_number || t.id}</td>
+                    <td>${fmtDate(t.created_at)}</td>
+                    <td>${fmt(t.total_amount)}</td>
+                    <td>${t.device_source || '-'}</td>
+                    <td>${t.cashier_name || '-'}</td>
+                    <td><button class="btn-secondary" onclick="alert('Detail #${t.id}')">Detail</button></td>
+                </tr>`).join('');
+        } catch (e) { console.error(e.message); }
+    }
+
+    load();
+</script>
+</body>
+</html>
