@@ -6,143 +6,414 @@
     <title>Kasir — POS System</title>
     <link rel="stylesheet" href="/src/css/style.css">
     <style>
-        .kasir-layout { display: grid; grid-template-columns: 1fr 360px; gap: 20px; height: calc(100vh - 88px); }
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; overflow-y: auto; }
-        .product-card { cursor: pointer; text-align: center; padding: 14px 10px; }
-        .product-card:hover { box-shadow: 0 4px 12px rgba(37,99,235,0.15); }
-        .product-card .price { color: #2563eb; font-weight: 700; margin-top: 4px; font-size: 13px; }
-        .cart-panel { display: flex; flex-direction: column; }
-        .cart-items { flex: 1; overflow-y: auto; }
-        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
-        .cart-footer { padding-top: 12px; border-top: 2px solid #e5e7eb; }
-        .total-row { display: flex; justify-content: space-between; font-weight: 700; font-size: 18px; margin-bottom: 12px; }
-        #search-product { margin-bottom: 14px; }
+        /* ---- Layout ---- */
+        body { margin: 0; background: #f5f6fa; }
+
+        .navbar {
+            background: #2c3e50; color: #fff; padding: 0 30px; height: 60px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+        .navbar-brand { font-size: 18px; font-weight: 700; }
+        .navbar-user  { display: flex; align-items: center; gap: 16px; }
+        .user-info    { display: flex; flex-direction: column; align-items: flex-end; }
+        .user-info strong { font-size: 13px; }
+        .user-role    { font-size: 11px; color: #bdc3c7; text-transform: capitalize; }
+
+        .dashboard-container { display: flex; margin-top: 60px; min-height: calc(100vh - 60px); }
+
+        .sidebar {
+            width: 220px; background: #fff; box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+            position: fixed; left: 0; top: 60px; bottom: 0; overflow-y: auto;
+        }
+        .sidebar-menu { list-style: none; padding: 12px 0; margin: 0; }
+        .menu-item a {
+            display: flex; align-items: center; padding: 11px 18px;
+            color: #2c3e50; text-decoration: none; font-size: 13px; font-weight: 500;
+            transition: background 0.2s;
+        }
+        .menu-item a:hover { background: #f8f9fa; }
+        .menu-item.active a { background: #3498db; color: #fff; border-right: 4px solid #2980b9; }
+        .menu-icon { font-size: 16px; margin-right: 10px; width: 20px; text-align: center; }
+
+        .main-content { flex: 1; margin-left: 220px; padding: 20px 24px; }
+
+        /* ---- Content header ---- */
+        .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .content-header h1 { font-size: 22px; color: #2c3e50; margin: 0; }
+        .keyboard-hints { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+        .hint { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #7f8c8d; }
+        kbd {
+            background: #f0f0f0; border: 1px solid #ccc; border-bottom: 3px solid #bbb;
+            border-radius: 4px; padding: 2px 5px; font-size: 10px; font-family: monospace;
+        }
+
+        /* ---- Kasir Layout ---- */
+        .kasir-container { display: grid; grid-template-columns: 60% 1fr; gap: 16px; }
+
+        .kasir-left, .kasir-right {
+            background: #fff; border-radius: 8px; padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+
+        /* Product Search */
+        .product-search-box { position: relative; margin-bottom: 14px; }
+        .product-search-box input {
+            width: 100%; padding: 10px 14px; border: 2px solid #3498db; border-radius: 5px; font-size: 14px; box-sizing: border-box;
+        }
+        .product-search-box input:focus { outline: none; border-color: #2980b9; }
+        .suggestions-dropdown {
+            position: absolute; top: 100%; left: 0; right: 0; background: #fff;
+            border: 2px solid #3498db; border-top: none; border-radius: 0 0 5px 5px;
+            max-height: 280px; overflow-y: auto; z-index: 200; display: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .suggestion-item { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #ecf0f1; }
+        .suggestion-item:hover { background: #f8f9fa; }
+        .suggestion-main  { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .suggestion-main strong { color: #2c3e50; font-size: 13px; }
+        .suggestion-barcode { font-size: 11px; color: #95a5a6; font-family: monospace; }
+        .suggestion-details { display: flex; justify-content: space-between; font-size: 12px; }
+        .suggestion-price { color: #27ae60; font-weight: 600; }
+        .suggestion-stock { color: #7f8c8d; }
+
+        /* Cart */
+        .cart-container { height: 350px; overflow-y: auto; border: 1px solid #ecf0f1; border-radius: 5px; margin-bottom: 14px; }
+        .cart-table { width: 100%; border-collapse: collapse; }
+        .cart-table th, .cart-table td { padding: 8px 10px; font-size: 12px; border-bottom: 1px solid #f3f4f6; }
+        .cart-table th { background: #f9fafb; font-weight: 600; color: #374151; position: sticky; top: 0; }
+        .empty-cart { text-align: center; color: #9ca3af; padding: 30px 10px !important; }
+        .empty-cart small { display: block; margin-top: 4px; font-size: 11px; }
+
+        /* Qty controls */
+        .qty-controls { display: flex; align-items: center; gap: 4px; }
+        .btn-qty { background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 3px 8px; cursor: pointer; font-size: 13px; }
+        .btn-qty:hover { background: #e5e7eb; }
+        .qty-input { width: 50px; text-align: center; padding: 3px; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 12px; }
+
+        .btn-unit-select { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 4px; padding: 3px 8px; cursor: pointer; font-size: 12px; color: #1d4ed8; }
+        .btn-unit-select:hover { background: #dbeafe; }
+        .btn-remove { background: none; border: none; cursor: pointer; font-size: 14px; opacity: .7; }
+        .btn-remove:hover { opacity: 1; }
+        .btn-item-discount { background: none; border: none; cursor: pointer; font-size: 13px; opacity: .6; }
+        .btn-item-discount.active, .btn-item-discount:hover { opacity: 1; }
+
+        /* Badges */
+        .badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 10px; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-danger  { background: #fee2e2; color: #991b1b; }
+
+        /* Cart Summary */
+        .cart-summary { border-top: 2px solid #e5e7eb; padding-top: 12px; }
+        .summary-row  { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-size: 13px; }
+        .total-row    { font-size: 16px; font-weight: 700; border-top: 1px solid #e5e7eb; padding-top: 8px; margin-top: 4px; }
+        .total-amount { color: #2563eb; font-size: 20px; }
+        .discount-row { align-items: flex-start; gap: 10px; }
+        .discount-controls { display: flex; align-items: center; gap: 8px; flex: 1; }
+        .discount-controls input { width: 80px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 12px; }
+        .discount-toggle { display: flex; }
+        .btn-toggle {
+            padding: 3px 10px; border: 1px solid #d1d5db; background: #f9fafb; color: #374151;
+            cursor: pointer; font-size: 12px;
+        }
+        .btn-toggle:first-child { border-radius: 4px 0 0 4px; }
+        .btn-toggle:last-child  { border-radius: 0 4px 4px 0; border-left: none; }
+        .btn-toggle.active      { background: #2563eb; color: #fff; border-color: #2563eb; }
+        .tax-controls { display: flex; align-items: center; gap: 6px; flex: 1; }
+        .tax-controls input { width: 70px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 12px; }
+
+        /* Payment Form (right panel) */
+        .payment-form h3 { font-size: 15px; margin-bottom: 14px; color: #1e293b; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 5px; font-size: 13px; box-sizing: border-box;
+        }
+        .required { color: #dc2626; }
+        .action-buttons { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+        .btn { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; width: 100%; }
+        .btn-success { background: #059669; color: #fff; }
+        .btn-success:hover { background: #047857; }
+        .btn-warning { background: #d97706; color: #fff; }
+        .btn-warning:hover { background: #b45309; }
+        .btn-danger  { background: #dc2626; color: #fff; }
+        .btn-danger:hover  { background: #b91c1c; }
+        .btn-secondary { background: #e5e7eb; color: #374151; }
+        .btn-secondary:hover { background: #d1d5db; }
+        .btn-primary { background: #2563eb; color: #fff; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-large { font-size: 15px; padding: 12px 16px; }
+
+        /* Modal */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,.5); z-index: 2000; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: #fff; border-radius: 10px; max-width: 480px; width: 90%;
+            box-shadow: 0 8px 24px rgba(0,0,0,.2); max-height: 90vh; overflow-y: auto;
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 20px; border-bottom: 1px solid #e5e7eb;
+        }
+        .modal-header h2 { font-size: 18px; margin: 0; }
+        .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #6b7280; line-height: 1; }
+        .modal-close:hover { color: #111; }
+        .modal-body   { padding: 20px; }
+        .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .modal-footer .btn { width: auto; }
+
+        .payment-summary { background: #f8fafc; border-radius: 8px; padding: 14px; margin-bottom: 16px; }
+        .payment-info-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px; }
+        .payment-change { margin-top: 12px; }
+        .change-row { display: flex; justify-content: space-between; font-size: 14px; }
+        .warning-insufficient { color: #dc2626; font-size: 13px; margin-top: 6px; font-weight: 600; }
+        .hidden { display: none !important; }
+
+        /* Item Discount Popup */
+        .item-discount-popup {
+            position: absolute; background: #fff; border: 1px solid #e5e7eb;
+            border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,.15); z-index: 300; width: 240px;
+        }
+        .item-discount-popup-inner { padding: 14px; }
+
+        @media (max-width: 900px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; }
+            .kasir-container { grid-template-columns: 1fr; }
+        }
+
+        /* ---- PRINT STRUK ---- */
+        #receipt-print { display: none; }
+
+        @media print {
+            body > *:not(#receipt-print) { display: none !important; }
+            #receipt-print { display: block !important; margin: 0; padding: 0; }
+        }
     </style>
 </head>
 <body>
-<div class="layout">
-    <aside class="sidebar">
-        <div class="logo">POS System</div>
-        <nav>
-            <a href="/dashboard.html">Dashboard</a>
-            <a href="/kasir.html" class="active">Kasir</a>
-            <a href="/products.html">Produk</a>
-            <a href="/transactions.html">Transaksi</a>
-            <a href="/finance.html">Keuangan</a>
-            <a href="/customers.html">Pelanggan</a>
-            <a href="/receivables.html">Piutang</a>
-            <a href="/suppliers.html">Supplier</a>
-            <a href="/shifts.html">Shift</a>
-            <a href="/reports.html">Laporan</a>
-            <a href="/sync-center.html">Sync Center</a>
-            <a href="/settings.html">Pengaturan</a>
-        </nav>
-        <div style="margin-top:auto;padding:20px;">
-            <button class="btn-secondary" id="btn-logout" style="width:100%">Logout</button>
+<!-- Navbar -->
+<nav class="navbar">
+    <div class="navbar-brand">POS System — Kasir</div>
+    <div class="navbar-user">
+        <div class="user-info">
+            <strong id="navUsername">—</strong>
+            <span class="user-role" id="navUserRole"></span>
         </div>
+        <button class="btn btn-secondary" id="btn-logout-nav" style="width:auto;padding:6px 14px;font-size:13px">Logout</button>
+    </div>
+</nav>
+
+<div class="dashboard-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <ul class="sidebar-menu">
+            <li class="menu-item"><a href="/dashboard.html"><span class="menu-icon">🏠</span> Dashboard</a></li>
+            <li class="menu-item active"><a href="/kasir.html"><span class="menu-icon">🛒</span> Kasir</a></li>
+            <li class="menu-item"><a href="/products.html"><span class="menu-icon">📦</span> Produk</a></li>
+            <li class="menu-item"><a href="/transactions.html"><span class="menu-icon">💳</span> Transaksi</a></li>
+            <li class="menu-item"><a href="/finance.html"><span class="menu-icon">💰</span> Keuangan</a></li>
+            <li class="menu-item"><a href="/customers.html"><span class="menu-icon">👥</span> Pelanggan</a></li>
+            <li class="menu-item"><a href="/receivables.html"><span class="menu-icon">📋</span> Piutang</a></li>
+            <li class="menu-item"><a href="/suppliers.html"><span class="menu-icon">🏭</span> Supplier</a></li>
+            <li class="menu-item"><a href="/shifts.html"><span class="menu-icon">🕐</span> Shift</a></li>
+            <li class="menu-item"><a href="/reports.html"><span class="menu-icon">📈</span> Laporan</a></li>
+            <li class="menu-item"><a href="/sync-center.html"><span class="menu-icon">🔄</span> Sync Center</a></li>
+            <li class="menu-item"><a href="/settings.html"><span class="menu-icon">⚙️</span> Pengaturan</a></li>
+        </ul>
     </aside>
+
+    <!-- Main Content -->
     <main class="main-content">
-        <h1 class="page-title">Kasir</h1>
-        <div class="kasir-layout">
-            <div>
-                <input type="text" id="search-product" placeholder="Cari produk...">
-                <div class="product-grid" id="product-grid"></div>
+        <div class="content-header">
+            <h1>Kasir</h1>
+            <div class="keyboard-hints">
+                <span class="hint"><kbd>F2</kbd> Focus Input</span>
+                <span class="hint"><kbd>Enter</kbd> Scan/Tambah</span>
+                <span class="hint"><kbd>F8</kbd> Bayar</span>
+                <span class="hint"><kbd>F9</kbd> Tunda</span>
+                <span class="hint"><kbd>ESC</kbd> Batal</span>
             </div>
-            <div class="card cart-panel">
-                <h3 style="margin-bottom:12px">Keranjang</h3>
-                <div class="cart-items" id="cart-items"></div>
-                <div class="cart-footer">
-                    <div class="total-row">
-                        <span>Total</span>
-                        <span id="cart-total">Rp 0</span>
+        </div>
+
+        <!-- Kasir Layout -->
+        <div class="kasir-container">
+            <!-- Left Column: Cart -->
+            <div class="kasir-left">
+                <!-- Product Search -->
+                <div class="product-search-box">
+                    <input type="text" id="productSearch" placeholder="Ketik nama produk atau scan barcode..." autocomplete="off">
+                    <div id="productSuggestions" class="suggestions-dropdown"></div>
+                </div>
+
+                <!-- Cart Table -->
+                <div class="cart-container">
+                    <table class="cart-table">
+                        <thead>
+                            <tr>
+                                <th width="32">No</th>
+                                <th>Nama Produk</th>
+                                <th width="110">Satuan</th>
+                                <th width="100">Harga</th>
+                                <th width="120">Qty</th>
+                                <th width="110">Subtotal</th>
+                                <th width="34" title="Diskon Item">🏷️</th>
+                                <th width="38">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cartTableBody">
+                            <tr>
+                                <td colspan="8" class="empty-cart">
+                                    Keranjang masih kosong<br>
+                                    <small>Scan barcode atau cari produk untuk mulai transaksi</small>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Cart Summary -->
+                <div class="cart-summary">
+                    <div class="summary-row">
+                        <span>Subtotal:</span>
+                        <strong id="cartSubtotal">Rp 0</strong>
                     </div>
-                    <button class="btn-primary" style="width:100%;padding:12px;font-size:15px" id="btn-checkout">Bayar</button>
+                    <div class="summary-row discount-row">
+                        <div class="discount-controls">
+                            <span>Diskon:</span>
+                            <div class="discount-toggle">
+                                <button class="btn-toggle" id="discountTypePercent" data-type="percent">%</button>
+                                <button class="btn-toggle" id="discountTypeAmount" data-type="amount">Rp</button>
+                            </div>
+                            <input type="number" id="discountValue" placeholder="0" min="0" step="1">
+                        </div>
+                        <strong id="discountAmount">Rp 0</strong>
+                    </div>
+                    <div class="summary-row">
+                        <div class="tax-controls">
+                            <span>Pajak:</span>
+                            <input type="number" id="taxPercent" placeholder="0" min="0" max="100" step="0.1">
+                            <span>%</span>
+                        </div>
+                        <strong id="taxAmount">Rp 0</strong>
+                    </div>
+                    <div class="summary-row total-row">
+                        <span>TOTAL:</span>
+                        <strong id="cartTotal" class="total-amount">Rp 0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Payment Info -->
+            <div class="kasir-right">
+                <div class="payment-form">
+                    <h3>Informasi Pembayaran</h3>
+
+                    <div class="form-group">
+                        <label for="customerName">Nama Customer</label>
+                        <input type="text" id="customerName" placeholder="Opsional">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="paymentMethod">Metode Bayar <span class="required">*</span></label>
+                        <select id="paymentMethod" required>
+                            <option value="cash">Cash</option>
+                            <option value="debit">Debit Card</option>
+                            <option value="credit">Credit Card</option>
+                            <option value="qris">QRIS</option>
+                            <option value="transfer">Transfer</option>
+                            <option value="kredit">Kredit / Piutang</option>
+                        </select>
+                    </div>
+
+                    <!-- Section Pelanggan (muncul saat kredit dipilih) -->
+                    <div class="form-group" id="customerSection" style="display:none">
+                        <label for="customerSelect">Pelanggan <span class="required">*</span></label>
+                        <select id="customerSelect">
+                            <option value="">-- Pilih Pelanggan --</option>
+                        </select>
+                        <div id="customerCreditInfo" style="font-size:12px;margin-top:4px;color:#666"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Catatan</label>
+                        <textarea id="notes" placeholder="Catatan transaksi (opsional)" rows="3"></textarea>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-success btn-large" id="btnPayment">💰 BAYAR (F8)</button>
+                        <button class="btn btn-warning" id="btnHold">⏸️ TUNDA / SIMPAN DRAFT (F9)</button>
+                        <button class="btn btn-danger"  id="btnCancel">❌ BATAL (ESC)</button>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 </div>
 
+<!-- Payment Modal -->
+<div id="paymentModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Pembayaran</h2>
+            <button class="modal-close" id="closePaymentModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="payment-summary">
+                <div class="payment-info-row">
+                    <span>Total Tagihan:</span>
+                    <strong id="paymentTotal" class="total-amount">Rp 0</strong>
+                </div>
+                <div class="payment-info-row">
+                    <span>Metode Bayar:</span>
+                    <strong id="paymentMethodDisplay">Cash</strong>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="paymentAmount">Jumlah Uang Dibayar <span class="required">*</span></label>
+                <input type="number" id="paymentAmount" placeholder="0" min="0" step="1000">
+            </div>
+            <div class="payment-change">
+                <div class="change-row" id="changeDisplay">
+                    <span>Kembalian:</span>
+                    <strong id="changeAmount">Rp 0</strong>
+                </div>
+                <div class="warning-insufficient hidden" id="insufficientWarning">⚠️ Uang yang dibayarkan kurang!</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCancelPayment">Batal</button>
+                <button type="button" class="btn btn-success btn-large" id="btnProcessPayment">✓ Proses Pembayaran</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Pilih Satuan Jual -->
+<div id="unitSelectModal" class="modal">
+    <div class="modal-content" style="max-width:420px">
+        <div class="modal-header">
+            <h2>Pilih Satuan Jual</h2>
+            <button class="modal-close" id="closeUnitSelectModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="unitSelectProductName" style="font-weight:600;margin-bottom:12px"></p>
+            <div id="unitSelectList" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Print Area (tersembunyi, tampil hanya saat print) -->
+<div id="receipt-print"></div>
+
 <script src="/src/js/api-client.js"></script>
 <script src="/src/js/app.js"></script>
 <script src="/src/js/auth.js"></script>
-<script src="/src/js/router.js"></script>
+<script src="/src/js/kasir.js"></script>
 <script>
-    requireAuth();
-    document.getElementById('btn-logout').addEventListener('click', logout);
-
-    let products = [];
-    let cart = [];
-
-    function fmt(n) { return 'Rp ' + Number(n).toLocaleString('id-ID'); }
-
-    async function loadProducts() {
-        try {
-            products = await apiClient.get('/products', { is_active: true, limit: 200 }) || [];
-            renderProducts(products);
-        } catch (e) { console.error(e.message); }
-    }
-
-    function renderProducts(list) {
-        document.getElementById('product-grid').innerHTML = list.map(p => `
-            <div class="card product-card" onclick="addToCart(${p.id})">
-                <div style="font-weight:600;font-size:13px">${p.name}</div>
-                <div class="price">${fmt(p.price)}</div>
-                <div style="font-size:11px;color:#9ca3af">Stok: ${p.stock}</div>
-            </div>`).join('');
-    }
-
-    function addToCart(id) {
-        const p = products.find(x => x.id === id);
-        if (!p) return;
-        const existing = cart.find(x => x.id === id);
-        if (existing) { existing.qty++; } else { cart.push({ ...p, qty: 1 }); }
-        renderCart();
-    }
-
-    function renderCart() {
-        const el = document.getElementById('cart-items');
-        el.innerHTML = cart.map((item, i) => `
-            <div class="cart-item">
-                <span>${item.name}</span>
-                <span style="display:flex;align-items:center;gap:6px">
-                    <button onclick="changeQty(${i},-1)" style="padding:2px 8px">−</button>
-                    ${item.qty}
-                    <button onclick="changeQty(${i},1)" style="padding:2px 8px">+</button>
-                    <span>${fmt(item.price * item.qty)}</span>
-                </span>
-            </div>`).join('') || '<p style="color:#9ca3af;font-size:13px">Keranjang kosong</p>';
-
-        const total = cart.reduce((s, x) => s + x.price * x.qty, 0);
-        document.getElementById('cart-total').textContent = fmt(total);
-    }
-
-    function changeQty(i, delta) {
-        cart[i].qty += delta;
-        if (cart[i].qty <= 0) cart.splice(i, 1);
-        renderCart();
-    }
-
-    document.getElementById('btn-checkout').addEventListener('click', async () => {
-        if (!cart.length) return alert('Keranjang kosong');
-        const payload = {
-            items: cart.map(x => ({ product_id: x.id, qty: x.qty, price: x.price })),
-            device_source: 'web',
-        };
-        try {
-            await apiClient.post('/transactions', payload);
-            cart = [];
-            renderCart();
-            alert('Transaksi berhasil');
-        } catch (e) { alert('Error: ' + e.message); }
-    });
-
-    document.getElementById('search-product').addEventListener('input', e => {
-        const q = e.target.value.toLowerCase();
-        renderProducts(products.filter(p => p.name.toLowerCase().includes(q)));
-    });
-
-    loadProducts();
+    document.getElementById('btn-logout-nav').addEventListener('click', logout);
 </script>
 </body>
 </html>
