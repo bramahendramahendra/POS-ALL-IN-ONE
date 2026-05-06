@@ -1,25 +1,49 @@
-// Simpan data auth setelah login berhasil
-function saveAuthData(data) {
-    localStorage.setItem('access_token', data.token);
-    if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
-    if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
-    apiClient.setToken(data.token);
+const AUTH_PLATFORM = 'web';
+
+async function login(username, password) {
+    const res = await apiClient.post('/auth/login', {
+        username,
+        password,
+        platform: AUTH_PLATFORM,
+    });
+
+    localStorage.setItem('access_token',  res.access_token);
+    localStorage.setItem('refresh_token', res.refresh_token);
+    localStorage.setItem('user',          JSON.stringify(res.user));
+
+    // Sync token ke apiClient agar request berikutnya terautentikasi
+    apiClient.setToken(res.access_token);
+
+    // Redirect berdasarkan role
+    const role = res.user.role;
+    if (role === 'kasir') {
+        window.location.href = '/kasir.html';
+    } else {
+        window.location.href = '/dashboard.html';
+    }
 }
 
-function getUser() {
+async function logout() {
+    try {
+        await apiClient.post('/auth/logout');
+    } catch {}
+    localStorage.clear();
+    window.location.href = '/login.html';
+}
+
+function getCurrentUser() {
     const raw = localStorage.getItem('user');
     return raw ? JSON.parse(raw) : null;
 }
 
-function logout() {
-    apiClient.clearToken();
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user');
-    window.location.href = '/login.html';
+function requireAuth() {
+    const token = localStorage.getItem('access_token');
+    if (!token) { window.location.href = '/login.html'; }
 }
 
-async function login(username, password) {
-    const data = await apiClient.post('/auth/login', { username, password });
-    saveAuthData(data);
-    return data;
+function requireRole(...allowedRoles) {
+    const user = getCurrentUser();
+    if (!user || !allowedRoles.includes(user.role)) {
+        window.location.href = '/dashboard.html';
+    }
 }
