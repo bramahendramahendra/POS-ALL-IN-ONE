@@ -1,0 +1,15 @@
+{
+  "appId": "com.yourcompany.possystem",
+  "appName": "POS System",
+  "webDir": "../web",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#1e40af",
+      "showSpinner": false
+    }
+  }
+}

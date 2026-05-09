@@ -695,7 +695,7 @@ async function processTransaction() {
         notes:             document.getElementById('notes').value.trim(),
         customer_id:       customerId,
         is_credit:         isCredit ? 1 : 0,
-        device_source:     'web',
+        device_source:     window.APP_CONFIG?.deviceSource || 'web',
         items,
     };
 
