@@ -2,6 +2,7 @@ package service_sync
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	dto_sync "permen_api/domain/sync/dto"
@@ -90,7 +91,47 @@ func (s *syncService) PushSync(req *dto_sync.PushSyncRequest) (*dto_sync.PushSyn
 			continue
 		}
 
-		// Tidak ada konflik → apply langsung via queue
+		// Tidak ada konflik: transaksi baru dari desktop diterapkan secara atomik
+		if item.EntityType == "transaction" && item.ServerID == 0 {
+			serverID, err := s.transactionRepo.ApplySyncTransaction(item.Payload, item.LocalID)
+			if err != nil {
+				if strings.Contains(err.Error(), "stok produk") {
+					// Stok tidak mencukupi → simpan sebagai konflik khusus
+					conflictID, cerr := s.repo.CreateConflict(req.DeviceID, item, err.Error())
+					if cerr != nil {
+						failed++
+						results = append(results, dto_sync.SyncItemResult{
+							LocalID: item.LocalID,
+							Status:  "failed",
+						})
+						continue
+					}
+					conflicts++
+					results = append(results, dto_sync.SyncItemResult{
+						LocalID:    item.LocalID,
+						Status:     "conflict",
+						ConflictID: conflictID,
+						Message:    err.Error(),
+					})
+				} else {
+					failed++
+					results = append(results, dto_sync.SyncItemResult{
+						LocalID: item.LocalID,
+						Status:  "failed",
+					})
+				}
+				continue
+			}
+			processed++
+			results = append(results, dto_sync.SyncItemResult{
+				LocalID:  item.LocalID,
+				Status:   "synced",
+				ServerID: serverID,
+			})
+			continue
+		}
+
+		// Entity lain (expense, product, dll) → apply via queue
 		queueID, err := s.repo.CreateQueueItem(req.DeviceID, item)
 		if err != nil {
 			failed++

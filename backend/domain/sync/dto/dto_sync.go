@@ -96,6 +96,36 @@ type QueueListResponse struct {
 	Total int             `json:"total"`
 }
 
+// SyncTransactionItemPayload adalah satu item dalam payload transaksi offline dari desktop.
+type SyncTransactionItemPayload struct {
+	ProductID     int     `json:"product_id"`
+	ProductName   string  `json:"product_name"`
+	Quantity      float64 `json:"quantity"`
+	Unit          string  `json:"unit"`
+	Price         float64 `json:"price"`
+	Subtotal      float64 `json:"subtotal"`
+	DiscountItem  float64 `json:"discount_item"`
+	ConversionQty float64 `json:"conversion_qty"`
+	UnitID        *int    `json:"unit_id"`
+}
+
+// SyncTransactionPayload adalah struktur payload transaksi offline yang dikirim desktop.
+type SyncTransactionPayload struct {
+	UserID        int                          `json:"user_id"`
+	ShiftID       *int                         `json:"shift_id"`
+	Subtotal      float64                      `json:"subtotal"`
+	Discount      float64                      `json:"discount"`
+	Tax           float64                      `json:"tax"`
+	TotalAmount   float64                      `json:"total_amount"`
+	PaymentMethod string                       `json:"payment_method"`
+	PaymentAmount float64                      `json:"payment_amount"`
+	ChangeAmount  float64                      `json:"change_amount"`
+	CustomerID    *int                         `json:"customer_id"`
+	IsCredit      bool                         `json:"is_credit"`
+	DeviceSource  string                       `json:"device_source"`
+	Items         []SyncTransactionItemPayload `json:"items"`
+}
+
 // --- History ---
 
 type HistoryFilter struct {

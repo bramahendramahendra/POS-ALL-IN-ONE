@@ -16,4 +16,8 @@ type TransactionRepo interface {
 	// ReturnStockForRejectSync mengembalikan stok semua item transaksi yang ditolak
 	// dan mencatat setiap pengembalian sebagai mutasi REJECT_SYNC untuk audit trail
 	ReturnStockForRejectSync(transactionID, resolvedBy int) error
+	// ApplySyncTransaction menerapkan transaksi offline dari desktop secara atomik.
+	// Menggunakan SELECT FOR UPDATE untuk cek stok, insert transaksi, kurangi stok, dan catat mutasi SALE.
+	// Mengembalikan serverID transaksi baru dan error (error berisi "stok produk" jika stok tidak cukup).
+	ApplySyncTransaction(payload string, localID string) (int, error)
 }

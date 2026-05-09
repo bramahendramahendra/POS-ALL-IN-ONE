@@ -1,9 +1,11 @@
 package repo_transaction
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
+	dto_sync "permen_api/domain/sync/dto"
 	dto_transaction "permen_api/domain/transaction/dto"
 	model_transaction "permen_api/domain/transaction/model"
 
@@ -325,6 +327,99 @@ func (r *transactionRepo) GetItems(transactionID int) ([]model_transaction.Trans
 		items = append(items, item)
 	}
 	return items, nil
+}
+
+// ApplySyncTransaction menerapkan transaksi offline secara atomik dengan SELECT FOR UPDATE.
+// Jika stok produk mana pun tidak mencukupi, seluruh transaksi di-rollback dan error dikembalikan.
+func (r *transactionRepo) ApplySyncTransaction(payload string, localID string) (int, error) {
+	var tx dto_sync.SyncTransactionPayload
+	if err := json.Unmarshal([]byte(payload), &tx); err != nil {
+		return 0, fmt.Errorf("payload transaksi tidak valid: %w", err)
+	}
+
+	var serverID int
+
+	err := r.db.Transaction(func(db *gorm.DB) error {
+		// 1. Cek stok semua item dengan SELECT FOR UPDATE (lock baris product)
+		for _, item := range tx.Items {
+			var currentStock float64
+			if err := db.Raw(`SELECT stock FROM products WHERE id = ? FOR UPDATE`, item.ProductID).Scan(&currentStock).Error; err != nil {
+				return fmt.Errorf("stok produk %d tidak ditemukan", item.ProductID)
+			}
+			if currentStock < item.Quantity {
+				return fmt.Errorf("stok produk %d tidak mencukupi (%.2f tersedia, butuh %.2f)",
+					item.ProductID, currentStock, item.Quantity)
+			}
+		}
+
+		// 2. Generate kode transaksi
+		prefixMap := map[string]string{"desktop": "DSK", "web": "WEB", "android": "AND"}
+		prefix, ok := prefixMap[tx.DeviceSource]
+		if !ok {
+			prefix = "DSK"
+		}
+		var count int
+		if err := db.Raw(generateTransactionCodeQuery, tx.DeviceSource).Scan(&count).Error; err != nil {
+			return err
+		}
+		code := fmt.Sprintf("%s-%s-%03d", prefix, time.Now().Format("20060102"), count+1)
+
+		// 3. Insert header transaksi
+		if err := db.Exec(createTransactionQuery,
+			code, tx.UserID, tx.ShiftID, time.Now(),
+			tx.Subtotal, tx.Discount, tx.Tax, tx.TotalAmount,
+			tx.PaymentMethod, tx.PaymentAmount, tx.ChangeAmount,
+			tx.CustomerID, tx.IsCredit, "completed", tx.DeviceSource,
+		).Error; err != nil {
+			return err
+		}
+
+		var transactionID int
+		if err := db.Raw(`SELECT LAST_INSERT_ID()`).Scan(&transactionID).Error; err != nil {
+			return err
+		}
+
+		// 4. Kurangi stok + insert item + catat mutasi SALE
+		for _, item := range tx.Items {
+			var stockBefore float64
+			if err := db.Raw(getProductStockQuery, item.ProductID).Scan(&stockBefore).Error; err != nil {
+				return err
+			}
+
+			if err := db.Exec(updateProductStockQuery, item.Quantity, item.ProductID, item.Quantity).Error; err != nil {
+				return err
+			}
+
+			if err := db.Exec(createTransactionItemQuery,
+				transactionID, item.ProductID, item.ProductName,
+				item.Quantity, item.Unit, item.Price, item.Subtotal,
+				item.DiscountItem, item.ConversionQty, item.UnitID,
+			).Error; err != nil {
+				return err
+			}
+
+			stockAfter := stockBefore - item.Quantity
+			notes := fmt.Sprintf("Sync offline tx %s", localID)
+			if err := db.Exec(createStockMutationQuery,
+				item.ProductID, "out", item.Quantity, stockBefore, stockAfter,
+				"transaction", transactionID, notes, tx.UserID,
+			).Error; err != nil {
+				return err
+			}
+		}
+
+		// 5. Jika kredit → buat piutang
+		if tx.IsCredit && tx.CustomerID != nil {
+			if err := db.Exec(createReceivableQuery, transactionID, *tx.CustomerID, tx.TotalAmount).Error; err != nil {
+				return err
+			}
+		}
+
+		serverID = transactionID
+		return nil
+	})
+
+	return serverID, err
 }
 
 // ReturnStockForRejectSync mengembalikan stok setiap item transaksi yang ditolak
