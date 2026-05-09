@@ -16,8 +16,9 @@ type SyncItem struct {
 }
 
 type PushSyncRequest struct {
-	DeviceID string     `json:"device_id" binding:"required"`
-	Items    []SyncItem `json:"items" binding:"required"`
+	DeviceID   string     `json:"device_id" binding:"required"`
+	DeviceType string     `json:"device_type"`
+	Items      []SyncItem `json:"items" binding:"required"`
 }
 
 // SyncItemResult adalah hasil per-item saat push sync
@@ -128,11 +129,32 @@ type SyncTransactionPayload struct {
 
 // --- History ---
 
+// HistoryFilter digunakan oleh endpoint GET /sync/history (sync_history table)
 type HistoryFilter struct {
 	DeviceID   string
-	EntityType string
-	DateFrom   string
-	DateTo     string
+	StartDate  string
+	EndDate    string
 	Page       int
 	Limit      int
+}
+
+type SyncHistoryResponse struct {
+	ID            int64   `json:"id"`
+	DeviceID      string  `json:"device_id"`
+	DeviceType    string  `json:"device_type"`
+	TotalItems    int     `json:"total_items"`
+	SyncedItems   int     `json:"synced_items"`
+	ConflictItems int     `json:"conflict_items"`
+	FailedItems   int     `json:"failed_items"`
+	DurationMs    int     `json:"duration_ms"`
+	Status        string  `json:"status"`
+	StartedAt     string  `json:"started_at"`
+	FinishedAt    *string `json:"finished_at"`
+}
+
+type SyncHistoryListResponse struct {
+	Data  []SyncHistoryResponse `json:"data"`
+	Total int                   `json:"total"`
+	Page  int                   `json:"page"`
+	Limit int                   `json:"limit"`
 }

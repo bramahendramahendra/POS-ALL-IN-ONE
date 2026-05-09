@@ -117,15 +117,14 @@ func (h *SyncHandler) GetQueue(c *gin.Context) {
 	})
 }
 
-// GET /api/sync/history
+// GET /api/sync/history?device_id=&start_date=&end_date=&page=1&limit=20
 func (h *SyncHandler) GetHistory(c *gin.Context) {
 	filter := &dto_sync.HistoryFilter{
-		DeviceID:   c.Query("device_id"),
-		EntityType: c.Query("entity_type"),
-		DateFrom:   c.Query("date_from"),
-		DateTo:     c.Query("date_to"),
-		Page:       parseIntQuery(c.Query("page"), 1),
-		Limit:      parseIntQuery(c.Query("limit"), 20),
+		DeviceID:  c.Query("device_id"),
+		StartDate: c.Query("start_date"),
+		EndDate:   c.Query("end_date"),
+		Page:      parseIntQuery(c.Query("page"), 1),
+		Limit:     parseIntQuery(c.Query("limit"), 20),
 	}
 
 	result, err := h.service.GetHistory(filter)

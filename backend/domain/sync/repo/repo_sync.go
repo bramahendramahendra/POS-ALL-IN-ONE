@@ -22,6 +22,10 @@ const (
 	CreateQueueItemQuery   = `INSERT INTO sync_queue (device_id, entity_type, entity_id, action, payload, status) VALUES (?, ?, ?, ?, ?, 'pending')`
 	UpdateQueueStatusQuery = `UPDATE sync_queue SET status=?, synced_at=CASE WHEN ? = 'synced' THEN NOW() ELSE NULL END, error_message=? WHERE id=?`
 
+	insertHistoryQuery  = `INSERT INTO sync_history (device_id, device_type, total_items, synced_items, conflict_items, failed_items, duration_ms, status, started_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	getHistoryQuery     = `SELECT id, device_id, device_type, total_items, synced_items, conflict_items, failed_items, duration_ms, status, DATE_FORMAT(started_at,'%Y-%m-%dT%H:%i:%sZ'), DATE_FORMAT(finished_at,'%Y-%m-%dT%H:%i:%sZ') FROM sync_history WHERE 1=1`
+	countHistoryBase    = `SELECT COUNT(*) FROM sync_history WHERE 1=1`
+
 	// entityTableMap menentukan tabel dan kolom JSON per entity type
 	// Format query: SELECT updated_at, JSON_OBJECT(...) AS data FROM <table> WHERE id=?
 	// Tabel yang didukung: products, transactions, expenses
@@ -280,33 +284,36 @@ func (r *syncRepo) UpdateQueueStatus(id int, status, errMsg string) error {
 	return r.db.Exec(UpdateQueueStatusQuery, status, status, errMsg, id).Error
 }
 
-func (r *syncRepo) GetHistory(filter *dto_sync.HistoryFilter) ([]dto_sync.QueueResponse, int, error) {
+func (r *syncRepo) InsertHistory(h model_sync.SyncHistory) error {
+	return r.db.Exec(insertHistoryQuery,
+		h.DeviceID, h.DeviceType, h.TotalItems, h.SyncedItems,
+		h.ConflictItems, h.FailedItems, h.DurationMs, h.Status,
+		h.StartedAt, h.FinishedAt,
+	).Error
+}
+
+func (r *syncRepo) GetHistory(filter *dto_sync.HistoryFilter) ([]dto_sync.SyncHistoryResponse, int, error) {
 	var args, countArgs []interface{}
-	conditions := " AND status = 'synced'"
+	conditions := ""
 
 	if filter.DeviceID != "" {
 		conditions += " AND device_id = ?"
 		args = append(args, filter.DeviceID)
 		countArgs = append(countArgs, filter.DeviceID)
 	}
-	if filter.EntityType != "" {
-		conditions += " AND entity_type = ?"
-		args = append(args, filter.EntityType)
-		countArgs = append(countArgs, filter.EntityType)
+	if filter.StartDate != "" {
+		conditions += " AND DATE(started_at) >= ?"
+		args = append(args, filter.StartDate)
+		countArgs = append(countArgs, filter.StartDate)
 	}
-	if filter.DateFrom != "" {
-		conditions += " AND DATE(created_at) >= ?"
-		args = append(args, filter.DateFrom)
-		countArgs = append(countArgs, filter.DateFrom)
-	}
-	if filter.DateTo != "" {
-		conditions += " AND DATE(created_at) <= ?"
-		args = append(args, filter.DateTo)
-		countArgs = append(countArgs, filter.DateTo)
+	if filter.EndDate != "" {
+		conditions += " AND DATE(started_at) <= ?"
+		args = append(args, filter.EndDate)
+		countArgs = append(countArgs, filter.EndDate)
 	}
 
 	var total int
-	if err := r.db.Raw(countQueueBase+conditions, countArgs...).Scan(&total).Error; err != nil {
+	if err := r.db.Raw(countHistoryBase+conditions, countArgs...).Scan(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -319,7 +326,7 @@ func (r *syncRepo) GetHistory(filter *dto_sync.HistoryFilter) ([]dto_sync.QueueR
 	}
 	offset := (page - 1) * limit
 
-	query := GetQueueQuery + conditions + fmt.Sprintf(" ORDER BY created_at DESC LIMIT %d OFFSET %d", limit, offset)
+	query := getHistoryQuery + conditions + fmt.Sprintf(" ORDER BY started_at DESC LIMIT %d OFFSET %d", limit, offset)
 
 	rows, err := r.db.Raw(query, args...).Rows()
 	if err != nil {
@@ -327,16 +334,21 @@ func (r *syncRepo) GetHistory(filter *dto_sync.HistoryFilter) ([]dto_sync.QueueR
 	}
 	defer rows.Close()
 
-	var items []dto_sync.QueueResponse
+	var items []dto_sync.SyncHistoryResponse
 	for rows.Next() {
-		var item dto_sync.QueueResponse
-		if err := rows.Scan(&item.ID, &item.DeviceID, &item.EntityType, &item.EntityID, &item.Action, &item.Status, &item.RetryCount, &item.CreatedAt); err != nil {
+		var item dto_sync.SyncHistoryResponse
+		if err := rows.Scan(
+			&item.ID, &item.DeviceID, &item.DeviceType,
+			&item.TotalItems, &item.SyncedItems, &item.ConflictItems,
+			&item.FailedItems, &item.DurationMs, &item.Status,
+			&item.StartedAt, &item.FinishedAt,
+		); err != nil {
 			return nil, 0, err
 		}
 		items = append(items, item)
 	}
 	if items == nil {
-		items = []dto_sync.QueueResponse{}
+		items = []dto_sync.SyncHistoryResponse{}
 	}
 	return items, total, nil
 }

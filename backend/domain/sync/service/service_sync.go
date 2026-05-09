@@ -8,8 +8,8 @@ import (
 	dto_sync "permen_api/domain/sync/dto"
 	model_sync "permen_api/domain/sync/model"
 	repo_expense "permen_api/domain/expense/repo"
-	repo_transaction "permen_api/domain/transaction/repo"
 	repo_sync "permen_api/domain/sync/repo"
+	repo_transaction "permen_api/domain/transaction/repo"
 	"permen_api/errors"
 )
 
@@ -64,6 +64,7 @@ func (s *syncService) detectConflict(item *dto_sync.SyncItem) (bool, string, err
 }
 
 func (s *syncService) PushSync(req *dto_sync.PushSyncRequest) (*dto_sync.PushSyncResponse, error) {
+	startedAt := time.Now()
 	processed, conflicts, failed := 0, 0, 0
 	results := make([]dto_sync.SyncItemResult, 0, len(req.Items))
 
@@ -151,12 +152,55 @@ func (s *syncService) PushSync(req *dto_sync.PushSyncRequest) (*dto_sync.PushSyn
 		})
 	}
 
-	return &dto_sync.PushSyncResponse{
+	resp := &dto_sync.PushSyncResponse{
 		Processed: processed,
 		Conflicts: conflicts,
 		Failed:    failed,
 		Results:   results,
-	}, nil
+	}
+
+	s.saveSyncHistory(req.DeviceID, req.DeviceType, results, startedAt)
+
+	return resp, nil
+}
+
+func (s *syncService) saveSyncHistory(deviceID, deviceType string, results []dto_sync.SyncItemResult, startedAt time.Time) {
+	synced, conflict, failed := 0, 0, 0
+	for _, r := range results {
+		switch r.Status {
+		case "synced":
+			synced++
+		case "conflict":
+			conflict++
+		case "failed":
+			failed++
+		}
+	}
+
+	status := "success"
+	if failed > 0 && synced == 0 {
+		status = "failed"
+	} else if conflict > 0 || failed > 0 {
+		status = "partial"
+	}
+
+	if deviceType == "" {
+		deviceType = "desktop"
+	}
+
+	now := time.Now()
+	_ = s.repo.InsertHistory(model_sync.SyncHistory{
+		DeviceID:      deviceID,
+		DeviceType:    deviceType,
+		TotalItems:    len(results),
+		SyncedItems:   synced,
+		ConflictItems: conflict,
+		FailedItems:   failed,
+		DurationMs:    int(now.Sub(startedAt).Milliseconds()),
+		Status:        status,
+		StartedAt:     startedAt,
+		FinishedAt:    &now,
+	})
 }
 
 func (s *syncService) GetConflicts(filter *dto_sync.ConflictFilter) (*dto_sync.ConflictListResponse, error) {
@@ -238,10 +282,17 @@ func (s *syncService) GetQueue(filter *dto_sync.QueueFilter) (*dto_sync.QueueLis
 	return &dto_sync.QueueListResponse{Data: data, Total: total}, nil
 }
 
-func (s *syncService) GetHistory(filter *dto_sync.HistoryFilter) (*dto_sync.QueueListResponse, error) {
+func (s *syncService) GetHistory(filter *dto_sync.HistoryFilter) (*dto_sync.SyncHistoryListResponse, error) {
 	data, total, err := s.repo.GetHistory(filter)
 	if err != nil {
 		return nil, &errors.InternalServerError{Message: "Gagal mengambil riwayat sync"}
 	}
-	return &dto_sync.QueueListResponse{Data: data, Total: total}, nil
+	page, limit := filter.Page, filter.Limit
+	if page <= 0 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 20
+	}
+	return &dto_sync.SyncHistoryListResponse{Data: data, Total: total, Page: page, Limit: limit}, nil
 }

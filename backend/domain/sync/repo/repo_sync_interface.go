@@ -25,5 +25,8 @@ type SyncRepo interface {
 	CreateQueueItem(deviceID string, item *dto_sync.SyncItem) (int, error)
 	UpdateQueueStatus(id int, status, errMsg string) error
 
-	GetHistory(filter *dto_sync.HistoryFilter) ([]dto_sync.QueueResponse, int, error)
+	// InsertHistory mencatat satu sesi push sync ke tabel sync_history
+	InsertHistory(h model_sync.SyncHistory) error
+	// GetHistory mengambil riwayat sesi sync dari tabel sync_history
+	GetHistory(filter *dto_sync.HistoryFilter) ([]dto_sync.SyncHistoryResponse, int, error)
 }
