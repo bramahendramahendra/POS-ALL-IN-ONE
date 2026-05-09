@@ -1,82 +1,264 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pelanggan — POS System</title>
-    <link rel="stylesheet" href="/src/css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Master Pelanggan — POS System</title>
+  <link rel="stylesheet" href="/src/css/style.css">
+  <style>
+    body { margin: 0; background: #f5f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+    .navbar {
+      background: #2c3e50; color: #fff; padding: 0 30px; height: 60px;
+      display: flex; justify-content: space-between; align-items: center;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    .navbar-brand { font-size: 18px; font-weight: 700; }
+    .navbar-user  { display: flex; align-items: center; gap: 16px; }
+    .user-info    { display: flex; flex-direction: column; align-items: flex-end; }
+    .user-info strong { font-size: 13px; }
+    .user-role    { font-size: 11px; color: #bdc3c7; text-transform: capitalize; }
+
+    .dashboard-container { display: flex; margin-top: 60px; min-height: calc(100vh - 60px); }
+
+    .sidebar {
+      width: 220px; background: #fff; box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+      position: fixed; left: 0; top: 60px; bottom: 0; overflow-y: auto;
+    }
+    .sidebar-menu { list-style: none; padding: 12px 0; margin: 0; }
+    .menu-item a {
+      display: flex; align-items: center; padding: 11px 18px;
+      color: #2c3e50; text-decoration: none; font-size: 13px; font-weight: 500;
+      transition: background 0.2s;
+    }
+    .menu-item a:hover { background: #f8f9fa; }
+    .menu-item.active a { background: #3498db; color: #fff; border-right: 4px solid #2980b9; }
+    .menu-icon { font-size: 16px; margin-right: 10px; width: 20px; text-align: center; }
+
+    .main-content { flex: 1; margin-left: 220px; padding: 20px 24px; }
+
+    .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .content-header h1 { font-size: 22px; color: #2c3e50; margin: 0; }
+
+    .filters-container { display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; align-items: flex-end; }
+    .filter-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .filter-input {
+      padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px;
+      font-size: 13px; background: #fff; min-width: 180px;
+    }
+
+    .table-container { overflow-x: auto; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+    .data-table { width: 100%; border-collapse: collapse; background: #fff; font-size: 13px; }
+    .data-table thead th {
+      background: #f9fafb; padding: 10px 12px; text-align: left;
+      font-weight: 600; color: #374151; border-bottom: 2px solid #e5e7eb; white-space: nowrap;
+    }
+    .data-table tbody td { padding: 10px 12px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:hover { background: #f9fafb; }
+    .text-center { text-align: center; color: #9ca3af; padding: 24px !important; }
+    .text-muted { color: #9ca3af; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer;
+      font-size: 13px; font-weight: 600; transition: background 0.15s; white-space: nowrap;
+    }
+    .btn-primary   { background: #3498db; color: #fff; }
+    .btn-primary:hover   { background: #2980b9; }
+    .btn-secondary { background: #e5e7eb; color: #374151; }
+    .btn-secondary:hover { background: #d1d5db; }
+    .btn-danger    { background: #dc2626; color: #fff; }
+    .btn-danger:hover    { background: #b91c1c; }
+    .btn-warning   { background: #f59e0b; color: #fff; }
+    .btn-warning:hover   { background: #d97706; }
+    .btn-success   { background: #059669; color: #fff; }
+    .btn-success:hover   { background: #047857; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-danger  { background: #fee2e2; color: #991b1b; }
+
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,.5); z-index: 2000; justify-content: center; align-items: center;
+    }
+    .modal-content {
+      background: #fff; border-radius: 10px; width: 92%;
+      box-shadow: 0 8px 24px rgba(0,0,0,.2); max-height: 90vh; overflow-y: auto;
+    }
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; border-bottom: 1px solid #e5e7eb;
+      position: sticky; top: 0; background: #fff; z-index: 1;
+    }
+    .modal-header h2 { font-size: 18px; margin: 0; color: #1e293b; }
+    .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #6b7280; line-height: 1; }
+    .modal-close:hover { color: #111; }
+    .modal-body   { padding: 20px; }
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+
+    .form-row { display: flex; gap: 12px; }
+    .form-row .form-group { flex: 1; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+    .form-group label { font-size: 13px; font-weight: 600; color: #374151; }
+    .form-group input, .form-group select, .form-group textarea {
+      padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px;
+    }
+    .form-group textarea { resize: vertical; font-family: inherit; }
+    .form-hint { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+    .required { color: #dc2626; }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main-content { margin-left: 0; }
+    }
+  </style>
 </head>
 <body>
-<div class="layout">
-    <aside class="sidebar">
-        <div class="logo">POS System</div>
-        <nav>
-            <a href="/dashboard.html">Dashboard</a>
-            <a href="/kasir.html">Kasir</a>
-            <a href="/products.html">Produk</a>
-            <a href="/transactions.html">Transaksi</a>
-            <a href="/finance.html">Keuangan</a>
-            <a href="/customers.html" class="active">Pelanggan</a>
-            <a href="/receivables.html">Piutang</a>
-            <a href="/suppliers.html">Supplier</a>
-            <a href="/shifts.html">Shift</a>
-            <a href="/reports.html">Laporan</a>
-            <a href="/sync-center.html">Sync Center</a>
-            <a href="/settings.html">Pengaturan</a>
-        </nav>
-        <div style="margin-top:auto;padding:20px;">
-            <button class="btn-secondary" id="btn-logout" style="width:100%">Logout</button>
-        </div>
-    </aside>
-    <main class="main-content">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-            <h1 class="page-title" style="margin:0">Pelanggan</h1>
-            <button class="btn-primary" onclick="alert('Tambah pelanggan — coming soon')">+ Tambah</button>
-        </div>
-        <div class="card">
-            <input type="text" id="search" placeholder="Cari pelanggan..." style="max-width:300px;margin-bottom:16px">
-            <table>
-                <thead><tr><th>Nama</th><th>Telepon</th><th>Email</th><th>Total Transaksi</th><th></th></tr></thead>
-                <tbody id="table-body"></tbody>
-            </table>
-        </div>
-    </main>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="navbar-brand">POS System — Pelanggan</div>
+  <div class="navbar-user">
+    <div class="user-info">
+      <strong id="navUsername">—</strong>
+      <span class="user-role" id="navUserRole"></span>
+    </div>
+    <button class="btn btn-secondary" id="btn-logout-nav" style="width:auto;padding:6px 14px;font-size:13px">Logout</button>
+  </div>
+</nav>
+
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <ul class="sidebar-menu">
+      <li class="menu-item"><a href="/dashboard.html"><span class="menu-icon">🏠</span> Dashboard</a></li>
+      <li class="menu-item"><a href="/kasir.html"><span class="menu-icon">🛒</span> Kasir</a></li>
+      <li class="menu-item"><a href="/products.html"><span class="menu-icon">📦</span> Produk</a></li>
+      <li class="menu-item"><a href="/transactions.html"><span class="menu-icon">💳</span> Transaksi</a></li>
+      <li class="menu-item"><a href="/finance.html"><span class="menu-icon">💰</span> Keuangan</a></li>
+      <li class="menu-item active"><a href="/customers.html"><span class="menu-icon">👥</span> Pelanggan</a></li>
+      <li class="menu-item"><a href="/receivables.html"><span class="menu-icon">📋</span> Piutang</a></li>
+      <li class="menu-item"><a href="/suppliers.html"><span class="menu-icon">🏭</span> Supplier</a></li>
+      <li class="menu-item"><a href="/shifts.html"><span class="menu-icon">🕐</span> Shift</a></li>
+      <li class="menu-item"><a href="/reports.html"><span class="menu-icon">📈</span> Laporan</a></li>
+      <li class="menu-item"><a href="/sync-center.html"><span class="menu-icon">🔄</span> Sync Center</a></li>
+      <li class="menu-item"><a href="/settings.html"><span class="menu-icon">⚙️</span> Pengaturan</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="content-header">
+      <h1>Master Pelanggan</h1>
+      <button class="btn btn-primary" id="btnAddCustomer">+ Tambah Pelanggan</button>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-container">
+      <div class="filter-group">
+        <input type="text" id="searchCustomer" class="filter-input" placeholder="Cari nama / telepon / kode...">
+        <select id="filterStatus" class="filter-input" style="min-width:140px;">
+          <option value="">Semua Status</option>
+          <option value="1">Aktif</option>
+          <option value="0">Nonaktif</option>
+        </select>
+        <button class="btn btn-primary" id="btnFilter">🔍 Filter</button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th width="110">Kode</th>
+            <th>Nama</th>
+            <th width="130">Telepon</th>
+            <th>Alamat</th>
+            <th width="130">Limit Kredit</th>
+            <th width="130">Outstanding</th>
+            <th width="80">Status</th>
+            <th width="160">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="customerTableBody">
+          <tr><td colspan="8" class="text-center">Memuat data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
 </div>
+
+<!-- Modal Form Pelanggan -->
+<div id="customerModal" class="modal">
+  <div class="modal-content" style="max-width:520px;">
+    <div class="modal-header">
+      <h2 id="customerModalTitle">Tambah Pelanggan</h2>
+      <button class="modal-close" id="closeCustomerModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="customerForm">
+        <input type="hidden" id="customerId">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Kode Pelanggan <span class="required">*</span></label>
+            <input type="text" id="customerCode" placeholder="Cth: PLG-001" required>
+          </div>
+          <div class="form-group">
+            <label>Telepon</label>
+            <input type="text" id="customerPhone" placeholder="08xxx">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Nama Pelanggan <span class="required">*</span></label>
+          <input type="text" id="customerName" placeholder="Nama lengkap" required>
+        </div>
+        <div class="form-group">
+          <label>Alamat</label>
+          <textarea id="customerAddress" rows="2" placeholder="Alamat lengkap"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Batas Kredit (Plafon)</label>
+          <input type="number" id="customerCreditLimit" placeholder="0 = tidak terbatas" min="0" step="1000">
+          <small class="form-hint">Isi 0 jika tidak ada batas kredit</small>
+        </div>
+        <div class="form-group">
+          <label>Catatan</label>
+          <textarea id="customerNotes" rows="2" placeholder="Catatan (opsional)"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btnCancelCustomer">Batal</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveCustomer">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Konfirmasi Hapus -->
+<div id="deleteCustomerModal" class="modal">
+  <div class="modal-content" style="max-width:400px;">
+    <div class="modal-header">
+      <h2>Hapus Pelanggan</h2>
+      <button class="modal-close" id="closeDeleteCustomerModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>Yakin ingin menghapus pelanggan <strong id="deleteCustomerName"></strong>?</p>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btnCancelDelete">Batal</button>
+        <button type="button" class="btn btn-danger" id="btnConfirmDelete">Hapus</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="/src/js/api-client.js"></script>
 <script src="/src/js/app.js"></script>
 <script src="/src/js/auth.js"></script>
-<script src="/src/js/router.js"></script>
-<script>
-    requireAuth();
-    document.getElementById('btn-logout').addEventListener('click', logout);
-
-    let customers = [];
-    function fmt(n) { return 'Rp ' + Number(n).toLocaleString('id-ID'); }
-
-    async function load() {
-        try {
-            customers = await apiClient.get('/customers', { limit: 500 }) || [];
-            render(customers);
-        } catch (e) { console.error(e.message); }
-    }
-
-    function render(list) {
-        document.getElementById('table-body').innerHTML = list.map(c => `
-            <tr>
-                <td>${c.name}</td>
-                <td>${c.phone || '-'}</td>
-                <td>${c.email || '-'}</td>
-                <td>${fmt(c.total_spent || 0)}</td>
-                <td><button class="btn-secondary" onclick="alert('Detail #${c.id}')">Detail</button></td>
-            </tr>`).join('');
-    }
-
-    document.getElementById('search').addEventListener('input', e => {
-        const q = e.target.value.toLowerCase();
-        render(customers.filter(c => c.name.toLowerCase().includes(q) || (c.phone||'').includes(q)));
-    });
-
-    load();
-</script>
+<script src="/src/js/customers.js"></script>
 </body>
 </html>

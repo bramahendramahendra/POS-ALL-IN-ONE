@@ -1,69 +1,327 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Piutang — POS System</title>
-    <link rel="stylesheet" href="/src/css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Piutang Pelanggan — POS System</title>
+  <link rel="stylesheet" href="/src/css/style.css">
+  <style>
+    body { margin: 0; background: #f5f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+    .navbar {
+      background: #2c3e50; color: #fff; padding: 0 30px; height: 60px;
+      display: flex; justify-content: space-between; align-items: center;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    .navbar-brand { font-size: 18px; font-weight: 700; }
+    .navbar-user  { display: flex; align-items: center; gap: 16px; }
+    .user-info    { display: flex; flex-direction: column; align-items: flex-end; }
+    .user-info strong { font-size: 13px; }
+    .user-role    { font-size: 11px; color: #bdc3c7; text-transform: capitalize; }
+
+    .dashboard-container { display: flex; margin-top: 60px; min-height: calc(100vh - 60px); }
+
+    .sidebar {
+      width: 220px; background: #fff; box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+      position: fixed; left: 0; top: 60px; bottom: 0; overflow-y: auto;
+    }
+    .sidebar-menu { list-style: none; padding: 12px 0; margin: 0; }
+    .menu-item a {
+      display: flex; align-items: center; padding: 11px 18px;
+      color: #2c3e50; text-decoration: none; font-size: 13px; font-weight: 500;
+      transition: background 0.2s;
+    }
+    .menu-item a:hover { background: #f8f9fa; }
+    .menu-item.active a { background: #3498db; color: #fff; border-right: 4px solid #2980b9; }
+    .menu-icon { font-size: 16px; margin-right: 10px; width: 20px; text-align: center; }
+
+    .main-content { flex: 1; margin-left: 220px; padding: 20px 24px; }
+
+    .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .content-header h1 { font-size: 22px; color: #2c3e50; margin: 0; }
+
+    .tabs-container { margin-bottom: 14px; }
+    .tabs { display: flex; gap: 4px; border-bottom: 2px solid #e5e7eb; }
+    .tab-button {
+      padding: 8px 18px; border: none; background: none; cursor: pointer;
+      font-size: 13px; font-weight: 600; color: #6b7280;
+      border-bottom: 3px solid transparent; margin-bottom: -2px; transition: color 0.2s;
+    }
+    .tab-button:hover  { color: #2c3e50; }
+    .tab-button.active { color: #3498db; border-bottom-color: #3498db; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .filters-container { display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; align-items: flex-end; }
+    .filter-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
+    .filter-group--with-label { align-items: flex-end; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-size: 12px; font-weight: 600; color: #6b7280; }
+    .filter-input {
+      padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px;
+      font-size: 13px; background: #fff; min-width: 160px;
+    }
+
+    .table-container { overflow-x: auto; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+    .data-table { width: 100%; border-collapse: collapse; background: #fff; font-size: 13px; }
+    .data-table thead th {
+      background: #f9fafb; padding: 10px 12px; text-align: left;
+      font-weight: 600; color: #374151; border-bottom: 2px solid #e5e7eb; white-space: nowrap;
+    }
+    .data-table tbody td { padding: 10px 12px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:hover { background: #f9fafb; }
+    .text-center { text-align: center; color: #9ca3af; padding: 24px !important; }
+    .text-muted { color: #9ca3af; font-size: 13px; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer;
+      font-size: 13px; font-weight: 600; transition: background 0.15s; white-space: nowrap;
+    }
+    .btn-primary   { background: #3498db; color: #fff; }
+    .btn-primary:hover   { background: #2980b9; }
+    .btn-secondary { background: #e5e7eb; color: #374151; }
+    .btn-secondary:hover { background: #d1d5db; }
+    .btn-success   { background: #059669; color: #fff; }
+    .btn-success:hover   { background: #047857; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-danger  { background: #fee2e2; color: #991b1b; }
+
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,.5); z-index: 2000; justify-content: center; align-items: center;
+    }
+    .modal-content {
+      background: #fff; border-radius: 10px; width: 92%;
+      box-shadow: 0 8px 24px rgba(0,0,0,.2); max-height: 90vh; overflow-y: auto;
+    }
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; border-bottom: 1px solid #e5e7eb;
+      position: sticky; top: 0; background: #fff; z-index: 1;
+    }
+    .modal-header h2 { font-size: 18px; margin: 0; color: #1e293b; }
+    .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #6b7280; line-height: 1; }
+    .modal-close:hover { color: #111; }
+    .modal-body   { padding: 20px; }
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; }
+
+    .payment-summary { background: #f8fafc; border-radius: 8px; padding: 14px; }
+    .payment-info-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; border-bottom: 1px solid #e5e7eb; }
+    .payment-info-row:last-child { border-bottom: none; }
+    .total-amount { font-size: 15px; color: #e74c3c; font-weight: 700; }
+
+    .pay-form-section hr { border: none; border-top: 1px solid #e5e7eb; margin: 14px 0; }
+    .pay-form-section h4 { font-size: 14px; color: #374151; margin: 0 0 12px; }
+    .form-row { display: flex; gap: 12px; }
+    .form-row .form-group { flex: 1; }
+    .form-group-pay { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+    .form-group-pay label { font-size: 13px; font-weight: 600; color: #374151; }
+    .form-group-pay input, .form-group-pay select {
+      padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px;
+    }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main-content { margin-left: 0; }
+    }
+  </style>
 </head>
 <body>
-<div class="layout">
-    <aside class="sidebar">
-        <div class="logo">POS System</div>
-        <nav>
-            <a href="/dashboard.html">Dashboard</a>
-            <a href="/kasir.html">Kasir</a>
-            <a href="/products.html">Produk</a>
-            <a href="/transactions.html">Transaksi</a>
-            <a href="/finance.html">Keuangan</a>
-            <a href="/customers.html">Pelanggan</a>
-            <a href="/receivables.html" class="active">Piutang</a>
-            <a href="/suppliers.html">Supplier</a>
-            <a href="/shifts.html">Shift</a>
-            <a href="/reports.html">Laporan</a>
-            <a href="/sync-center.html">Sync Center</a>
-            <a href="/settings.html">Pengaturan</a>
-        </nav>
-        <div style="margin-top:auto;padding:20px;">
-            <button class="btn-secondary" id="btn-logout" style="width:100%">Logout</button>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="navbar-brand">POS System — Piutang</div>
+  <div class="navbar-user">
+    <div class="user-info">
+      <strong id="navUsername">—</strong>
+      <span class="user-role" id="navUserRole"></span>
+    </div>
+    <button class="btn btn-secondary" id="btn-logout-nav" style="width:auto;padding:6px 14px;font-size:13px">Logout</button>
+  </div>
+</nav>
+
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <ul class="sidebar-menu">
+      <li class="menu-item"><a href="/dashboard.html"><span class="menu-icon">🏠</span> Dashboard</a></li>
+      <li class="menu-item"><a href="/kasir.html"><span class="menu-icon">🛒</span> Kasir</a></li>
+      <li class="menu-item"><a href="/products.html"><span class="menu-icon">📦</span> Produk</a></li>
+      <li class="menu-item"><a href="/transactions.html"><span class="menu-icon">💳</span> Transaksi</a></li>
+      <li class="menu-item"><a href="/finance.html"><span class="menu-icon">💰</span> Keuangan</a></li>
+      <li class="menu-item"><a href="/customers.html"><span class="menu-icon">👥</span> Pelanggan</a></li>
+      <li class="menu-item active"><a href="/receivables.html"><span class="menu-icon">📋</span> Piutang</a></li>
+      <li class="menu-item"><a href="/suppliers.html"><span class="menu-icon">🏭</span> Supplier</a></li>
+      <li class="menu-item"><a href="/shifts.html"><span class="menu-icon">🕐</span> Shift</a></li>
+      <li class="menu-item"><a href="/reports.html"><span class="menu-icon">📈</span> Laporan</a></li>
+      <li class="menu-item"><a href="/sync-center.html"><span class="menu-icon">🔄</span> Sync Center</a></li>
+      <li class="menu-item"><a href="/settings.html"><span class="menu-icon">⚙️</span> Pengaturan</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="content-header">
+      <h1>Piutang Pelanggan</h1>
+      <a href="/customers.html" class="btn btn-secondary">👥 Master Pelanggan</a>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs-container">
+      <div class="tabs">
+        <button class="tab-button active" data-tab="summary">Ringkasan Piutang</button>
+        <button class="tab-button" data-tab="detail">Detail Piutang</button>
+      </div>
+    </div>
+
+    <!-- Tab: Ringkasan per Pelanggan -->
+    <div id="summary-tab" class="tab-content active">
+      <div class="filters-container">
+        <div class="filter-group">
+          <input type="text" id="searchSummary" class="filter-input" placeholder="Cari nama pelanggan...">
+          <button class="btn btn-primary" id="btnFilterSummary">🔍 Filter</button>
         </div>
-    </aside>
-    <main class="main-content">
-        <h1 class="page-title">Piutang</h1>
-        <div class="card">
-            <table>
-                <thead><tr><th>Pelanggan</th><th>Jumlah</th><th>Jatuh Tempo</th><th>Status</th><th></th></tr></thead>
-                <tbody id="table-body"></tbody>
-            </table>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th width="110">Kode</th>
+              <th>Nama Pelanggan</th>
+              <th width="130">Telepon</th>
+              <th width="130">Limit Kredit</th>
+              <th width="130">Outstanding</th>
+              <th width="80">Blm Bayar</th>
+              <th width="80">Sebagian</th>
+              <th width="100">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="summaryTableBody">
+            <tr><td colspan="8" class="text-center">Memuat data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab: Detail Piutang -->
+    <div id="detail-tab" class="tab-content">
+      <div class="filters-container">
+        <div class="filter-group filter-group--with-label">
+          <div class="form-group">
+            <label>Pelanggan</label>
+            <select id="filterDetailCustomer" class="filter-input">
+              <option value="">Semua Pelanggan</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="filterDetailStatus" class="filter-input">
+              <option value="">Semua Status</option>
+              <option value="unpaid">Belum Bayar</option>
+              <option value="partial">Bayar Sebagian</option>
+              <option value="paid">Lunas</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>&nbsp;</label>
+            <button class="btn btn-primary" id="btnFilterDetail">🔍 Filter</button>
+          </div>
         </div>
-    </main>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th width="130">No. Transaksi</th>
+              <th>Pelanggan</th>
+              <th width="140">Tgl Transaksi</th>
+              <th width="120">Total</th>
+              <th width="120">Sudah Bayar</th>
+              <th width="120">Sisa</th>
+              <th width="110">Status</th>
+              <th width="130">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="detailTableBody">
+            <tr><td colspan="8" class="text-center">Memuat data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
 </div>
+
+<!-- Modal Pembayaran Piutang -->
+<div id="paymentModal" class="modal">
+  <div class="modal-content" style="max-width:580px;">
+    <div class="modal-header">
+      <h2>Pembayaran Piutang</h2>
+      <button class="modal-close" id="closePaymentModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <!-- Info Piutang -->
+      <div class="payment-summary" style="margin-bottom:16px;">
+        <div class="payment-info-row"><span>Pelanggan:</span><strong id="payCustomerName">-</strong></div>
+        <div class="payment-info-row"><span>No. Transaksi:</span><strong id="payTransactionCode">-</strong></div>
+        <div class="payment-info-row"><span>Total Piutang:</span><strong id="payTotalAmount">Rp 0</strong></div>
+        <div class="payment-info-row"><span>Sudah Dibayar:</span><strong id="payPaidAmount">Rp 0</strong></div>
+        <div class="payment-info-row"><span>Sisa Piutang:</span><strong id="payRemainingAmount" class="total-amount">Rp 0</strong></div>
+      </div>
+
+      <!-- Form Bayar -->
+      <div id="payFormSection" class="pay-form-section">
+        <hr>
+        <h4>Input Pembayaran</h4>
+        <input type="hidden" id="payReceivableId">
+        <div class="form-row">
+          <div class="form-group-pay">
+            <label>Jumlah Bayar <span style="color:#dc2626">*</span></label>
+            <input type="number" id="payAmount" placeholder="0" min="1" step="1000">
+          </div>
+          <div class="form-group-pay">
+            <label>Metode Bayar</label>
+            <select id="payMethod">
+              <option value="cash">Cash</option>
+              <option value="transfer">Transfer</option>
+              <option value="debit">Debit Card</option>
+              <option value="qris">QRIS</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group-pay">
+          <label>Catatan</label>
+          <input type="text" id="payNotes" placeholder="Opsional">
+        </div>
+        <div id="paySisaPreview" style="font-size:13px;color:#666;margin-bottom:8px;"></div>
+        <div class="modal-footer" style="padding:0;">
+          <button type="button" class="btn btn-secondary" id="btnCancelPay">Batal</button>
+          <button type="button" class="btn btn-success" id="btnProcessPay">✓ Proses Pembayaran</button>
+        </div>
+      </div>
+
+      <!-- Riwayat Pembayaran -->
+      <div style="margin-top:20px;">
+        <h4 style="font-size:14px;margin-bottom:8px;">Riwayat Pembayaran</h4>
+        <div id="paymentHistory">
+          <p class="text-muted text-center">Belum ada pembayaran</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="/src/js/api-client.js"></script>
 <script src="/src/js/app.js"></script>
 <script src="/src/js/auth.js"></script>
-<script src="/src/js/router.js"></script>
-<script>
-    requireAuth();
-    document.getElementById('btn-logout').addEventListener('click', logout);
-
-    function fmt(n) { return 'Rp ' + Number(n).toLocaleString('id-ID'); }
-    function fmtDate(s) { return s ? new Date(s).toLocaleDateString('id-ID') : '-'; }
-
-    async function load() {
-        try {
-            const data = await apiClient.get('/receivables', { limit: 500 }) || [];
-            document.getElementById('table-body').innerHTML = data.map(r => `
-                <tr>
-                    <td>${r.customer_name || '-'}</td>
-                    <td>${fmt(r.amount)}</td>
-                    <td>${fmtDate(r.due_date)}</td>
-                    <td>${r.status}</td>
-                    <td><button class="btn-secondary" onclick="alert('Bayar #${r.id}')">Bayar</button></td>
-                </tr>`).join('');
-        } catch (e) { console.error(e.message); }
-    }
-
-    load();
-</script>
+<script src="/src/js/receivables.js"></script>
 </body>
 </html>
