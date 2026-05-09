@@ -1,80 +1,286 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transaksi — POS System</title>
-    <link rel="stylesheet" href="/src/css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Riwayat Transaksi — POS System</title>
+  <link rel="stylesheet" href="/src/css/style.css">
+  <style>
+    body { margin: 0; background: #f5f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+    .navbar {
+      background: #2c3e50; color: #fff; padding: 0 30px; height: 60px;
+      display: flex; justify-content: space-between; align-items: center;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    .navbar-brand { font-size: 18px; font-weight: 700; }
+    .navbar-user  { display: flex; align-items: center; gap: 16px; }
+    .user-info    { display: flex; flex-direction: column; align-items: flex-end; }
+    .user-info strong { font-size: 13px; }
+    .user-role    { font-size: 11px; color: #bdc3c7; text-transform: capitalize; }
+
+    .dashboard-container { display: flex; margin-top: 60px; min-height: calc(100vh - 60px); }
+
+    .sidebar {
+      width: 220px; background: #fff; box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+      position: fixed; left: 0; top: 60px; bottom: 0; overflow-y: auto;
+    }
+    .sidebar-menu { list-style: none; padding: 12px 0; margin: 0; }
+    .menu-item a {
+      display: flex; align-items: center; padding: 11px 18px;
+      color: #2c3e50; text-decoration: none; font-size: 13px; font-weight: 500;
+      transition: background 0.2s;
+    }
+    .menu-item a:hover { background: #f8f9fa; }
+    .menu-item.active a { background: #3498db; color: #fff; border-right: 4px solid #2980b9; }
+    .menu-icon { font-size: 16px; margin-right: 10px; width: 20px; text-align: center; }
+
+    .main-content { flex: 1; margin-left: 220px; padding: 20px 24px; }
+
+    .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .content-header h1 { font-size: 22px; color: #2c3e50; margin: 0; }
+
+    .summary-cards { display: flex; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
+    .summary-card {
+      flex: 1; min-width: 150px; background: #fff; border-radius: 8px; padding: 14px 18px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    .summary-card .card-label { font-size: 12px; color: #6b7280; font-weight: 600; margin-bottom: 4px; }
+    .summary-card .card-value { font-size: 20px; font-weight: 700; color: #1e293b; }
+
+    .filters-container { display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; align-items: flex-end; }
+    .filter-item { display: flex; flex-direction: column; gap: 4px; }
+    .filter-item label { font-size: 12px; font-weight: 600; color: #6b7280; }
+    .filter-select, .filter-input {
+      padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px;
+      font-size: 13px; background: #fff;
+    }
+
+    .table-container { overflow-x: auto; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+    .data-table { width: 100%; border-collapse: collapse; background: #fff; font-size: 13px; }
+    .data-table thead th {
+      background: #f9fafb; padding: 10px 12px; text-align: left;
+      font-weight: 600; color: #374151; border-bottom: 2px solid #e5e7eb; white-space: nowrap;
+    }
+    .data-table tbody td { padding: 10px 12px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:hover { background: #f9fafb; }
+    .text-center { text-align: center; color: #9ca3af; padding: 24px !important; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer;
+      font-size: 13px; font-weight: 600; transition: background 0.15s; white-space: nowrap;
+    }
+    .btn-primary { background: #3498db; color: #fff; }
+    .btn-primary:hover { background: #2980b9; }
+    .btn-secondary { background: #e5e7eb; color: #374151; }
+    .btn-secondary:hover { background: #d1d5db; }
+    .btn-danger { background: #dc2626; color: #fff; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-icon {
+      background: none; border: none; cursor: pointer; font-size: 16px;
+      padding: 3px 5px; border-radius: 4px; transition: background 0.1s;
+    }
+    .btn-icon:hover { background: #f3f4f6; }
+    .action-buttons { display: flex; gap: 4px; white-space: nowrap; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-danger  { background: #fee2e2; color: #991b1b; }
+    .badge-info    { background: #dbeafe; color: #1e40af; }
+    .badge-gray    { background: #f3f4f6; color: #374151; }
+
+    .pagination {
+      display: flex; align-items: center; gap: 8px; justify-content: center; margin-top: 16px;
+    }
+    .pagination button {
+      padding: 6px 12px; border: 1px solid #d1d5db; border-radius: 6px;
+      background: #fff; cursor: pointer; font-size: 13px;
+    }
+    .pagination button:hover:not(:disabled) { background: #f3f4f6; }
+    .pagination button:disabled { opacity: 0.4; cursor: default; }
+    .page-info { font-size: 13px; color: #6b7280; }
+
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,.5); z-index: 2000; justify-content: center; align-items: center;
+    }
+    .modal-content {
+      background: #fff; border-radius: 10px; max-width: 680px; width: 92%;
+      box-shadow: 0 8px 24px rgba(0,0,0,.2); max-height: 90vh; overflow-y: auto;
+    }
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; border-bottom: 1px solid #e5e7eb;
+      position: sticky; top: 0; background: #fff; z-index: 1;
+    }
+    .modal-header h2 { font-size: 18px; margin: 0; color: #1e293b; }
+    .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #6b7280; line-height: 1; }
+    .modal-close:hover { color: #111; }
+    .modal-body   { padding: 20px; }
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+
+    .detail-section { margin-bottom: 16px; }
+    .detail-section-title { font-size: 13px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .detail-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { color: #6b7280; }
+    .detail-value { font-weight: 600; color: #1e293b; text-align: right; }
+    .void-notice {
+      background: #fee2e2; color: #991b1b; padding: 10px 14px; border-radius: 6px;
+      font-size: 13px; font-weight: 700; text-align: center; margin-bottom: 14px;
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main-content { margin-left: 0; }
+    }
+  </style>
 </head>
 <body>
-<div class="layout">
-    <aside class="sidebar">
-        <div class="logo">POS System</div>
-        <nav>
-            <a href="/dashboard.html">Dashboard</a>
-            <a href="/kasir.html">Kasir</a>
-            <a href="/products.html">Produk</a>
-            <a href="/transactions.html" class="active">Transaksi</a>
-            <a href="/finance.html">Keuangan</a>
-            <a href="/customers.html">Pelanggan</a>
-            <a href="/receivables.html">Piutang</a>
-            <a href="/suppliers.html">Supplier</a>
-            <a href="/shifts.html">Shift</a>
-            <a href="/reports.html">Laporan</a>
-            <a href="/sync-center.html">Sync Center</a>
-            <a href="/settings.html">Pengaturan</a>
-        </nav>
-        <div style="margin-top:auto;padding:20px;">
-            <button class="btn-secondary" id="btn-logout" style="width:100%">Logout</button>
-        </div>
-    </aside>
-    <main class="main-content">
-        <h1 class="page-title">Riwayat Transaksi</h1>
-        <div class="card">
-            <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
-                <input type="date" id="date-from" style="width:auto">
-                <input type="date" id="date-to" style="width:auto">
-                <button class="btn-primary" onclick="load()">Filter</button>
-            </div>
-            <table>
-                <thead><tr><th>No. Transaksi</th><th>Tanggal</th><th>Total</th><th>Platform</th><th>Kasir</th><th></th></tr></thead>
-                <tbody id="table-body"></tbody>
-            </table>
-        </div>
-    </main>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="navbar-brand">POS System — Transaksi</div>
+  <div class="navbar-user">
+    <div class="user-info">
+      <strong id="navUsername">—</strong>
+      <span class="user-role" id="navUserRole"></span>
+    </div>
+    <button class="btn btn-secondary" id="btn-logout-nav" style="width:auto;padding:6px 14px;font-size:13px">Logout</button>
+  </div>
+</nav>
+
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <ul class="sidebar-menu">
+      <li class="menu-item"><a href="/dashboard.html"><span class="menu-icon">🏠</span> Dashboard</a></li>
+      <li class="menu-item"><a href="/kasir.html"><span class="menu-icon">🛒</span> Kasir</a></li>
+      <li class="menu-item"><a href="/products.html"><span class="menu-icon">📦</span> Produk</a></li>
+      <li class="menu-item active"><a href="/transactions.html"><span class="menu-icon">💳</span> Transaksi</a></li>
+      <li class="menu-item"><a href="/finance.html"><span class="menu-icon">💰</span> Keuangan</a></li>
+      <li class="menu-item"><a href="/customers.html"><span class="menu-icon">👥</span> Pelanggan</a></li>
+      <li class="menu-item"><a href="/receivables.html"><span class="menu-icon">📋</span> Piutang</a></li>
+      <li class="menu-item"><a href="/suppliers.html"><span class="menu-icon">🏭</span> Supplier</a></li>
+      <li class="menu-item"><a href="/shifts.html"><span class="menu-icon">🕐</span> Shift</a></li>
+      <li class="menu-item"><a href="/reports.html"><span class="menu-icon">📈</span> Laporan</a></li>
+      <li class="menu-item"><a href="/sync-center.html"><span class="menu-icon">🔄</span> Sync Center</a></li>
+      <li class="menu-item"><a href="/settings.html"><span class="menu-icon">⚙️</span> Pengaturan</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="content-header">
+      <h1>Riwayat Transaksi</h1>
+      <button class="btn btn-secondary" id="btnRefresh">🔄 Refresh</button>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+      <div class="summary-card">
+        <div class="card-label">Total Transaksi</div>
+        <div class="card-value" id="summaryTotal">—</div>
+      </div>
+      <div class="summary-card">
+        <div class="card-label">Total Pendapatan</div>
+        <div class="card-value" id="summaryRevenue">—</div>
+      </div>
+      <div class="summary-card">
+        <div class="card-label">Rata-rata per Transaksi</div>
+        <div class="card-value" id="summaryAvg">—</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-container">
+      <div class="filter-item">
+        <label>Dari Tanggal</label>
+        <input type="date" id="filterStartDate" class="filter-input">
+      </div>
+      <div class="filter-item">
+        <label>Sampai Tanggal</label>
+        <input type="date" id="filterEndDate" class="filter-input">
+      </div>
+      <div class="filter-item">
+        <label>Metode Bayar</label>
+        <select id="filterPaymentMethod" class="filter-select">
+          <option value="">Semua Metode</option>
+          <option value="cash">Cash</option>
+          <option value="transfer">Transfer</option>
+          <option value="qris">QRIS</option>
+          <option value="card">Kartu</option>
+          <option value="piutang">Piutang</option>
+        </select>
+      </div>
+      <div class="filter-item">
+        <label>Platform</label>
+        <select id="filterDeviceSource" class="filter-select">
+          <option value="">Semua Platform</option>
+          <option value="desktop">Desktop</option>
+          <option value="web">Web</option>
+          <option value="android">Android</option>
+        </select>
+      </div>
+      <div class="filter-item" style="align-self:flex-end;">
+        <button class="btn btn-primary" id="btnApplyFilter">Terapkan Filter</button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>No. Transaksi</th>
+            <th>Tanggal &amp; Waktu</th>
+            <th>Kasir</th>
+            <th>Pelanggan</th>
+            <th>Metode Bayar</th>
+            <th>Platform</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="transactionsTableBody">
+          <tr><td colspan="9" class="text-center">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="paginationContainer">
+      <button id="btnPrevPage" disabled>&#8592; Sebelumnya</button>
+      <span class="page-info" id="pageInfo">Halaman 1</span>
+      <button id="btnNextPage" disabled>Berikutnya &#8594;</button>
+    </div>
+  </main>
 </div>
+
+<!-- Modal Detail Transaksi -->
+<div id="detailModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="detailModalTitle">Detail Transaksi</h2>
+      <button class="modal-close" id="closeDetailModal">&times;</button>
+    </div>
+    <div class="modal-body" id="detailModalBody">
+      <p class="text-center">Loading...</p>
+    </div>
+  </div>
+</div>
+
 <script src="/src/js/api-client.js"></script>
 <script src="/src/js/app.js"></script>
 <script src="/src/js/auth.js"></script>
-<script src="/src/js/router.js"></script>
-<script>
-    requireAuth();
-    document.getElementById('btn-logout').addEventListener('click', logout);
-
-    function fmt(n) { return 'Rp ' + Number(n).toLocaleString('id-ID'); }
-    function fmtDate(s) { return s ? new Date(s).toLocaleString('id-ID') : '-'; }
-
-    async function load() {
-        const from = document.getElementById('date-from').value;
-        const to   = document.getElementById('date-to').value;
-        const params = {};
-        if (from) params.date_from = from;
-        if (to)   params.date_to   = to;
-        try {
-            const data = await apiClient.get('/transactions', params) || [];
-            document.getElementById('table-body').innerHTML = data.map(t => `
-                <tr>
-                    <td>${t.transaction_number || t.id}</td>
-                    <td>${fmtDate(t.created_at)}</td>
-                    <td>${fmt(t.total_amount)}</td>
-                    <td>${t.device_source || '-'}</td>
-                    <td>${t.cashier_name || '-'}</td>
-                    <td><button class="btn-secondary" onclick="alert('Detail #${t.id}')">Detail</button></td>
-                </tr>`).join('');
-        } catch (e) { console.error(e.message); }
-    }
-
-    load();
-</script>
+<script src="/src/js/transactions.js"></script>
 </body>
 </html>
