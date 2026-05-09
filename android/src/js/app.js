@@ -11,3 +11,6 @@ if (typeof apiClient !== 'undefined') {
     const storedToken = localStorage.getItem('access_token');
     if (storedToken) apiClient.token = storedToken;
 }
+
+// Cek update setelah login berhasil
+window.addEventListener('auth:login-success', checkForUpdate);
