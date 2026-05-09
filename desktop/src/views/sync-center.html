@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
@@ -143,7 +143,7 @@
     <!-- Main Content -->
     <main class="main-content">
       <div class="content-header" style="display:flex;align-items:center;justify-content:space-between;">
-        <h1>☁️ Sync Center</h1>
+        <h1>â˜ï¸ Sync Center</h1>
         <div id="connectionStatus" class="connection-status offline">
           <span class="status-dot offline" id="statusDot"></span>
           <span id="statusText">Memeriksa koneksi...</span>
@@ -153,9 +153,9 @@
       <!-- Tabs Navigation -->
       <div class="tabs-container">
         <div class="tabs">
-          <button class="tab-button active" data-tab="conflicts">⚠️ Konflik Transaksi</button>
-          <button class="tab-button" data-tab="queue">🔄 Antrian Sync</button>
-          <button class="tab-button" data-tab="history">📋 Riwayat Sync</button>
+          <button class="tab-button active" data-tab="conflicts">âš ï¸ Konflik Transaksi</button>
+          <button class="tab-button" data-tab="queue">ðŸ”„ Antrian Sync</button>
+          <button class="tab-button" data-tab="history">ðŸ“‹ Riwayat Sync</button>
         </div>
       </div>
 
@@ -170,13 +170,13 @@
               <option value="resolved">Resolved</option>
               <option value="">Semua</option>
             </select>
-            <button class="btn btn-primary" id="btnLoadConflicts">🔍 Muat Data</button>
+            <button class="btn btn-primary" id="btnLoadConflicts">ðŸ” Muat Data</button>
           </div>
         </div>
 
         <div id="conflictsList">
           <div class="empty-state">
-            <div class="empty-state-icon">⚠️</div>
+            <div class="empty-state-icon">âš ï¸</div>
             <p>Klik "Muat Data" untuk menampilkan konflik</p>
           </div>
         </div>
@@ -184,8 +184,8 @@
         <div class="pagination-container" id="conflictsPagination" style="display:none;">
           <span class="pagination-info" id="conflictsPaginationInfo"></span>
           <div class="pagination-buttons">
-            <button class="btn btn-secondary btn-sm" id="conflictsPrevBtn">← Prev</button>
-            <button class="btn btn-secondary btn-sm" id="conflictsNextBtn">Next →</button>
+            <button class="btn btn-secondary btn-sm" id="conflictsPrevBtn">â† Prev</button>
+            <button class="btn btn-secondary btn-sm" id="conflictsNextBtn">Next â†’</button>
           </div>
         </div>
       </div>
@@ -203,14 +203,14 @@
               <option value="synced">Synced</option>
               <option value="failed">Failed</option>
             </select>
-            <button class="btn btn-primary" id="btnLoadQueue">🔍 Muat Data</button>
-            <button class="btn btn-success" id="btnManualSync">☁️ Sync Manual</button>
+            <button class="btn btn-primary" id="btnLoadQueue">ðŸ” Muat Data</button>
+            <button class="btn btn-success" id="btnManualSync">â˜ï¸ Sync Manual</button>
           </div>
         </div>
 
         <div id="queueList">
           <div class="empty-state">
-            <div class="empty-state-icon">🔄</div>
+            <div class="empty-state-icon">ðŸ”„</div>
             <p>Klik "Muat Data" untuk menampilkan antrian</p>
           </div>
         </div>
@@ -218,8 +218,8 @@
         <div class="pagination-container" id="queuePagination" style="display:none;">
           <span class="pagination-info" id="queuePaginationInfo"></span>
           <div class="pagination-buttons">
-            <button class="btn btn-secondary btn-sm" id="queuePrevBtn">← Prev</button>
-            <button class="btn btn-secondary btn-sm" id="queueNextBtn">Next →</button>
+            <button class="btn btn-secondary btn-sm" id="queuePrevBtn">â† Prev</button>
+            <button class="btn btn-secondary btn-sm" id="queueNextBtn">Next â†’</button>
           </div>
         </div>
       </div>
@@ -234,7 +234,7 @@
             <input type="date" id="historyStartDate" class="filter-input">
             <span class="text-separator">s/d</span>
             <input type="date" id="historyEndDate" class="filter-input">
-            <button class="btn btn-primary" id="btnLoadHistory">🔍 Filter</button>
+            <button class="btn btn-primary" id="btnLoadHistory">ðŸ” Filter</button>
           </div>
         </div>
 
@@ -262,8 +262,8 @@
         <div class="pagination-container" id="historyPagination" style="display:none;">
           <span class="pagination-info" id="historyPaginationInfo"></span>
           <div class="pagination-buttons">
-            <button class="btn btn-secondary btn-sm" id="historyPrevBtn">← Prev</button>
-            <button class="btn btn-secondary btn-sm" id="historyNextBtn">Next →</button>
+            <button class="btn btn-secondary btn-sm" id="historyPrevBtn">â† Prev</button>
+            <button class="btn btn-secondary btn-sm" id="historyNextBtn">Next â†’</button>
           </div>
         </div>
       </div>
@@ -287,6 +287,7 @@
   <script src="../js/auth-check.js"></script>
   <script src="../js/menu.js"></script>
   <script src="../js/notification.js"></script>
+  <script src="../js/notification-poller.js"></script>
   <script src="../js/sync-center.js"></script>
 </body>
 </html>

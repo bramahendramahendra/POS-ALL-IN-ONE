@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard — POS System</title>
+    <title>Dashboard â€” POS System</title>
     <link rel="stylesheet" href="/src/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -172,7 +172,7 @@
     <div class="navbar-brand">POS System</div>
     <div class="navbar-user">
         <div class="user-info">
-            <strong id="navUsername">—</strong>
+            <strong id="navUsername">â€”</strong>
             <span class="user-role" id="navUserRole"></span>
         </div>
         <button class="btn-secondary" id="btn-logout-nav">Logout</button>
@@ -184,40 +184,40 @@
     <aside class="sidebar">
         <ul class="sidebar-menu">
             <li class="menu-item active">
-                <a href="/dashboard.html"><span class="menu-icon">🏠</span> Dashboard</a>
+                <a href="/dashboard.html"><span class="menu-icon">ðŸ </span> Dashboard</a>
             </li>
             <li class="menu-item">
-                <a href="/kasir.html"><span class="menu-icon">🛒</span> Kasir</a>
+                <a href="/kasir.html"><span class="menu-icon">ðŸ›’</span> Kasir</a>
             </li>
             <li class="menu-item">
-                <a href="/products.html"><span class="menu-icon">📦</span> Produk</a>
+                <a href="/products.html"><span class="menu-icon">ðŸ“¦</span> Produk</a>
             </li>
             <li class="menu-item">
-                <a href="/transactions.html"><span class="menu-icon">💳</span> Transaksi</a>
+                <a href="/transactions.html"><span class="menu-icon">ðŸ’³</span> Transaksi</a>
             </li>
             <li class="menu-item">
-                <a href="/finance.html"><span class="menu-icon">💰</span> Keuangan</a>
+                <a href="/finance.html"><span class="menu-icon">ðŸ’°</span> Keuangan</a>
             </li>
             <li class="menu-item">
-                <a href="/customers.html"><span class="menu-icon">👥</span> Pelanggan</a>
+                <a href="/customers.html"><span class="menu-icon">ðŸ‘¥</span> Pelanggan</a>
             </li>
             <li class="menu-item">
-                <a href="/receivables.html"><span class="menu-icon">📋</span> Piutang</a>
+                <a href="/receivables.html"><span class="menu-icon">ðŸ“‹</span> Piutang</a>
             </li>
             <li class="menu-item">
-                <a href="/suppliers.html"><span class="menu-icon">🏭</span> Supplier</a>
+                <a href="/suppliers.html"><span class="menu-icon">ðŸ­</span> Supplier</a>
             </li>
             <li class="menu-item">
-                <a href="/shifts.html"><span class="menu-icon">🕐</span> Shift</a>
+                <a href="/shifts.html"><span class="menu-icon">ðŸ•</span> Shift</a>
             </li>
             <li class="menu-item">
-                <a href="/reports.html"><span class="menu-icon">📈</span> Laporan</a>
+                <a href="/reports.html"><span class="menu-icon">ðŸ“ˆ</span> Laporan</a>
             </li>
             <li class="menu-item" id="menuSyncCenter">
-                <a href="/sync-center.html"><span class="menu-icon">🔄</span> Sync Center</a>
+                <a href="/sync-center.html"><span class="menu-icon">ðŸ”„</span> Sync Center</a>
             </li>
             <li class="menu-item">
-                <a href="/settings.html"><span class="menu-icon">⚙️</span> Pengaturan</a>
+                <a href="/settings.html"><span class="menu-icon">âš™ï¸</span> Pengaturan</a>
             </li>
         </ul>
     </aside>
@@ -231,17 +231,17 @@
 
         <!-- Welcome Card -->
         <div class="welcome-card">
-            <h2>Selamat datang, <span id="welcomeName">User</span>! 👋</h2>
+            <h2>Selamat datang, <span id="welcomeName">User</span>! ðŸ‘‹</h2>
             <p>Berikut ringkasan aktivitas toko Anda hari ini.</p>
         </div>
 
         <!-- Stats Hari Ini -->
         <div class="dashboard-section-header">
-            <h3 class="section-label">📅 Hari Ini</h3>
+            <h3 class="section-label">ðŸ“… Hari Ini</h3>
         </div>
         <div class="stats-container">
             <div class="stat-card stat-card-primary">
-                <div class="stat-icon">💰</div>
+                <div class="stat-icon">ðŸ’°</div>
                 <div class="stat-content">
                     <h3>Total Penjualan</h3>
                     <p class="stat-value" id="statTodaySales">Rp 0</p>
@@ -249,7 +249,7 @@
                 </div>
             </div>
             <div class="stat-card stat-card-success">
-                <div class="stat-icon">🧾</div>
+                <div class="stat-icon">ðŸ§¾</div>
                 <div class="stat-content">
                     <h3>Transaksi</h3>
                     <p class="stat-value" id="statTodayTransactions">0</p>
@@ -257,7 +257,7 @@
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">📦</div>
+                <div class="stat-icon">ðŸ“¦</div>
                 <div class="stat-content">
                     <h3>Total Produk</h3>
                     <p class="stat-value" id="statTotalProducts">0</p>
@@ -265,7 +265,7 @@
                 </div>
             </div>
             <div class="stat-card stat-card-warning clickable" id="statLowStockCard">
-                <div class="stat-icon">⚠️</div>
+                <div class="stat-icon">âš ï¸</div>
                 <div class="stat-content">
                     <h3>Stok Menipis</h3>
                     <p class="stat-value" id="statLowStock">0</p>
@@ -276,11 +276,11 @@
 
         <!-- Stats Bulan Ini -->
         <div class="dashboard-section-header">
-            <h3 class="section-label">📆 Bulan Ini</h3>
+            <h3 class="section-label">ðŸ“† Bulan Ini</h3>
         </div>
         <div class="stats-container" style="grid-template-columns: repeat(auto-fit, minmax(220px,1fr))">
             <div class="stat-card">
-                <div class="stat-icon">📈</div>
+                <div class="stat-icon">ðŸ“ˆ</div>
                 <div class="stat-content">
                     <h3>Total Penjualan</h3>
                     <p class="stat-value" id="statMonthSales">Rp 0</p>
@@ -288,7 +288,7 @@
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">👥</div>
+                <div class="stat-icon">ðŸ‘¥</div>
                 <div class="stat-content">
                     <h3>User Aktif</h3>
                     <p class="stat-value" id="statTotalUsers">0</p>
@@ -299,7 +299,7 @@
 
         <!-- Grafik Section -->
         <div class="dashboard-section-header" style="margin-top: 10px">
-            <h3 class="section-label">📊 Analitik & Grafik</h3>
+            <h3 class="section-label">ðŸ“Š Analitik & Grafik</h3>
         </div>
 
         <!-- Filter Periode Global -->
@@ -315,7 +315,7 @@
         <div class="dashboard-charts-grid">
             <div class="dashboard-chart-card full-width">
                 <div class="dcc-header">
-                    <h3>📈 Trend Penjualan — Periode Ini vs Sebelumnya</h3>
+                    <h3>ðŸ“ˆ Trend Penjualan â€” Periode Ini vs Sebelumnya</h3>
                     <div class="dcc-controls">
                         <button class="dcc-toggle-btn active" id="trendToggleValue">Nilai (Rp)</button>
                         <button class="dcc-toggle-btn" id="trendToggleCount">Jumlah Transaksi</button>
@@ -331,7 +331,7 @@
         <div class="dashboard-charts-grid">
             <div class="dashboard-chart-card">
                 <div class="dcc-header">
-                    <h3>🏷️ Top 5 Kategori Terlaris</h3>
+                    <h3>ðŸ·ï¸ Top 5 Kategori Terlaris</h3>
                 </div>
                 <div class="dcc-body">
                     <canvas id="chartTopCategories"></canvas>
@@ -339,7 +339,7 @@
             </div>
             <div class="dashboard-chart-card">
                 <div class="dcc-header">
-                    <h3>💳 Distribusi Metode Pembayaran</h3>
+                    <h3>ðŸ’³ Distribusi Metode Pembayaran</h3>
                 </div>
                 <div class="dcc-body">
                     <canvas id="chartPaymentMethods"></canvas>
@@ -351,7 +351,7 @@
         <div class="dashboard-charts-grid">
             <div class="dashboard-chart-card full-width">
                 <div class="dcc-header">
-                    <h3>🏆 Top 5 Produk Terlaris</h3>
+                    <h3>ðŸ† Top 5 Produk Terlaris</h3>
                     <div class="dcc-controls">
                         <button class="dcc-toggle-btn active" id="prodToggleQty">Qty Terjual</button>
                         <button class="dcc-toggle-btn" id="prodToggleValue">Nilai Penjualan</button>
@@ -365,42 +365,42 @@
 
         <!-- Summary Extra / Insight -->
         <div class="dashboard-section-header">
-            <h3 class="section-label">💡 Insight Periode Ini</h3>
+            <h3 class="section-label">ðŸ’¡ Insight Periode Ini</h3>
         </div>
         <div class="summary-extra-grid">
             <div class="summary-extra-card">
-                <div class="sec-icon">🏅</div>
+                <div class="sec-icon">ðŸ…</div>
                 <div class="sec-body">
                     <div class="sec-label">Transaksi Tertinggi</div>
                     <div class="sec-value" id="secHighestAmount">Rp 0</div>
-                    <div class="sec-sub"   id="secHighestCode">—</div>
+                    <div class="sec-sub"   id="secHighestCode">â€”</div>
                 </div>
             </div>
             <div class="summary-extra-card">
-                <div class="sec-icon">🕐</div>
+                <div class="sec-icon">ðŸ•</div>
                 <div class="sec-body">
                     <div class="sec-label">Jam Tersibuk (Peak Hour)</div>
-                    <div class="sec-value" id="secPeakHour">—</div>
-                    <div class="sec-sub"   id="secPeakCount">— transaksi</div>
+                    <div class="sec-value" id="secPeakHour">â€”</div>
+                    <div class="sec-sub"   id="secPeakCount">â€” transaksi</div>
                 </div>
             </div>
             <div class="summary-extra-card">
-                <div class="sec-icon">📊</div>
+                <div class="sec-icon">ðŸ“Š</div>
                 <div class="sec-body">
                     <div class="sec-label">Rata-rata Nilai Transaksi</div>
                     <div class="sec-value" id="secAvgAmount">Rp 0</div>
-                    <div class="sec-sub"   id="secTotalCount">dari — transaksi</div>
+                    <div class="sec-sub"   id="secTotalCount">dari â€” transaksi</div>
                 </div>
             </div>
         </div>
 
         <!-- Quick Actions -->
         <div class="dashboard-section-header">
-            <h3 class="section-label">⚡ Aksi Cepat</h3>
+            <h3 class="section-label">âš¡ Aksi Cepat</h3>
         </div>
         <div class="quick-actions-grid">
             <a href="/kasir.html" class="quick-action-card">
-                <div class="quick-action-icon">🛒</div>
+                <div class="quick-action-icon">ðŸ›’</div>
                 <div class="quick-action-text">
                     <strong>Kasir</strong>
                     <small>Buat transaksi baru</small>
@@ -408,7 +408,7 @@
                 <div class="quick-action-shortcut"><kbd>Ctrl+N</kbd></div>
             </a>
             <a href="/products.html" class="quick-action-card">
-                <div class="quick-action-icon">📦</div>
+                <div class="quick-action-icon">ðŸ“¦</div>
                 <div class="quick-action-text">
                     <strong>Produk</strong>
                     <small>Kelola produk &amp; stok</small>
@@ -416,7 +416,7 @@
                 <div class="quick-action-shortcut"><kbd>Ctrl+P</kbd></div>
             </a>
             <a href="/transactions.html" class="quick-action-card">
-                <div class="quick-action-icon">💳</div>
+                <div class="quick-action-icon">ðŸ’³</div>
                 <div class="quick-action-text">
                     <strong>Transaksi</strong>
                     <small>Riwayat transaksi</small>
@@ -424,7 +424,7 @@
                 <div class="quick-action-shortcut"><kbd>Ctrl+T</kbd></div>
             </a>
             <a href="/finance.html" class="quick-action-card" id="qaFinance">
-                <div class="quick-action-icon">💰</div>
+                <div class="quick-action-icon">ðŸ’°</div>
                 <div class="quick-action-text">
                     <strong>Keuangan</strong>
                     <small>Kas, pengeluaran, pembelian</small>
@@ -432,20 +432,20 @@
                 <div class="quick-action-shortcut"><kbd>Ctrl+F</kbd></div>
             </a>
             <a href="/reports.html" class="quick-action-card" id="qaReports">
-                <div class="quick-action-icon">📈</div>
+                <div class="quick-action-icon">ðŸ“ˆ</div>
                 <div class="quick-action-text">
                     <strong>Laporan</strong>
                     <small>Analisis &amp; export data</small>
                 </div>
-                <div class="quick-action-shortcut"><kbd>Ctrl+⇧+R</kbd></div>
+                <div class="quick-action-shortcut"><kbd>Ctrl+â‡§+R</kbd></div>
             </a>
             <a href="/settings.html" class="quick-action-card" id="qaSettings">
-                <div class="quick-action-icon">⚙️</div>
+                <div class="quick-action-icon">âš™ï¸</div>
                 <div class="quick-action-text">
                     <strong>Pengaturan</strong>
                     <small>Konfigurasi aplikasi</small>
                 </div>
-                <div class="quick-action-shortcut"><kbd>Ctrl+⇧+S</kbd></div>
+                <div class="quick-action-shortcut"><kbd>Ctrl+â‡§+S</kbd></div>
             </a>
         </div>
     </main>
@@ -458,5 +458,6 @@
 <script>
     document.getElementById('btn-logout-nav').addEventListener('click', logout);
 </script>
+<script src="/src/js/notification-poller.js"></script>
 </body>
 </html>

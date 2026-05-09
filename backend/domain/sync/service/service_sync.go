@@ -223,6 +223,10 @@ func (s *syncService) GetConflicts(filter *dto_sync.ConflictFilter) (*dto_sync.C
 	}, nil
 }
 
+func (s *syncService) CountPendingConflicts() (int, error) {
+	return s.repo.CountPendingConflicts()
+}
+
 func (s *syncService) ResolveConflict(id, userID int, action string) error {
 	conflict, err := s.repo.GetConflictByID(id)
 	if err != nil {

@@ -43,6 +43,22 @@ func (h *SyncHandler) PushSync(c *gin.Context) {
 	})
 }
 
+// GET /api/sync/conflicts/count — jumlah konflik pending untuk polling notifikasi
+func (h *SyncHandler) GetConflictCount(c *gin.Context) {
+	count, err := h.service.CountPendingConflicts()
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
+		Code:    helper.StatusOk,
+		Status:  true,
+		Message: "Jumlah konflik pending",
+		Data:    map[string]int{"count": count},
+	})
+}
+
 // GET /api/sync/conflicts?status=pending&page=1&limit=20
 func (h *SyncHandler) GetConflicts(c *gin.Context) {
 	filter := &dto_sync.ConflictFilter{

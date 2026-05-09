@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Piutang Pelanggan — POS System</title>
+  <title>Piutang Pelanggan â€” POS System</title>
   <link rel="stylesheet" href="/src/css/style.css">
   <style>
     body { margin: 0; background: #f5f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
@@ -137,10 +137,10 @@
 
 <!-- Navbar -->
 <nav class="navbar">
-  <div class="navbar-brand">POS System — Piutang</div>
+  <div class="navbar-brand">POS System â€” Piutang</div>
   <div class="navbar-user">
     <div class="user-info">
-      <strong id="navUsername">—</strong>
+      <strong id="navUsername">â€”</strong>
       <span class="user-role" id="navUserRole"></span>
     </div>
     <button class="btn btn-secondary" id="btn-logout-nav" style="width:auto;padding:6px 14px;font-size:13px">Logout</button>
@@ -151,18 +151,18 @@
   <!-- Sidebar -->
   <aside class="sidebar">
     <ul class="sidebar-menu">
-      <li class="menu-item"><a href="/dashboard.html"><span class="menu-icon">🏠</span> Dashboard</a></li>
-      <li class="menu-item"><a href="/kasir.html"><span class="menu-icon">🛒</span> Kasir</a></li>
-      <li class="menu-item"><a href="/products.html"><span class="menu-icon">📦</span> Produk</a></li>
-      <li class="menu-item"><a href="/transactions.html"><span class="menu-icon">💳</span> Transaksi</a></li>
-      <li class="menu-item"><a href="/finance.html"><span class="menu-icon">💰</span> Keuangan</a></li>
-      <li class="menu-item"><a href="/customers.html"><span class="menu-icon">👥</span> Pelanggan</a></li>
-      <li class="menu-item active"><a href="/receivables.html"><span class="menu-icon">📋</span> Piutang</a></li>
-      <li class="menu-item"><a href="/suppliers.html"><span class="menu-icon">🏭</span> Supplier</a></li>
-      <li class="menu-item"><a href="/shifts.html"><span class="menu-icon">🕐</span> Shift</a></li>
-      <li class="menu-item"><a href="/reports.html"><span class="menu-icon">📈</span> Laporan</a></li>
-      <li class="menu-item"><a href="/sync-center.html"><span class="menu-icon">🔄</span> Sync Center</a></li>
-      <li class="menu-item"><a href="/settings.html"><span class="menu-icon">⚙️</span> Pengaturan</a></li>
+      <li class="menu-item"><a href="/dashboard.html"><span class="menu-icon">ðŸ </span> Dashboard</a></li>
+      <li class="menu-item"><a href="/kasir.html"><span class="menu-icon">ðŸ›’</span> Kasir</a></li>
+      <li class="menu-item"><a href="/products.html"><span class="menu-icon">ðŸ“¦</span> Produk</a></li>
+      <li class="menu-item"><a href="/transactions.html"><span class="menu-icon">ðŸ’³</span> Transaksi</a></li>
+      <li class="menu-item"><a href="/finance.html"><span class="menu-icon">ðŸ’°</span> Keuangan</a></li>
+      <li class="menu-item"><a href="/customers.html"><span class="menu-icon">ðŸ‘¥</span> Pelanggan</a></li>
+      <li class="menu-item active"><a href="/receivables.html"><span class="menu-icon">ðŸ“‹</span> Piutang</a></li>
+      <li class="menu-item"><a href="/suppliers.html"><span class="menu-icon">ðŸ­</span> Supplier</a></li>
+      <li class="menu-item"><a href="/shifts.html"><span class="menu-icon">ðŸ•</span> Shift</a></li>
+      <li class="menu-item"><a href="/reports.html"><span class="menu-icon">ðŸ“ˆ</span> Laporan</a></li>
+      <li class="menu-item"><a href="/sync-center.html"><span class="menu-icon">ðŸ”„</span> Sync Center</a></li>
+      <li class="menu-item"><a href="/settings.html"><span class="menu-icon">âš™ï¸</span> Pengaturan</a></li>
     </ul>
   </aside>
 
@@ -170,7 +170,7 @@
   <main class="main-content">
     <div class="content-header">
       <h1>Piutang Pelanggan</h1>
-      <a href="/customers.html" class="btn btn-secondary">👥 Master Pelanggan</a>
+      <a href="/customers.html" class="btn btn-secondary">ðŸ‘¥ Master Pelanggan</a>
     </div>
 
     <!-- Tabs -->
@@ -186,7 +186,7 @@
       <div class="filters-container">
         <div class="filter-group">
           <input type="text" id="searchSummary" class="filter-input" placeholder="Cari nama pelanggan...">
-          <button class="btn btn-primary" id="btnFilterSummary">🔍 Filter</button>
+          <button class="btn btn-primary" id="btnFilterSummary">ðŸ” Filter</button>
         </div>
       </div>
 
@@ -232,7 +232,7 @@
           </div>
           <div class="form-group">
             <label>&nbsp;</label>
-            <button class="btn btn-primary" id="btnFilterDetail">🔍 Filter</button>
+            <button class="btn btn-primary" id="btnFilterDetail">ðŸ” Filter</button>
           </div>
         </div>
       </div>
@@ -304,7 +304,7 @@
         <div id="paySisaPreview" style="font-size:13px;color:#666;margin-bottom:8px;"></div>
         <div class="modal-footer" style="padding:0;">
           <button type="button" class="btn btn-secondary" id="btnCancelPay">Batal</button>
-          <button type="button" class="btn btn-success" id="btnProcessPay">✓ Proses Pembayaran</button>
+          <button type="button" class="btn btn-success" id="btnProcessPay">âœ“ Proses Pembayaran</button>
         </div>
       </div>
 
@@ -323,5 +323,6 @@
 <script src="/src/js/app.js"></script>
 <script src="/src/js/auth.js"></script>
 <script src="/src/js/receivables.js"></script>
+<script src="/src/js/notification-poller.js"></script>
 </body>
 </html>

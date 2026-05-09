@@ -100,6 +100,12 @@ func (r *syncRepo) GetConflictByID(id int) (*model_sync.SyncConflict, error) {
 	return &c, nil
 }
 
+func (r *syncRepo) CountPendingConflicts() (int, error) {
+	var count int
+	err := r.db.Raw(`SELECT COUNT(*) FROM sync_conflicts WHERE status = 'pending'`).Scan(&count).Error
+	return count, err
+}
+
 func (r *syncRepo) ResolveConflict(id, userID int, action string) error {
 	return r.db.Exec(ResolveConflictQuery, userID, action, id).Error
 }

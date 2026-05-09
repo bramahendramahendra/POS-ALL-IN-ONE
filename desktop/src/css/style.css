@@ -1090,6 +1090,18 @@ textarea:focus {
   color: #fff;
 }
 
+.menu-badge-conflict {
+  background: #ef4444;
+  color: #fff;
+  border-radius: 9999px;
+  padding: 1px 6px;
+  font-size: 11px;
+}
+
+.menu-item.active .menu-badge-conflict {
+  background: rgba(239, 68, 68, 0.85);
+}
+
 /* Main Content */
 .main-content {
   flex: 1;

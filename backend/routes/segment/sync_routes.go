@@ -22,6 +22,7 @@ func SyncRoutes(r *gin.RouterGroup) {
 	g := r.Group("/sync")
 	{
 		g.GET("/conflicts", middleware.RoleMiddleware("owner", "admin"), syncHand.GetConflicts)
+		g.GET("/conflicts/count", middleware.RoleMiddleware("owner", "admin"), syncHand.GetConflictCount)
 		g.POST("/conflicts/:id/resolve", middleware.RoleMiddleware("owner", "admin"), syncHand.ResolveConflict)
 		g.GET("/queue", middleware.RoleMiddleware("owner", "admin"), syncHand.GetQueue)
 		g.GET("/history", middleware.RoleMiddleware("owner", "admin"), syncHand.GetHistory)

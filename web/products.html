@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manajemen Produk — POS System</title>
+  <title>Manajemen Produk â€” POS System</title>
   <link rel="stylesheet" href="/src/css/style.css">
   <style>
     body { margin: 0; background: #f5f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
@@ -167,10 +167,10 @@
 
 <!-- Navbar -->
 <nav class="navbar">
-  <div class="navbar-brand">POS System — Produk</div>
+  <div class="navbar-brand">POS System â€” Produk</div>
   <div class="navbar-user">
     <div class="user-info">
-      <strong id="navUsername">—</strong>
+      <strong id="navUsername">â€”</strong>
       <span class="user-role" id="navUserRole"></span>
     </div>
     <button class="btn btn-secondary" id="btn-logout-nav" style="width:auto;padding:6px 14px;font-size:13px">Logout</button>
@@ -181,18 +181,18 @@
   <!-- Sidebar -->
   <aside class="sidebar">
     <ul class="sidebar-menu">
-      <li class="menu-item"><a href="/dashboard.html"><span class="menu-icon">🏠</span> Dashboard</a></li>
-      <li class="menu-item"><a href="/kasir.html"><span class="menu-icon">🛒</span> Kasir</a></li>
-      <li class="menu-item active"><a href="/products.html"><span class="menu-icon">📦</span> Produk</a></li>
-      <li class="menu-item"><a href="/transactions.html"><span class="menu-icon">💳</span> Transaksi</a></li>
-      <li class="menu-item"><a href="/finance.html"><span class="menu-icon">💰</span> Keuangan</a></li>
-      <li class="menu-item"><a href="/customers.html"><span class="menu-icon">👥</span> Pelanggan</a></li>
-      <li class="menu-item"><a href="/receivables.html"><span class="menu-icon">📋</span> Piutang</a></li>
-      <li class="menu-item"><a href="/suppliers.html"><span class="menu-icon">🏭</span> Supplier</a></li>
-      <li class="menu-item"><a href="/shifts.html"><span class="menu-icon">🕐</span> Shift</a></li>
-      <li class="menu-item"><a href="/reports.html"><span class="menu-icon">📈</span> Laporan</a></li>
-      <li class="menu-item"><a href="/sync-center.html"><span class="menu-icon">🔄</span> Sync Center</a></li>
-      <li class="menu-item"><a href="/settings.html"><span class="menu-icon">⚙️</span> Pengaturan</a></li>
+      <li class="menu-item"><a href="/dashboard.html"><span class="menu-icon">ðŸ </span> Dashboard</a></li>
+      <li class="menu-item"><a href="/kasir.html"><span class="menu-icon">ðŸ›’</span> Kasir</a></li>
+      <li class="menu-item active"><a href="/products.html"><span class="menu-icon">ðŸ“¦</span> Produk</a></li>
+      <li class="menu-item"><a href="/transactions.html"><span class="menu-icon">ðŸ’³</span> Transaksi</a></li>
+      <li class="menu-item"><a href="/finance.html"><span class="menu-icon">ðŸ’°</span> Keuangan</a></li>
+      <li class="menu-item"><a href="/customers.html"><span class="menu-icon">ðŸ‘¥</span> Pelanggan</a></li>
+      <li class="menu-item"><a href="/receivables.html"><span class="menu-icon">ðŸ“‹</span> Piutang</a></li>
+      <li class="menu-item"><a href="/suppliers.html"><span class="menu-icon">ðŸ­</span> Supplier</a></li>
+      <li class="menu-item"><a href="/shifts.html"><span class="menu-icon">ðŸ•</span> Shift</a></li>
+      <li class="menu-item"><a href="/reports.html"><span class="menu-icon">ðŸ“ˆ</span> Laporan</a></li>
+      <li class="menu-item"><a href="/sync-center.html"><span class="menu-icon">ðŸ”„</span> Sync Center</a></li>
+      <li class="menu-item"><a href="/settings.html"><span class="menu-icon">âš™ï¸</span> Pengaturan</a></li>
     </ul>
   </aside>
 
@@ -215,19 +215,19 @@
     <div id="products-tab" class="tab-content active">
       <div class="tab-header">
         <button class="btn btn-primary" id="btnAddProduct">
-          <span>➕</span> Tambah Produk
+          <span>âž•</span> Tambah Produk
         </button>
         <button class="btn btn-secondary" id="btnBulkPrintLabel" style="display:none;">
-          <span>🏷️</span> Cetak Label Terpilih (<span id="selectedCount">0</span>)
+          <span>ðŸ·ï¸</span> Cetak Label Terpilih (<span id="selectedCount">0</span>)
         </button>
         <button class="btn btn-secondary" id="btnImportProduct">
-          <span>📥</span> Import Produk
+          <span>ðŸ“¥</span> Import Produk
         </button>
       </div>
 
       <div class="filters-container">
         <div class="search-box">
-          <input type="text" id="searchProduct" placeholder="🔍 Cari nama produk atau barcode..." class="search-input">
+          <input type="text" id="searchProduct" placeholder="ðŸ” Cari nama produk atau barcode..." class="search-input">
         </div>
         <div class="filter-group">
           <select id="filterCategory" class="filter-select">
@@ -270,7 +270,7 @@
     <div id="categories-tab" class="tab-content">
       <div class="tab-header">
         <button class="btn btn-primary" id="btnAddCategory">
-          <span>➕</span> Tambah Kategori
+          <span>âž•</span> Tambah Kategori
         </button>
       </div>
 
@@ -295,7 +295,7 @@
     <div id="units-tab" class="tab-content">
       <div class="tab-header">
         <button class="btn btn-primary" id="btnAddUnit">
-          <span>➕</span> Tambah Satuan
+          <span>âž•</span> Tambah Satuan
         </button>
       </div>
 
@@ -335,7 +335,7 @@
             <div class="input-group">
               <input type="text" id="barcode" placeholder="PROD-xxxxx" required>
               <button type="button" class="btn btn-secondary btn-sm" id="btnGenerateBarcode">Generate</button>
-              <button type="button" class="btn btn-secondary btn-sm android-only hidden" id="btnScanBarcode" title="Scan Barcode">📷 Scan</button>
+              <button type="button" class="btn btn-secondary btn-sm android-only hidden" id="btnScanBarcode" title="Scan Barcode">ðŸ“· Scan</button>
             </div>
           </div>
           <div class="form-group">
@@ -397,7 +397,7 @@
           <hr style="margin:16px 0;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
             <label style="font-weight:600;font-size:14px;">Harga Grosir / Multi-Harga</label>
-            <button type="button" class="btn btn-secondary btn-sm" id="btnAddProductPrice">➕ Tambah Tier Harga</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnAddProductPrice">âž• Tambah Tier Harga</button>
           </div>
           <small class="form-text" style="display:block;margin-bottom:8px;">
             Harga retail (default) diambil dari Harga Jual di atas. Tambahkan tier grosir beserta qty minimum dan harganya.
@@ -410,7 +410,7 @@
           <hr style="margin:16px 0;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
             <label style="font-weight:600;font-size:14px;">Satuan Jual</label>
-            <button type="button" class="btn btn-secondary btn-sm" id="btnAddProductUnit">➕ Tambah Satuan Jual</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnAddProductUnit">âž• Tambah Satuan Jual</button>
           </div>
           <small class="form-text" style="display:block;margin-bottom:8px;">
             Satuan dasar = satuan pada produk. Tambahkan satuan jual lain beserta konversi dan harganya.
@@ -426,10 +426,10 @@
               style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid #ddd;display:none">
             <input type="hidden" id="product-image-url">
             <!-- Android: ambil dari kamera/galeri -->
-            <button type="button" class="btn btn-secondary btn-sm android-only hidden" id="btn-take-photo">📷 Ambil Foto</button>
+            <button type="button" class="btn btn-secondary btn-sm android-only hidden" id="btn-take-photo">ðŸ“· Ambil Foto</button>
             <!-- Web/Desktop: input file biasa -->
             <label class="btn btn-secondary btn-sm web-only" style="cursor:pointer;margin:0">
-              📁 Pilih Foto
+              ðŸ“ Pilih Foto
               <input type="file" id="product-image-input" accept="image/*" style="display:none">
             </label>
           </div>
@@ -585,7 +585,7 @@
 <div id="labelPrintModal" class="modal">
   <div class="modal-content modal-large">
     <div class="modal-header">
-      <h2>🏷️ Cetak Label Barcode</h2>
+      <h2>ðŸ·ï¸ Cetak Label Barcode</h2>
       <button class="modal-close" id="closeLabelPrintModal">&times;</button>
     </div>
     <div class="modal-body">
@@ -593,17 +593,17 @@
         <div class="form-group">
           <label>Ukuran Label</label>
           <select id="labelSize" class="filter-select" style="width:100%;">
-            <option value="3x2">3 × 2 cm (kecil)</option>
-            <option value="4x2.5" selected>4 × 2.5 cm (standar)</option>
-            <option value="5x3">5 × 3 cm (sedang)</option>
-            <option value="6x4">6 × 4 cm (besar)</option>
-            <option value="8x5">8 × 5 cm (jumbo)</option>
+            <option value="3x2">3 Ã— 2 cm (kecil)</option>
+            <option value="4x2.5" selected>4 Ã— 2.5 cm (standar)</option>
+            <option value="5x3">5 Ã— 3 cm (sedang)</option>
+            <option value="6x4">6 Ã— 4 cm (besar)</option>
+            <option value="8x5">8 Ã— 5 cm (jumbo)</option>
           </select>
         </div>
         <div class="form-group">
           <label>Printer</label>
           <select id="labelPrinter" class="filter-select" style="width:100%;">
-            <option value="">— Gunakan dialog print browser —</option>
+            <option value="">â€” Gunakan dialog print browser â€”</option>
           </select>
         </div>
       </div>
@@ -634,9 +634,9 @@
       <div id="labelPrintError" class="error-message hidden"></div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" id="btnRefreshLabelPreview">🔄 Refresh Preview</button>
+        <button type="button" class="btn btn-secondary" id="btnRefreshLabelPreview">ðŸ”„ Refresh Preview</button>
         <button type="button" class="btn btn-secondary" id="btnCancelLabelPrint">Batal</button>
-        <button type="button" class="btn btn-primary" id="btnDoLabelPrint">🖨️ Cetak Label</button>
+        <button type="button" class="btn btn-primary" id="btnDoLabelPrint">ðŸ–¨ï¸ Cetak Label</button>
       </div>
     </div>
   </div>
@@ -654,7 +654,7 @@
       <!-- Step 1: Upload -->
       <div id="importStep1">
         <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
-          <button type="button" class="btn btn-secondary" id="btnDownloadTemplate">📄 Download Template Excel</button>
+          <button type="button" class="btn btn-secondary" id="btnDownloadTemplate">ðŸ“„ Download Template Excel</button>
           <span style="color:#888;font-size:13px;">Download template, isi data, lalu upload kembali.</span>
         </div>
         <div class="form-group">
@@ -699,7 +699,7 @@
         <div class="modal-footer" style="padding-top:12px;">
           <button type="button" class="btn btn-secondary" id="btnBackImport">&larr; Kembali</button>
           <button type="button" class="btn btn-secondary" id="btnCancelImport2">Batal</button>
-          <button type="button" class="btn btn-primary" id="btnProcessImport">✅ Proses Import</button>
+          <button type="button" class="btn btn-primary" id="btnProcessImport">âœ… Proses Import</button>
         </div>
       </div>
 
@@ -721,5 +721,6 @@
 <script src="/src/js/app.js"></script>
 <script src="/src/js/auth.js"></script>
 <script src="/src/js/products.js"></script>
+<script src="/src/js/notification-poller.js"></script>
 </body>
 </html>

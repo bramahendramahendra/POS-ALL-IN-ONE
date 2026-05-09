@@ -118,6 +118,7 @@ function renderMenu(activePage) {
             <span class="menu-icon">${item.icon}</span>
             <span class="menu-text">${item.text}</span>
             ${item.id === 'products' ? '<span class="menu-badge" id="menuStockBadge" style="display:none">0</span>' : ''}
+            ${item.id === 'sync-center' ? '<span class="menu-badge menu-badge-conflict" id="syncCenterBadge" style="display:none"></span>' : ''}
           </a>
         </li>
       `).join('')}

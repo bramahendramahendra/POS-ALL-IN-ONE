@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Laporan — POS System</title>
+  <title>Laporan â€” POS System</title>
   <link rel="stylesheet" href="/src/css/style.css">
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -282,10 +282,10 @@
 
 <!-- Navbar -->
 <nav class="navbar">
-  <div class="navbar-brand">POS System — Laporan</div>
+  <div class="navbar-brand">POS System â€” Laporan</div>
   <div class="navbar-user">
     <div class="user-info">
-      <strong id="navUsername">—</strong>
+      <strong id="navUsername">â€”</strong>
       <span class="user-role" id="navUserRole"></span>
     </div>
     <button class="btn btn-secondary" id="btn-logout-nav" style="width:auto;padding:6px 14px;font-size:13px">Logout</button>
@@ -299,25 +299,25 @@
   <!-- Sidebar -->
   <aside class="sidebar">
     <ul class="sidebar-menu">
-      <li class="menu-item"><a href="/dashboard.html"><span class="menu-icon">🏠</span> Dashboard</a></li>
-      <li class="menu-item"><a href="/kasir.html"><span class="menu-icon">🛒</span> Kasir</a></li>
-      <li class="menu-item"><a href="/products.html"><span class="menu-icon">📦</span> Produk</a></li>
-      <li class="menu-item"><a href="/transactions.html"><span class="menu-icon">💳</span> Transaksi</a></li>
-      <li class="menu-item"><a href="/finance.html"><span class="menu-icon">💰</span> Keuangan</a></li>
-      <li class="menu-item"><a href="/customers.html"><span class="menu-icon">👥</span> Pelanggan</a></li>
-      <li class="menu-item"><a href="/receivables.html"><span class="menu-icon">📋</span> Piutang</a></li>
-      <li class="menu-item"><a href="/suppliers.html"><span class="menu-icon">🏭</span> Supplier</a></li>
-      <li class="menu-item"><a href="/shifts.html"><span class="menu-icon">🕐</span> Shift</a></li>
-      <li class="menu-item active"><a href="/reports.html"><span class="menu-icon">📈</span> Laporan</a></li>
-      <li class="menu-item"><a href="/sync-center.html"><span class="menu-icon">🔄</span> Sync Center</a></li>
-      <li class="menu-item"><a href="/settings.html"><span class="menu-icon">⚙️</span> Pengaturan</a></li>
+      <li class="menu-item"><a href="/dashboard.html"><span class="menu-icon">ðŸ </span> Dashboard</a></li>
+      <li class="menu-item"><a href="/kasir.html"><span class="menu-icon">ðŸ›’</span> Kasir</a></li>
+      <li class="menu-item"><a href="/products.html"><span class="menu-icon">ðŸ“¦</span> Produk</a></li>
+      <li class="menu-item"><a href="/transactions.html"><span class="menu-icon">ðŸ’³</span> Transaksi</a></li>
+      <li class="menu-item"><a href="/finance.html"><span class="menu-icon">ðŸ’°</span> Keuangan</a></li>
+      <li class="menu-item"><a href="/customers.html"><span class="menu-icon">ðŸ‘¥</span> Pelanggan</a></li>
+      <li class="menu-item"><a href="/receivables.html"><span class="menu-icon">ðŸ“‹</span> Piutang</a></li>
+      <li class="menu-item"><a href="/suppliers.html"><span class="menu-icon">ðŸ­</span> Supplier</a></li>
+      <li class="menu-item"><a href="/shifts.html"><span class="menu-icon">ðŸ•</span> Shift</a></li>
+      <li class="menu-item active"><a href="/reports.html"><span class="menu-icon">ðŸ“ˆ</span> Laporan</a></li>
+      <li class="menu-item"><a href="/sync-center.html"><span class="menu-icon">ðŸ”„</span> Sync Center</a></li>
+      <li class="menu-item"><a href="/settings.html"><span class="menu-icon">âš™ï¸</span> Pengaturan</a></li>
     </ul>
   </aside>
 
   <!-- Main Content -->
   <main class="main-content">
     <div class="content-header">
-      <h1>📈 Laporan</h1>
+      <h1>ðŸ“ˆ Laporan</h1>
     </div>
 
     <!-- Tabs Navigation -->
@@ -363,19 +363,19 @@
             <option value="transfer">Transfer</option>
             <option value="qris">QRIS</option>
           </select>
-          <button class="btn btn-primary" id="btnFilterSales">🔍 Filter</button>
+          <button class="btn btn-primary" id="btnFilterSales">ðŸ” Filter</button>
         </div>
         <div class="filter-group filter-group-right">
-          <button class="btn btn-secondary" id="btnExportSalesPDF">📄 Export PDF</button>
-          <button class="btn btn-secondary" id="btnExportSalesExcel">📊 Export Excel</button>
-          <button class="btn btn-secondary" id="btnPrintSales">🖨️ Print</button>
+          <button class="btn btn-secondary" id="btnExportSalesPDF">ðŸ“„ Export PDF</button>
+          <button class="btn btn-secondary" id="btnExportSalesExcel">ðŸ“Š Export Excel</button>
+          <button class="btn btn-secondary" id="btnPrintSales">ðŸ–¨ï¸ Print</button>
         </div>
       </div>
 
       <!-- Summary Cards -->
       <div class="stats-container" id="salesSummaryCards">
         <div class="stat-card stat-card-primary">
-          <div class="stat-icon">💰</div>
+          <div class="stat-icon">ðŸ’°</div>
           <div class="stat-content">
             <h3>Total Penjualan</h3>
             <p class="stat-value" id="salesTotalAmount">Rp 0</p>
@@ -383,7 +383,7 @@
           </div>
         </div>
         <div class="stat-card stat-card-success">
-          <div class="stat-icon">🧾</div>
+          <div class="stat-icon">ðŸ§¾</div>
           <div class="stat-content">
             <h3>Jumlah Transaksi</h3>
             <p class="stat-value" id="salesTotalTransactions">0</p>
@@ -391,7 +391,7 @@
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon">📊</div>
+          <div class="stat-icon">ðŸ“Š</div>
           <div class="stat-content">
             <h3>Rata-rata / Transaksi</h3>
             <p class="stat-value" id="salesAvgTransaction">Rp 0</p>
@@ -399,7 +399,7 @@
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon">📦</div>
+          <div class="stat-icon">ðŸ“¦</div>
           <div class="stat-content">
             <h3>Total Item Terjual</h3>
             <p class="stat-value" id="salesTotalItems">0</p>
@@ -411,7 +411,7 @@
       <!-- Chart -->
       <div class="chart-card">
         <div class="chart-card-header">
-          <h3>📈 Grafik Penjualan Harian</h3>
+          <h3>ðŸ“ˆ Grafik Penjualan Harian</h3>
         </div>
         <div class="chart-wrapper">
           <canvas id="salesLineChart"></canvas>
@@ -444,9 +444,9 @@
 
       <!-- Pagination -->
       <div class="pagination-container hidden" id="salesPagination">
-        <button class="btn btn-secondary btn-sm" id="salesPrevPage">← Prev</button>
+        <button class="btn btn-secondary btn-sm" id="salesPrevPage">â† Prev</button>
         <span id="salesPageInfo" class="page-info-text"></span>
-        <button class="btn btn-secondary btn-sm" id="salesNextPage">Next →</button>
+        <button class="btn btn-secondary btn-sm" id="salesNextPage">Next â†’</button>
       </div>
     </div>
 
@@ -472,17 +472,17 @@
             <span class="text-separator">s/d</span>
             <input type="date" id="plEndDate" class="filter-input">
           </div>
-          <button class="btn btn-primary" id="btnFilterPL">🔍 Filter</button>
+          <button class="btn btn-primary" id="btnFilterPL">ðŸ” Filter</button>
         </div>
         <div class="filter-group filter-group-right">
-          <button class="btn btn-secondary" id="btnExportPLPDF">📄 Export PDF</button>
+          <button class="btn btn-secondary" id="btnExportPLPDF">ðŸ“„ Export PDF</button>
         </div>
       </div>
 
       <!-- P&L Summary -->
       <div class="pl-summary-grid">
         <div class="pl-card pl-revenue">
-          <div class="pl-card-icon">💰</div>
+          <div class="pl-card-icon">ðŸ’°</div>
           <div class="pl-card-body">
             <p class="pl-card-label">Pendapatan</p>
             <p class="pl-card-value" id="plRevenue">Rp 0</p>
@@ -490,7 +490,7 @@
           </div>
         </div>
         <div class="pl-card pl-cogs">
-          <div class="pl-card-icon">🏷️</div>
+          <div class="pl-card-icon">ðŸ·ï¸</div>
           <div class="pl-card-body">
             <p class="pl-card-label">HPP / COGS</p>
             <p class="pl-card-value" id="plCOGS">Rp 0</p>
@@ -498,7 +498,7 @@
           </div>
         </div>
         <div class="pl-card pl-gross">
-          <div class="pl-card-icon">📈</div>
+          <div class="pl-card-icon">ðŸ“ˆ</div>
           <div class="pl-card-body">
             <p class="pl-card-label">Laba Kotor</p>
             <p class="pl-card-value" id="plGrossProfit">Rp 0</p>
@@ -506,7 +506,7 @@
           </div>
         </div>
         <div class="pl-card pl-expenses">
-          <div class="pl-card-icon">📤</div>
+          <div class="pl-card-icon">ðŸ“¤</div>
           <div class="pl-card-body">
             <p class="pl-card-label">Pengeluaran Operasional</p>
             <p class="pl-card-value" id="plExpenses">Rp 0</p>
@@ -514,7 +514,7 @@
           </div>
         </div>
         <div class="pl-card pl-net" id="plNetCard">
-          <div class="pl-card-icon">🏆</div>
+          <div class="pl-card-icon">ðŸ†</div>
           <div class="pl-card-body">
             <p class="pl-card-label">Laba Bersih</p>
             <p class="pl-card-value" id="plNetProfit">Rp 0</p>
@@ -528,7 +528,7 @@
         <!-- Sales by Category Table -->
         <div class="chart-card">
           <div class="chart-card-header">
-            <h3>📦 Penjualan per Kategori</h3>
+            <h3>ðŸ“¦ Penjualan per Kategori</h3>
           </div>
           <div class="table-container table-container-flat">
             <table class="data-table" id="plCategoryTable">
@@ -551,7 +551,7 @@
         <!-- Expense Pie Chart -->
         <div class="chart-card">
           <div class="chart-card-header">
-            <h3>🍩 Pengeluaran per Kategori</h3>
+            <h3>ðŸ© Pengeluaran per Kategori</h3>
           </div>
           <div class="chart-wrapper chart-wrapper-sm">
             <canvas id="expensePieChart"></canvas>
@@ -578,17 +578,17 @@
             <option value="low">Stok Menipis</option>
             <option value="empty">Stok Habis</option>
           </select>
-          <button class="btn btn-primary" id="btnFilterStock">🔍 Filter</button>
+          <button class="btn btn-primary" id="btnFilterStock">ðŸ” Filter</button>
         </div>
         <div class="filter-group filter-group-right">
-          <button class="btn btn-secondary" id="btnExportStockExcel">📊 Export Excel</button>
+          <button class="btn btn-secondary" id="btnExportStockExcel">ðŸ“Š Export Excel</button>
         </div>
       </div>
 
       <!-- Summary Cards -->
       <div class="stats-container">
         <div class="stat-card stat-card-primary">
-          <div class="stat-icon">📦</div>
+          <div class="stat-icon">ðŸ“¦</div>
           <div class="stat-content">
             <h3>Total SKU</h3>
             <p class="stat-value" id="stockTotalSKU">0</p>
@@ -596,7 +596,7 @@
           </div>
         </div>
         <div class="stat-card stat-card-success">
-          <div class="stat-icon">💵</div>
+          <div class="stat-icon">ðŸ’µ</div>
           <div class="stat-content">
             <h3>Nilai Inventori</h3>
             <p class="stat-value" id="stockInventoryValue">Rp 0</p>
@@ -604,7 +604,7 @@
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon">✅</div>
+          <div class="stat-icon">âœ…</div>
           <div class="stat-content">
             <h3>Produk Aktif</h3>
             <p class="stat-value" id="stockActiveProducts">0</p>
@@ -612,7 +612,7 @@
           </div>
         </div>
         <div class="stat-card stat-card-warning">
-          <div class="stat-icon">⚠️</div>
+          <div class="stat-icon">âš ï¸</div>
           <div class="stat-content">
             <h3>Stok Menipis</h3>
             <p class="stat-value" id="stockLowCount">0</p>
@@ -623,7 +623,7 @@
 
       <!-- Low Stock Alert -->
       <div id="stockAlertBox" class="alert-box alert-warning hidden">
-        <strong>⚠️ Perhatian!</strong>
+        <strong>âš ï¸ Perhatian!</strong>
         <span id="stockAlertText"></span>
       </div>
 
@@ -678,17 +678,17 @@
           <select id="cashierUserFilter" class="filter-select">
             <option value="">Semua Kasir</option>
           </select>
-          <button class="btn btn-primary" id="btnFilterCashier">🔍 Filter</button>
+          <button class="btn btn-primary" id="btnFilterCashier">ðŸ” Filter</button>
         </div>
         <div class="filter-group filter-group-right">
-          <button class="btn btn-secondary" id="btnExportCashierPDF">📄 Export PDF</button>
+          <button class="btn btn-secondary" id="btnExportCashierPDF">ðŸ“„ Export PDF</button>
         </div>
       </div>
 
       <!-- Cashier Stats Cards -->
       <div id="cashierCardsContainer" class="cashier-cards-grid">
         <div class="empty-state">
-          <div class="empty-icon">👤</div>
+          <div class="empty-icon">ðŸ‘¤</div>
           <p>Klik Filter untuk memuat data kasir</p>
         </div>
       </div>
@@ -696,7 +696,7 @@
       <!-- Bar Chart -->
       <div class="chart-card mt-20">
         <div class="chart-card-header">
-          <h3>📊 Performa Kasir</h3>
+          <h3>ðŸ“Š Performa Kasir</h3>
         </div>
         <div class="chart-wrapper">
           <canvas id="cashierBarChart"></canvas>
@@ -706,7 +706,7 @@
       <!-- Ranking Table -->
       <div class="table-container mt-20">
         <div class="table-toolbar">
-          <span class="table-title">🏆 Ranking Kasir</span>
+          <span class="table-title">ðŸ† Ranking Kasir</span>
         </div>
         <table class="data-table" id="cashierRankTable">
           <thead>
@@ -744,5 +744,6 @@
 <script src="/src/js/app.js"></script>
 <script src="/src/js/auth.js"></script>
 <script src="/src/js/reports.js"></script>
+<script src="/src/js/notification-poller.js"></script>
 </body>
 </html>

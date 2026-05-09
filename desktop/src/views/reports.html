@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
@@ -23,7 +23,7 @@
     <!-- Main Content -->
     <main class="main-content">
       <div class="content-header">
-        <h1>📈 Laporan</h1>
+        <h1>ðŸ“ˆ Laporan</h1>
       </div>
 
       <!-- Tabs Navigation -->
@@ -69,19 +69,19 @@
               <option value="transfer">Transfer</option>
               <option value="qris">QRIS</option>
             </select>
-            <button class="btn btn-primary" id="btnFilterSales">🔍 Filter</button>
+            <button class="btn btn-primary" id="btnFilterSales">ðŸ” Filter</button>
           </div>
           <div class="filter-group filter-group-right">
-            <button class="btn btn-secondary" id="btnExportSalesPDF">📄 Export PDF</button>
-            <button class="btn btn-secondary" id="btnExportSalesExcel">📊 Export Excel</button>
-            <button class="btn btn-secondary" id="btnPrintSales">🖨️ Print</button>
+            <button class="btn btn-secondary" id="btnExportSalesPDF">ðŸ“„ Export PDF</button>
+            <button class="btn btn-secondary" id="btnExportSalesExcel">ðŸ“Š Export Excel</button>
+            <button class="btn btn-secondary" id="btnPrintSales">ðŸ–¨ï¸ Print</button>
           </div>
         </div>
 
         <!-- Summary Cards -->
         <div class="stats-container" id="salesSummaryCards">
           <div class="stat-card stat-card-primary">
-            <div class="stat-icon">💰</div>
+            <div class="stat-icon">ðŸ’°</div>
             <div class="stat-content">
               <h3>Total Penjualan</h3>
               <p class="stat-value" id="salesTotalAmount">Rp 0</p>
@@ -89,7 +89,7 @@
             </div>
           </div>
           <div class="stat-card stat-card-success">
-            <div class="stat-icon">🧾</div>
+            <div class="stat-icon">ðŸ§¾</div>
             <div class="stat-content">
               <h3>Jumlah Transaksi</h3>
               <p class="stat-value" id="salesTotalTransactions">0</p>
@@ -97,7 +97,7 @@
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">📊</div>
+            <div class="stat-icon">ðŸ“Š</div>
             <div class="stat-content">
               <h3>Rata-rata / Transaksi</h3>
               <p class="stat-value" id="salesAvgTransaction">Rp 0</p>
@@ -105,7 +105,7 @@
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">📦</div>
+            <div class="stat-icon">ðŸ“¦</div>
             <div class="stat-content">
               <h3>Total Item Terjual</h3>
               <p class="stat-value" id="salesTotalItems">0</p>
@@ -117,7 +117,7 @@
         <!-- Chart -->
         <div class="chart-card">
           <div class="chart-card-header">
-            <h3>📈 Grafik Penjualan Harian</h3>
+            <h3>ðŸ“ˆ Grafik Penjualan Harian</h3>
           </div>
           <div class="chart-wrapper">
             <canvas id="salesLineChart"></canvas>
@@ -150,9 +150,9 @@
 
         <!-- Pagination -->
         <div class="pagination-container hidden" id="salesPagination">
-          <button class="btn btn-secondary btn-sm" id="salesPrevPage">← Prev</button>
+          <button class="btn btn-secondary btn-sm" id="salesPrevPage">â† Prev</button>
           <span id="salesPageInfo" class="page-info-text"></span>
-          <button class="btn btn-secondary btn-sm" id="salesNextPage">Next →</button>
+          <button class="btn btn-secondary btn-sm" id="salesNextPage">Next â†’</button>
         </div>
       </div>
 
@@ -178,17 +178,17 @@
               <span class="text-separator">s/d</span>
               <input type="date" id="plEndDate" class="filter-input">
             </div>
-            <button class="btn btn-primary" id="btnFilterPL">🔍 Filter</button>
+            <button class="btn btn-primary" id="btnFilterPL">ðŸ” Filter</button>
           </div>
           <div class="filter-group filter-group-right">
-            <button class="btn btn-secondary" id="btnExportPLPDF">📄 Export PDF</button>
+            <button class="btn btn-secondary" id="btnExportPLPDF">ðŸ“„ Export PDF</button>
           </div>
         </div>
 
         <!-- P&L Summary -->
         <div class="pl-summary-grid">
           <div class="pl-card pl-revenue">
-            <div class="pl-card-icon">💰</div>
+            <div class="pl-card-icon">ðŸ’°</div>
             <div class="pl-card-body">
               <p class="pl-card-label">Pendapatan</p>
               <p class="pl-card-value" id="plRevenue">Rp 0</p>
@@ -196,7 +196,7 @@
             </div>
           </div>
           <div class="pl-card pl-cogs">
-            <div class="pl-card-icon">🏷️</div>
+            <div class="pl-card-icon">ðŸ·ï¸</div>
             <div class="pl-card-body">
               <p class="pl-card-label">HPP / COGS</p>
               <p class="pl-card-value" id="plCOGS">Rp 0</p>
@@ -204,7 +204,7 @@
             </div>
           </div>
           <div class="pl-card pl-gross">
-            <div class="pl-card-icon">📈</div>
+            <div class="pl-card-icon">ðŸ“ˆ</div>
             <div class="pl-card-body">
               <p class="pl-card-label">Laba Kotor</p>
               <p class="pl-card-value" id="plGrossProfit">Rp 0</p>
@@ -212,7 +212,7 @@
             </div>
           </div>
           <div class="pl-card pl-expenses">
-            <div class="pl-card-icon">📤</div>
+            <div class="pl-card-icon">ðŸ“¤</div>
             <div class="pl-card-body">
               <p class="pl-card-label">Pengeluaran Operasional</p>
               <p class="pl-card-value" id="plExpenses">Rp 0</p>
@@ -220,7 +220,7 @@
             </div>
           </div>
           <div class="pl-card pl-net" id="plNetCard">
-            <div class="pl-card-icon">🏆</div>
+            <div class="pl-card-icon">ðŸ†</div>
             <div class="pl-card-body">
               <p class="pl-card-label">Laba Bersih</p>
               <p class="pl-card-value" id="plNetProfit">Rp 0</p>
@@ -234,7 +234,7 @@
           <!-- Sales by Category Table -->
           <div class="chart-card">
             <div class="chart-card-header">
-              <h3>📦 Penjualan per Kategori</h3>
+              <h3>ðŸ“¦ Penjualan per Kategori</h3>
             </div>
             <div class="table-container table-container-flat">
               <table class="data-table" id="plCategoryTable">
@@ -257,7 +257,7 @@
           <!-- Expense Pie Chart -->
           <div class="chart-card">
             <div class="chart-card-header">
-              <h3>🍩 Pengeluaran per Kategori</h3>
+              <h3>ðŸ© Pengeluaran per Kategori</h3>
             </div>
             <div class="chart-wrapper chart-wrapper-sm">
               <canvas id="expensePieChart"></canvas>
@@ -284,17 +284,17 @@
               <option value="low">Stok Menipis</option>
               <option value="empty">Stok Habis</option>
             </select>
-            <button class="btn btn-primary" id="btnFilterStock">🔍 Filter</button>
+            <button class="btn btn-primary" id="btnFilterStock">ðŸ” Filter</button>
           </div>
           <div class="filter-group filter-group-right">
-            <button class="btn btn-secondary" id="btnExportStockExcel">📊 Export Excel</button>
+            <button class="btn btn-secondary" id="btnExportStockExcel">ðŸ“Š Export Excel</button>
           </div>
         </div>
 
         <!-- Summary Cards -->
         <div class="stats-container">
           <div class="stat-card stat-card-primary">
-            <div class="stat-icon">📦</div>
+            <div class="stat-icon">ðŸ“¦</div>
             <div class="stat-content">
               <h3>Total SKU</h3>
               <p class="stat-value" id="stockTotalSKU">0</p>
@@ -302,7 +302,7 @@
             </div>
           </div>
           <div class="stat-card stat-card-success">
-            <div class="stat-icon">💵</div>
+            <div class="stat-icon">ðŸ’µ</div>
             <div class="stat-content">
               <h3>Nilai Inventori</h3>
               <p class="stat-value" id="stockInventoryValue">Rp 0</p>
@@ -310,7 +310,7 @@
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">✅</div>
+            <div class="stat-icon">âœ…</div>
             <div class="stat-content">
               <h3>Produk Aktif</h3>
               <p class="stat-value" id="stockActiveProducts">0</p>
@@ -318,7 +318,7 @@
             </div>
           </div>
           <div class="stat-card stat-card-warning">
-            <div class="stat-icon">⚠️</div>
+            <div class="stat-icon">âš ï¸</div>
             <div class="stat-content">
               <h3>Stok Menipis</h3>
               <p class="stat-value" id="stockLowCount">0</p>
@@ -329,7 +329,7 @@
 
         <!-- Low Stock Alert -->
         <div id="stockAlertBox" class="alert-box alert-warning hidden">
-          <strong>⚠️ Perhatian!</strong>
+          <strong>âš ï¸ Perhatian!</strong>
           <span id="stockAlertText"></span>
         </div>
 
@@ -384,17 +384,17 @@
             <select id="cashierUserFilter" class="filter-select">
               <option value="">Semua Kasir</option>
             </select>
-            <button class="btn btn-primary" id="btnFilterCashier">🔍 Filter</button>
+            <button class="btn btn-primary" id="btnFilterCashier">ðŸ” Filter</button>
           </div>
           <div class="filter-group filter-group-right">
-            <button class="btn btn-secondary" id="btnExportCashierPDF">📄 Export PDF</button>
+            <button class="btn btn-secondary" id="btnExportCashierPDF">ðŸ“„ Export PDF</button>
           </div>
         </div>
 
         <!-- Cashier Stats Cards -->
         <div id="cashierCardsContainer" class="cashier-cards-grid">
           <div class="empty-state">
-            <div class="empty-icon">👤</div>
+            <div class="empty-icon">ðŸ‘¤</div>
             <p>Klik Filter untuk memuat data kasir</p>
           </div>
         </div>
@@ -402,7 +402,7 @@
         <!-- Bar Chart -->
         <div class="chart-card mt-20">
           <div class="chart-card-header">
-            <h3>📊 Performa Kasir</h3>
+            <h3>ðŸ“Š Performa Kasir</h3>
           </div>
           <div class="chart-wrapper">
             <canvas id="cashierBarChart"></canvas>
@@ -412,7 +412,7 @@
         <!-- Ranking Table -->
         <div class="table-container mt-20">
           <div class="table-toolbar">
-            <span class="table-title">🏆 Ranking Kasir</span>
+            <span class="table-title">ðŸ† Ranking Kasir</span>
           </div>
           <table class="data-table" id="cashierRankTable">
             <thead>
@@ -449,6 +449,7 @@
   <script src="../js/utils.js"></script>
   <script src="../js/menu.js"></script>
   <script src="../js/notification.js"></script>
+  <script src="../js/notification-poller.js"></script>
   <script src="../js/reports.js"></script>
 </body>
 </html>
