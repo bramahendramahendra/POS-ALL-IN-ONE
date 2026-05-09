@@ -1,7 +1,15 @@
 node_modules/
-android/
-.gradle/
-build/
+dist/
+.env
+
+# Build artifacts native Android (bukan source)
+android/.gradle/
+android/build/
+android/app/build/
+android/app/.cxx/
+android/local.properties
+android/.idea/
+
+# APK & bundle output
 *.apk
 *.aab
-local.properties
