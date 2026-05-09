@@ -327,6 +327,39 @@ func (r *transactionRepo) GetItems(transactionID int) ([]model_transaction.Trans
 	return items, nil
 }
 
+// ReturnStockForRejectSync mengembalikan stok setiap item transaksi yang ditolak
+// dan mencatat mutasi REJECT_SYNC sebagai audit trail.
+func (r *transactionRepo) ReturnStockForRejectSync(transactionID, resolvedBy int) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		items, err := r.GetItems(transactionID)
+		if err != nil {
+			return err
+		}
+
+		for _, item := range items {
+			var stockBefore float64
+			if err := tx.Raw(getProductStockQuery, item.ProductID).Scan(&stockBefore).Error; err != nil {
+				return err
+			}
+
+			if err := tx.Exec(restoreStockQuery, item.Quantity, item.ProductID).Error; err != nil {
+				return err
+			}
+
+			stockAfter := stockBefore + item.Quantity
+			notes := fmt.Sprintf("Reject sync konflik transaksi offline ID %d", transactionID)
+			if err := tx.Exec(createStockMutationQuery,
+				item.ProductID, "REJECT_SYNC", item.Quantity, stockBefore, stockAfter,
+				"transaction", transactionID, notes, resolvedBy,
+			).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
 // UpdateFromSync menerapkan data desktop ke tabel transactions saat konflik di-approve.
 // Hanya field yang aman di-overwrite; id/transaction_code/created_at tidak disentuh.
 func (r *transactionRepo) UpdateFromSync(id int, data map[string]interface{}) error {

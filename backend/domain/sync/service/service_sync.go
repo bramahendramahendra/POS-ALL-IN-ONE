@@ -152,12 +152,20 @@ func (s *syncService) ResolveConflict(id, userID int, action string) error {
 	case "approve":
 		return s.applyDesktopVersion(conflict, userID)
 	case "reject":
-		// fase 6.4: rejectDesktopVersion (kembalikan stok jika transaksi)
-		// untuk saat ini cukup catat resolved_action = reject
-		return s.repo.MarkResolved(id, userID, "reject")
+		return s.rejectDesktopVersion(conflict, userID)
 	default:
 		return &errors.BadRequestError{Message: "action tidak valid: gunakan 'approve' atau 'reject'"}
 	}
+}
+
+// rejectDesktopVersion mempertahankan data online; jika transaksi, kembalikan stok yang sempat dikurangi.
+func (s *syncService) rejectDesktopVersion(conflict *model_sync.SyncConflict, resolvedBy int) error {
+	if conflict.EntityType == "transaction" {
+		if err := s.transactionRepo.ReturnStockForRejectSync(conflict.EntityID, resolvedBy); err != nil {
+			return &errors.InternalServerError{Message: "Gagal mengembalikan stok transaksi yang ditolak"}
+		}
+	}
+	return s.repo.MarkResolved(conflict.ID, resolvedBy, "reject")
 }
 
 // applyDesktopVersion menimpa data online dengan versi desktop saat approve.

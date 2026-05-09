@@ -13,4 +13,7 @@ type TransactionRepo interface {
 	GetItems(transactionID int) ([]model_transaction.TransactionItem, error)
 	// UpdateFromSync menerapkan data desktop (approve) ke tabel transactions
 	UpdateFromSync(id int, data map[string]interface{}) error
+	// ReturnStockForRejectSync mengembalikan stok semua item transaksi yang ditolak
+	// dan mencatat setiap pengembalian sebagai mutasi REJECT_SYNC untuk audit trail
+	ReturnStockForRejectSync(transactionID, resolvedBy int) error
 }
