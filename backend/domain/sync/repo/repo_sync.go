@@ -100,6 +100,11 @@ func (r *syncRepo) ResolveConflict(id, userID int, action string) error {
 	return r.db.Exec(ResolveConflictQuery, userID, action, id).Error
 }
 
+// MarkResolved menandai konflik resolved dengan audit trail; dipakai setelah entity berhasil diupdate.
+func (r *syncRepo) MarkResolved(id, resolvedBy int, action string) error {
+	return r.db.Exec(ResolveConflictQuery, resolvedBy, action, id).Error
+}
+
 // CreateConflict menyimpan konflik ke sync_conflicts dan mengembalikan ID konflik yang baru
 func (r *syncRepo) CreateConflict(deviceID string, item *dto_sync.SyncItem, onlineData string) (int, error) {
 	result := r.db.Exec(CreateConflictQuery,

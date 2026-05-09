@@ -326,3 +326,24 @@ func (r *transactionRepo) GetItems(transactionID int) ([]model_transaction.Trans
 	}
 	return items, nil
 }
+
+// UpdateFromSync menerapkan data desktop ke tabel transactions saat konflik di-approve.
+// Hanya field yang aman di-overwrite; id/transaction_code/created_at tidak disentuh.
+func (r *transactionRepo) UpdateFromSync(id int, data map[string]interface{}) error {
+	allowed := []string{
+		"subtotal", "discount", "tax", "total_amount",
+		"payment_method", "payment_amount", "change_amount",
+		"customer_id", "is_credit", "status",
+	}
+	updates := make(map[string]interface{}, len(allowed))
+	for _, key := range allowed {
+		if val, ok := data[key]; ok {
+			updates[key] = val
+		}
+	}
+	if len(updates) == 0 {
+		return nil
+	}
+	updates["updated_at"] = "NOW()"
+	return r.db.Table("transactions").Where("id = ?", id).Updates(updates).Error
+}

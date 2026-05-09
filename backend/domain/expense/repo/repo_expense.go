@@ -126,3 +126,22 @@ func (r *expenseRepo) Update(id int, req *dto_expense.ExpenseRequest) error {
 func (r *expenseRepo) Delete(id int) error {
 	return r.db.Exec(deleteExpenseQuery, id).Error
 }
+
+// UpdateFromSync menerapkan data desktop ke tabel expenses saat konflik di-approve.
+func (r *expenseRepo) UpdateFromSync(id int, data map[string]interface{}) error {
+	allowed := []string{
+		"expense_date", "category", "description",
+		"amount", "payment_method", "notes",
+	}
+	updates := make(map[string]interface{}, len(allowed))
+	for _, key := range allowed {
+		if val, ok := data[key]; ok {
+			updates[key] = val
+		}
+	}
+	if len(updates) == 0 {
+		return nil
+	}
+	updates["updated_at"] = "NOW()"
+	return r.db.Table("expenses").Where("id = ?", id).Updates(updates).Error
+}

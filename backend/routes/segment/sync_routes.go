@@ -4,6 +4,8 @@ import (
 	sync_handler "permen_api/domain/sync/handler"
 	sync_repo "permen_api/domain/sync/repo"
 	sync_service "permen_api/domain/sync/service"
+	expense_repo "permen_api/domain/expense/repo"
+	transaction_repo "permen_api/domain/transaction/repo"
 	middleware "permen_api/middleware"
 	pkgdatabase "permen_api/pkg/database"
 
@@ -12,7 +14,9 @@ import (
 
 func SyncRoutes(r *gin.RouterGroup) {
 	syncRepo := sync_repo.NewSyncRepo(pkgdatabase.DB)
-	syncSvc := sync_service.NewSyncService(syncRepo)
+	txRepo := transaction_repo.NewTransactionRepo(pkgdatabase.DB)
+	expRepo := expense_repo.NewExpenseRepo(pkgdatabase.DB)
+	syncSvc := sync_service.NewSyncService(syncRepo, txRepo, expRepo)
 	syncHand := sync_handler.NewSyncHandler(syncSvc)
 
 	g := r.Group("/sync")

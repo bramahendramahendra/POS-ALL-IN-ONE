@@ -11,4 +11,6 @@ type TransactionRepo interface {
 	Create(req *dto_transaction.CreateTransactionRequest, userID int) (*dto_transaction.CreateTransactionResponse, error)
 	Void(id, userID int) error
 	GetItems(transactionID int) ([]model_transaction.TransactionItem, error)
+	// UpdateFromSync menerapkan data desktop (approve) ke tabel transactions
+	UpdateFromSync(id int, data map[string]interface{}) error
 }

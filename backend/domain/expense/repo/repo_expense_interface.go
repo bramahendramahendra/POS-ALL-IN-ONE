@@ -8,4 +8,6 @@ type ExpenseRepo interface {
 	Create(req *dto_expense.ExpenseRequest, userID int) (int, error)
 	Update(id int, req *dto_expense.ExpenseRequest) error
 	Delete(id int) error
+	// UpdateFromSync menerapkan data desktop (approve) ke tabel expenses
+	UpdateFromSync(id int, data map[string]interface{}) error
 }

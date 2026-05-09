@@ -1,19 +1,33 @@
 package service_sync
 
 import (
+	"encoding/json"
 	"time"
 
 	dto_sync "permen_api/domain/sync/dto"
+	model_sync "permen_api/domain/sync/model"
+	repo_expense "permen_api/domain/expense/repo"
+	repo_transaction "permen_api/domain/transaction/repo"
 	repo_sync "permen_api/domain/sync/repo"
 	"permen_api/errors"
 )
 
 type syncService struct {
-	repo repo_sync.SyncRepo
+	repo            repo_sync.SyncRepo
+	transactionRepo repo_transaction.TransactionRepo
+	expenseRepo     repo_expense.ExpenseRepo
 }
 
-func NewSyncService(repo repo_sync.SyncRepo) SyncService {
-	return &syncService{repo: repo}
+func NewSyncService(
+	repo repo_sync.SyncRepo,
+	transactionRepo repo_transaction.TransactionRepo,
+	expenseRepo repo_expense.ExpenseRepo,
+) SyncService {
+	return &syncService{
+		repo:            repo,
+		transactionRepo: transactionRepo,
+		expenseRepo:     expenseRepo,
+	}
 }
 
 // detectConflict membandingkan timestamp online vs desktop.
@@ -134,9 +148,37 @@ func (s *syncService) ResolveConflict(id, userID int, action string) error {
 		return &errors.BadRequestError{Message: "Konflik sudah diselesaikan"}
 	}
 
-	// approve → terapkan desktop_data ke MySQL (fase 6.2)
-	// reject  → pertahankan versi online, catat saja action-nya
-	return s.repo.ResolveConflict(id, userID, action)
+	switch action {
+	case "approve":
+		return s.applyDesktopVersion(conflict, userID)
+	case "reject":
+		// fase 6.4: rejectDesktopVersion (kembalikan stok jika transaksi)
+		// untuk saat ini cukup catat resolved_action = reject
+		return s.repo.MarkResolved(id, userID, "reject")
+	default:
+		return &errors.BadRequestError{Message: "action tidak valid: gunakan 'approve' atau 'reject'"}
+	}
+}
+
+// applyDesktopVersion menimpa data online dengan versi desktop saat approve.
+func (s *syncService) applyDesktopVersion(conflict *model_sync.SyncConflict, resolvedBy int) error {
+	var desktopData map[string]interface{}
+	if err := json.Unmarshal([]byte(conflict.DesktopData), &desktopData); err != nil {
+		return &errors.BadRequestError{Message: "desktop_data tidak valid JSON"}
+	}
+
+	switch conflict.EntityType {
+	case "transaction":
+		if err := s.transactionRepo.UpdateFromSync(conflict.EntityID, desktopData); err != nil {
+			return &errors.InternalServerError{Message: "Gagal menerapkan data transaksi desktop"}
+		}
+	case "expense":
+		if err := s.expenseRepo.UpdateFromSync(conflict.EntityID, desktopData); err != nil {
+			return &errors.InternalServerError{Message: "Gagal menerapkan data pengeluaran desktop"}
+		}
+	}
+
+	return s.repo.MarkResolved(conflict.ID, resolvedBy, "approve")
 }
 
 func (s *syncService) GetQueue(filter *dto_sync.QueueFilter) (*dto_sync.QueueListResponse, error) {
