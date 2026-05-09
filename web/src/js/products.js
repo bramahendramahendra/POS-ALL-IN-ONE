@@ -129,6 +129,9 @@ function setupEventListeners() {
     updateBulkLabelBtn();
   });
 
+  // Platform-aware: foto produk & scan barcode
+  setupCameraHandlers();
+
   // Close modal on outside click
   window.addEventListener('click', (e) => {
     if (e.target === document.getElementById('productModal'))      closeProductModal();
@@ -139,6 +142,69 @@ function setupEventListeners() {
     if (e.target === document.getElementById('labelPrintModal'))   closeLabelPrintModal();
     if (e.target === document.getElementById('importProductModal')) closeImportProductModal();
   });
+}
+
+// ============================================
+// CAMERA & FOTO PRODUK (platform-aware)
+// ============================================
+
+function setupCameraHandlers() {
+  const isAndroid = window.APP_CONFIG?.platform === 'android';
+
+  // Tampilkan elemen sesuai platform
+  document.querySelectorAll('.android-only').forEach(el => el.classList.toggle('hidden', !isAndroid));
+  document.querySelectorAll('.web-only').forEach(el => el.classList.toggle('hidden', isAndroid));
+
+  // Android: ambil foto via Capacitor Camera
+  const btnTakePhoto = document.getElementById('btn-take-photo');
+  if (btnTakePhoto) {
+    btnTakePhoto.addEventListener('click', async () => {
+      try {
+        const imageUrl = await pickProductImage();
+        _setProductImagePreview(imageUrl);
+      } catch (err) {
+        showToast('Gagal mengambil foto: ' + err.message, 'error');
+      }
+    });
+  }
+
+  // Web/Desktop: upload file HTML biasa
+  const fileInput = document.getElementById('product-image-input');
+  if (fileInput) {
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      try {
+        const formData = new FormData();
+        formData.append('image', file);
+        const result = await apiClient.uploadFile('/products/upload-image', formData);
+        _setProductImagePreview(result.image_url);
+      } catch (err) {
+        showToast('Gagal upload foto: ' + err.message, 'error');
+      }
+    });
+  }
+
+  // Android: scan barcode via kamera
+  const btnScanBarcode = document.getElementById('btnScanBarcode');
+  if (btnScanBarcode && isAndroid) {
+    btnScanBarcode.addEventListener('click', () => {
+      if (typeof openBarcodeScannerModal !== 'function') {
+        showToast('Scanner tidak tersedia', 'error');
+        return;
+      }
+      openBarcodeScannerModal((code) => {
+        document.getElementById('barcode').value = code;
+      });
+    });
+  }
+}
+
+function _setProductImagePreview(url) {
+  const preview = document.getElementById('product-image-preview');
+  const input   = document.getElementById('product-image-url');
+  if (preview) { preview.src = url; preview.style.display = 'block'; }
+  if (input)   input.value = url;
 }
 
 // ============================================

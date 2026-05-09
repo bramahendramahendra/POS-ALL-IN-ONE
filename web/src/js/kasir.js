@@ -709,9 +709,9 @@ async function processTransaction() {
         showToast('Transaksi berhasil disimpan!', 'success');
         closePaymentModal();
 
-        // Cetak struk via browser print
+        // Cetak struk — Android pakai Bluetooth, web pakai browser print
         const txData = (result && (result.transaction || result)) || transactionData;
-        printReceipt({ ...txData, transaction_code: transactionCode });
+        await printReceiptPlatform({ ...txData, transaction_code: transactionCode });
 
         clearCart();
     } catch (err) {
@@ -723,8 +723,17 @@ async function processTransaction() {
 }
 
 // ============================================
-// PRINT RECEIPT (browser window.print)
+// PRINT RECEIPT — platform-aware
 // ============================================
+
+// Router: Android → Bluetooth, web/desktop → browser print
+async function printReceiptPlatform(transaction) {
+    if (window.APP_CONFIG?.platform === 'android' && typeof printReceiptAndroid === 'function') {
+        await printReceiptAndroid(transaction);
+    } else {
+        printReceipt(transaction);
+    }
+}
 
 function printReceipt(transaction) {
     const printArea = document.getElementById('receipt-print');

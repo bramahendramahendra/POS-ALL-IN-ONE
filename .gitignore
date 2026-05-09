@@ -44,9 +44,14 @@ web/.env.production
 android/node_modules/
 android/dist/
 android/.env
-android/android/
 android/ios/
-android/.gradle/
+# Build artifacts dalam native project (bukan source-nya)
+android/android/.gradle/
+android/android/build/
+android/android/app/build/
+android/android/app/.cxx/
+android/android/local.properties
+android/android/.idea/
 
 # APK output
 *.apk
