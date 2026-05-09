@@ -1,82 +1,223 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shift — POS System</title>
-    <link rel="stylesheet" href="/src/css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manajemen Shift — POS System</title>
+  <link rel="stylesheet" href="/src/css/style.css">
+  <style>
+    body { margin: 0; background: #f5f6fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+    .navbar {
+      background: #2c3e50; color: #fff; padding: 0 30px; height: 60px;
+      display: flex; justify-content: space-between; align-items: center;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    .navbar-brand { font-size: 18px; font-weight: 700; }
+    .navbar-user  { display: flex; align-items: center; gap: 16px; }
+    .user-info    { display: flex; flex-direction: column; align-items: flex-end; }
+    .user-info strong { font-size: 13px; }
+    .user-role    { font-size: 11px; color: #bdc3c7; text-transform: capitalize; }
+
+    .dashboard-container { display: flex; margin-top: 60px; min-height: calc(100vh - 60px); }
+
+    .sidebar {
+      width: 220px; background: #fff; box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+      position: fixed; left: 0; top: 60px; bottom: 0; overflow-y: auto;
+    }
+    .sidebar-menu { list-style: none; padding: 12px 0; margin: 0; }
+    .menu-item a {
+      display: flex; align-items: center; padding: 11px 18px;
+      color: #2c3e50; text-decoration: none; font-size: 13px; font-weight: 500;
+      transition: background 0.2s;
+    }
+    .menu-item a:hover { background: #f8f9fa; }
+    .menu-item.active a { background: #3498db; color: #fff; border-right: 4px solid #2980b9; }
+    .menu-icon { font-size: 16px; margin-right: 10px; width: 20px; text-align: center; }
+
+    .main-content { flex: 1; margin-left: 220px; padding: 20px 24px; }
+
+    .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .content-header h1 { font-size: 22px; color: #2c3e50; margin: 0; }
+
+    .table-container { overflow-x: auto; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+    .data-table { width: 100%; border-collapse: collapse; background: #fff; font-size: 13px; }
+    .data-table thead th {
+      background: #f9fafb; padding: 10px 12px; text-align: left;
+      font-weight: 600; color: #374151; border-bottom: 2px solid #e5e7eb; white-space: nowrap;
+    }
+    .data-table tbody td { padding: 10px 12px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:hover { background: #f9fafb; }
+    .text-center { text-align: center; color: #9ca3af; padding: 24px !important; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer;
+      font-size: 13px; font-weight: 600; transition: background 0.15s; white-space: nowrap;
+    }
+    .btn-primary   { background: #3498db; color: #fff; }
+    .btn-primary:hover   { background: #2980b9; }
+    .btn-secondary { background: #e5e7eb; color: #374151; }
+    .btn-secondary:hover { background: #d1d5db; }
+    .btn-danger    { background: #dc2626; color: #fff; }
+    .btn-danger:hover    { background: #b91c1c; }
+    .btn-icon {
+      background: none; border: none; cursor: pointer; font-size: 15px;
+      padding: 3px 6px; border-radius: 4px; transition: background 0.15s;
+    }
+    .btn-icon:hover { background: #f3f4f6; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .badge-success   { background: #d1fae5; color: #065f46; }
+    .badge-secondary { background: #e5e7eb; color: #374151; }
+
+    .action-buttons { display: flex; gap: 4px; }
+
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,.5); z-index: 2000; justify-content: center; align-items: center;
+    }
+    .modal-content {
+      background: #fff; border-radius: 10px; width: 92%; max-width: 480px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.2); max-height: 90vh; overflow-y: auto;
+    }
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; border-bottom: 1px solid #e5e7eb;
+      position: sticky; top: 0; background: #fff; z-index: 1;
+    }
+    .modal-header h2 { font-size: 18px; margin: 0; color: #1e293b; }
+    .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #6b7280; line-height: 1; }
+    .modal-close:hover { color: #111; }
+    .modal-body   { padding: 20px; }
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+
+    .form-row { display: flex; gap: 12px; }
+    .form-row .form-group { flex: 1; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+    .form-group label { font-size: 13px; font-weight: 600; color: #374151; }
+    .form-group input { padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; }
+    .required { color: #dc2626; }
+
+    .error-message {
+      background: #fee2e2; color: #991b1b; border-radius: 6px;
+      padding: 8px 12px; font-size: 13px; margin-bottom: 10px;
+    }
+    .hidden { display: none !important; }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main-content { margin-left: 0; }
+      .form-row { flex-direction: column; }
+    }
+  </style>
 </head>
 <body>
-<div class="layout">
-    <aside class="sidebar">
-        <div class="logo">POS System</div>
-        <nav>
-            <a href="/dashboard.html">Dashboard</a>
-            <a href="/kasir.html">Kasir</a>
-            <a href="/products.html">Produk</a>
-            <a href="/transactions.html">Transaksi</a>
-            <a href="/finance.html">Keuangan</a>
-            <a href="/customers.html">Pelanggan</a>
-            <a href="/receivables.html">Piutang</a>
-            <a href="/suppliers.html">Supplier</a>
-            <a href="/shifts.html" class="active">Shift</a>
-            <a href="/reports.html">Laporan</a>
-            <a href="/sync-center.html">Sync Center</a>
-            <a href="/settings.html">Pengaturan</a>
-        </nav>
-        <div style="margin-top:auto;padding:20px;">
-            <button class="btn-secondary" id="btn-logout" style="width:100%">Logout</button>
-        </div>
-    </aside>
-    <main class="main-content">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-            <h1 class="page-title" style="margin:0">Shift</h1>
-            <button class="btn-primary" id="btn-open-shift">Buka Shift</button>
-        </div>
-        <div class="card">
-            <table>
-                <thead><tr><th>Kasir</th><th>Buka</th><th>Tutup</th><th>Modal Awal</th><th>Total Penjualan</th><th>Status</th></tr></thead>
-                <tbody id="table-body"></tbody>
-            </table>
-        </div>
-    </main>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="navbar-brand">POS System — Shift</div>
+  <div class="navbar-user">
+    <div class="user-info">
+      <strong id="navUsername">—</strong>
+      <span class="user-role" id="navUserRole"></span>
+    </div>
+    <button class="btn btn-secondary" id="btn-logout-nav" style="width:auto;padding:6px 14px;font-size:13px">Logout</button>
+  </div>
+</nav>
+
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <ul class="sidebar-menu">
+      <li class="menu-item"><a href="/dashboard.html"><span class="menu-icon">🏠</span> Dashboard</a></li>
+      <li class="menu-item"><a href="/kasir.html"><span class="menu-icon">🛒</span> Kasir</a></li>
+      <li class="menu-item"><a href="/products.html"><span class="menu-icon">📦</span> Produk</a></li>
+      <li class="menu-item"><a href="/transactions.html"><span class="menu-icon">💳</span> Transaksi</a></li>
+      <li class="menu-item"><a href="/finance.html"><span class="menu-icon">💰</span> Keuangan</a></li>
+      <li class="menu-item"><a href="/customers.html"><span class="menu-icon">👥</span> Pelanggan</a></li>
+      <li class="menu-item"><a href="/receivables.html"><span class="menu-icon">📋</span> Piutang</a></li>
+      <li class="menu-item"><a href="/suppliers.html"><span class="menu-icon">🏭</span> Supplier</a></li>
+      <li class="menu-item active"><a href="/shifts.html"><span class="menu-icon">🕐</span> Shift</a></li>
+      <li class="menu-item"><a href="/reports.html"><span class="menu-icon">📈</span> Laporan</a></li>
+      <li class="menu-item"><a href="/sync-center.html"><span class="menu-icon">🔄</span> Sync Center</a></li>
+      <li class="menu-item"><a href="/settings.html"><span class="menu-icon">⚙️</span> Pengaturan</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="content-header">
+      <h1>🕐 Manajemen Shift</h1>
+      <div class="header-actions">
+        <button class="btn btn-primary" id="btnAddShift">➕ Tambah Shift</button>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table" id="shiftsTable">
+        <thead>
+          <tr>
+            <th>Nama Shift</th>
+            <th>Jam Mulai</th>
+            <th>Jam Selesai</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="shiftsTableBody">
+          <tr>
+            <td colspan="5" class="text-center">Memuat data...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
 </div>
+
+<!-- Modal Add/Edit Shift -->
+<div id="shiftModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="shiftModalTitle">Tambah Shift</h2>
+      <button class="modal-close" id="closeShiftModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="shiftForm">
+        <input type="hidden" id="shiftId">
+
+        <div class="form-group">
+          <label for="shiftName">Nama Shift <span class="required">*</span></label>
+          <input type="text" id="shiftName" placeholder="Contoh: Shift Pagi" maxlength="50" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="shiftStartTime">Jam Mulai <span class="required">*</span></label>
+            <input type="time" id="shiftStartTime" required>
+          </div>
+          <div class="form-group">
+            <label for="shiftEndTime">Jam Selesai <span class="required">*</span></label>
+            <input type="time" id="shiftEndTime" required>
+          </div>
+        </div>
+
+        <div id="shiftFormError" class="error-message hidden"></div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btnCancelShift">Batal</button>
+          <button type="submit" class="btn btn-primary" id="btnSubmitShift">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script src="/src/js/api-client.js"></script>
 <script src="/src/js/app.js"></script>
 <script src="/src/js/auth.js"></script>
-<script src="/src/js/router.js"></script>
-<script>
-    requireAuth();
-    document.getElementById('btn-logout').addEventListener('click', logout);
-
-    function fmt(n) { return 'Rp ' + Number(n).toLocaleString('id-ID'); }
-    function fmtDate(s) { return s ? new Date(s).toLocaleString('id-ID') : '-'; }
-
-    async function load() {
-        try {
-            const data = await apiClient.get('/shifts', { limit: 100 }) || [];
-            document.getElementById('table-body').innerHTML = data.map(s => `
-                <tr>
-                    <td>${s.cashier_name || '-'}</td>
-                    <td>${fmtDate(s.opened_at)}</td>
-                    <td>${fmtDate(s.closed_at)}</td>
-                    <td>${fmt(s.opening_cash || 0)}</td>
-                    <td>${fmt(s.total_sales || 0)}</td>
-                    <td>${s.is_open ? '<span style="color:#059669">Buka</span>' : 'Tutup'}</td>
-                </tr>`).join('');
-        } catch (e) { console.error(e.message); }
-    }
-
-    document.getElementById('btn-open-shift').addEventListener('click', async () => {
-        const modal = prompt('Modal awal (Rp):');
-        if (modal === null) return;
-        try {
-            await apiClient.post('/shifts/open', { opening_cash: Number(modal), device_source: 'web' });
-            load();
-        } catch (e) { alert('Error: ' + e.message); }
-    });
-
-    load();
-</script>
+<script src="/src/js/shifts.js"></script>
 </body>
 </html>
