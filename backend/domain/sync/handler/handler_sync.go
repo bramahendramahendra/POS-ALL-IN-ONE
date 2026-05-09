@@ -81,7 +81,7 @@ func (h *SyncHandler) ResolveConflict(c *gin.Context) {
 
 	userID := helper.GetUserID(c)
 
-	if err := h.service.ResolveConflict(id, userID, req.Resolution); err != nil {
+	if err := h.service.ResolveConflict(id, userID, req.Action); err != nil {
 		c.Error(err)
 		return
 	}

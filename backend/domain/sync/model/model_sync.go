@@ -3,17 +3,26 @@ package model_sync
 import "time"
 
 type SyncConflict struct {
-	ID          int        `json:"id"`
-	EntityType  string     `json:"entity_type"`
-	EntityID    int        `json:"entity_id"`
-	DesktopData string     `json:"desktop_data"`
-	OnlineData  string     `json:"online_data"`
-	DesktopTime time.Time  `json:"desktop_time"`
-	OnlineTime  time.Time  `json:"online_time"`
-	Status      string     `json:"status"`
-	ResolvedBy  *int       `json:"resolved_by"`
-	Resolution  *string    `json:"resolution"`
-	ResolvedAt  *time.Time `json:"resolved_at"`
+	ID             int        `json:"id"`
+	EntityType     string     `json:"entity_type"`
+	EntityID       int        `json:"entity_id"`
+	LocalID        string     `json:"local_id"`
+	DeviceID       string     `json:"device_id"`
+	DesktopData    string     `json:"desktop_data"`
+	OnlineData     string     `json:"online_data"`
+	DesktopTime    time.Time  `json:"desktop_time"`
+	OnlineTime     time.Time  `json:"online_time"`
+	Status         string     `json:"status"`
+	ResolvedBy     *int       `json:"resolved_by"`
+	Resolution     *string    `json:"resolution"`
+	ResolvedAction *string    `json:"resolved_action"`
+	ResolvedAt     *time.Time `json:"resolved_at"`
+}
+
+// EntitySnapshot digunakan oleh DetectConflict untuk membandingkan timestamp
+type EntitySnapshot struct {
+	UpdatedAt string `json:"updated_at"`
+	Data      string `json:"data"` // JSON snapshot dari entity
 }
 
 type SyncQueue struct {

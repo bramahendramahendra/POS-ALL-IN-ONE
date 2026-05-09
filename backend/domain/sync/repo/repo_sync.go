@@ -13,13 +13,17 @@ const (
 	GetConflictsQuery    = `SELECT id, entity_type, entity_id, desktop_data, online_data, desktop_time, online_time, status FROM sync_conflicts WHERE 1=1`
 	countConflictsBase   = `SELECT COUNT(*) FROM sync_conflicts WHERE 1=1`
 	getConflictByIDQuery = `SELECT id, entity_type, entity_id, desktop_data, online_data, desktop_time, online_time, status, resolved_by, resolution, resolved_at FROM sync_conflicts WHERE id = ?`
-	ResolveConflictQuery = `UPDATE sync_conflicts SET status='resolved', resolved_by=?, resolution=?, resolved_at=NOW() WHERE id=?`
-	CreateConflictQuery  = `INSERT INTO sync_conflicts (entity_type, entity_id, desktop_data, online_data, desktop_time, online_time) VALUES (?, ?, ?, ?, ?, ?)`
+	ResolveConflictQuery = `UPDATE sync_conflicts SET status='resolved', resolved_by=?, resolved_action=?, resolved_at=NOW() WHERE id=?`
+	CreateConflictQuery  = `INSERT INTO sync_conflicts (entity_type, entity_id, local_id, device_id, desktop_data, online_data, desktop_time, online_time) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())`
 
-	GetQueueQuery        = `SELECT id, device_id, entity_type, entity_id, action, status, retry_count, created_at FROM sync_queue WHERE 1=1`
-	countQueueBase       = `SELECT COUNT(*) FROM sync_queue WHERE 1=1`
-	CreateQueueItemQuery = `INSERT INTO sync_queue (device_id, entity_type, entity_id, action, payload, status) VALUES (?, ?, ?, ?, ?, 'pending')`
+	GetQueueQuery          = `SELECT id, device_id, entity_type, entity_id, action, status, retry_count, created_at FROM sync_queue WHERE 1=1`
+	countQueueBase         = `SELECT COUNT(*) FROM sync_queue WHERE 1=1`
+	CreateQueueItemQuery   = `INSERT INTO sync_queue (device_id, entity_type, entity_id, action, payload, status) VALUES (?, ?, ?, ?, ?, 'pending')`
 	UpdateQueueStatusQuery = `UPDATE sync_queue SET status=?, synced_at=CASE WHEN ? = 'synced' THEN NOW() ELSE NULL END, error_message=? WHERE id=?`
+
+	// entityTableMap menentukan tabel dan kolom JSON per entity type
+	// Format query: SELECT updated_at, JSON_OBJECT(...) AS data FROM <table> WHERE id=?
+	// Tabel yang didukung: products, transactions, expenses
 )
 
 type syncRepo struct {
@@ -85,12 +89,55 @@ func (r *syncRepo) GetConflictByID(id int) (*model_sync.SyncConflict, error) {
 	return &c, nil
 }
 
-func (r *syncRepo) ResolveConflict(id, userID int, resolution string) error {
-	return r.db.Exec(ResolveConflictQuery, userID, resolution, id).Error
+func (r *syncRepo) ResolveConflict(id, userID int, action string) error {
+	return r.db.Exec(ResolveConflictQuery, userID, action, id).Error
 }
 
-func (r *syncRepo) CreateConflict(item *dto_sync.SyncItem) error {
-	return r.db.Exec(CreateConflictQuery, item.EntityType, item.EntityID, item.Payload, "", item.DesktopTime, item.DesktopTime).Error
+// CreateConflict menyimpan konflik ke sync_conflicts dan mengembalikan ID konflik yang baru
+func (r *syncRepo) CreateConflict(deviceID string, item *dto_sync.SyncItem, onlineData string) (int, error) {
+	result := r.db.Exec(CreateConflictQuery,
+		item.EntityType, item.ServerID, item.LocalID, deviceID,
+		item.Payload, onlineData,
+	)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	var id int
+	r.db.Raw("SELECT LAST_INSERT_ID()").Scan(&id)
+	return id, nil
+}
+
+// GetEntitySnapshot mengambil updated_at entity dari tabel aslinya untuk keperluan DetectConflict.
+// Data (JSON snapshot) diisi dengan updated_at saja agar bisa disimpan di online_data pada sync_conflicts.
+func (r *syncRepo) GetEntitySnapshot(entityType string, serverID int) (*model_sync.EntitySnapshot, error) {
+	var tableName string
+	switch entityType {
+	case "product":
+		tableName = "products"
+	case "transaction":
+		tableName = "transactions"
+	case "expense":
+		tableName = "expenses"
+	default:
+		return nil, nil // entity type tidak dikenal → anggap tidak ada konflik
+	}
+
+	// Ambil updated_at saja; query JSON per-table terlalu kompleks karena kolom berbeda
+	query := fmt.Sprintf(
+		`SELECT DATE_FORMAT(updated_at, '%%Y-%%m-%%dT%%H:%%i:%%sZ') FROM %s WHERE id = ? LIMIT 1`,
+		tableName,
+	)
+
+	var updatedAt string
+	row := r.db.Raw(query, serverID).Row()
+	if err := row.Scan(&updatedAt); err != nil {
+		// Row tidak ditemukan → entity belum ada di server, tidak ada konflik
+		return nil, nil
+	}
+	return &model_sync.EntitySnapshot{
+		UpdatedAt: updatedAt,
+		Data:      fmt.Sprintf(`{"id":%d,"updated_at":"%s"}`, serverID, updatedAt),
+	}, nil
 }
 
 func (r *syncRepo) GetQueue(filter *dto_sync.QueueFilter) ([]dto_sync.QueueResponse, int, error) {

@@ -5,11 +5,14 @@ import "time"
 // --- Push Sync ---
 
 type SyncItem struct {
+	LocalID     string `json:"local_id"`
+	ServerID    int    `json:"server_id"`
 	EntityType  string `json:"entity_type"`
 	EntityID    int    `json:"entity_id"`
 	Action      string `json:"action"` // create, update, delete
 	Payload     string `json:"payload"`
 	DesktopTime string `json:"desktop_time"`
+	UpdatedAt   string `json:"updated_at"` // updated_at terakhir dari desktop
 }
 
 type PushSyncRequest struct {
@@ -17,10 +20,19 @@ type PushSyncRequest struct {
 	Items    []SyncItem `json:"items" binding:"required"`
 }
 
+// SyncItemResult adalah hasil per-item saat push sync
+type SyncItemResult struct {
+	LocalID    string `json:"local_id"`
+	Status     string `json:"status"`     // "synced" | "conflict" | "failed"
+	ServerID   int    `json:"server_id,omitempty"`
+	ConflictID int    `json:"conflict_id,omitempty"`
+}
+
 type PushSyncResponse struct {
-	Processed int `json:"processed"`
-	Conflicts int `json:"conflicts"`
-	Failed    int `json:"failed"`
+	Processed int              `json:"processed"`
+	Conflicts int              `json:"conflicts"`
+	Failed    int              `json:"failed"`
+	Results   []SyncItemResult `json:"results"`
 }
 
 // --- Conflicts ---
@@ -48,7 +60,8 @@ type ConflictListResponse struct {
 }
 
 type ResolveConflictRequest struct {
-	Resolution string `json:"resolution" binding:"required,oneof=desktop online"`
+	// approve = terapkan versi desktop ke MySQL; reject = pertahankan versi online
+	Action string `json:"action" binding:"required,oneof=approve reject"`
 }
 
 // --- Queue ---

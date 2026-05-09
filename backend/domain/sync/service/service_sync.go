@@ -1,6 +1,8 @@
 package service_sync
 
 import (
+	"time"
+
 	dto_sync "permen_api/domain/sync/dto"
 	repo_sync "permen_api/domain/sync/repo"
 	"permen_api/errors"
@@ -14,32 +16,91 @@ func NewSyncService(repo repo_sync.SyncRepo) SyncService {
 	return &syncService{repo: repo}
 }
 
+// detectConflict membandingkan timestamp online vs desktop.
+// Mengembalikan (isConflict bool, onlineDataJSON string, error).
+// Konflik terjadi bila data online sudah diubah setelah data desktop terakhir sync.
+func (s *syncService) detectConflict(item *dto_sync.SyncItem) (bool, string, error) {
+	// Item baru (ServerID == 0) berarti belum ada di server → tidak mungkin konflik
+	if item.ServerID == 0 {
+		return false, "", nil
+	}
+
+	snapshot, err := s.repo.GetEntitySnapshot(item.EntityType, item.ServerID)
+	if err != nil || snapshot == nil {
+		return false, "", nil // data tidak ada di server → langsung apply
+	}
+
+	onlineTime, err := time.Parse(time.RFC3339, snapshot.UpdatedAt)
+	if err != nil {
+		return false, "", nil
+	}
+
+	desktopTime, err := time.Parse(time.RFC3339, item.UpdatedAt)
+	if err != nil {
+		return false, "", nil
+	}
+
+	// Konflik: data online lebih baru daripada data yang diketahui desktop
+	if onlineTime.After(desktopTime) {
+		return true, snapshot.Data, nil
+	}
+
+	return false, "", nil
+}
+
 func (s *syncService) PushSync(req *dto_sync.PushSyncRequest) (*dto_sync.PushSyncResponse, error) {
 	processed, conflicts, failed := 0, 0, 0
+	results := make([]dto_sync.SyncItemResult, 0, len(req.Items))
 
 	for i := range req.Items {
 		item := &req.Items[i]
 
-		queueID, err := s.repo.CreateQueueItem(req.DeviceID, item)
-		if err != nil {
-			failed++
+		isConflict, onlineData, _ := s.detectConflict(item)
+		if isConflict {
+			// Simpan ke sync_conflicts; jangan apply ke MySQL dulu
+			conflictID, err := s.repo.CreateConflict(req.DeviceID, item, onlineData)
+			if err != nil {
+				failed++
+				results = append(results, dto_sync.SyncItemResult{
+					LocalID: item.LocalID,
+					Status:  "failed",
+				})
+				continue
+			}
+			conflicts++
+			results = append(results, dto_sync.SyncItemResult{
+				LocalID:    item.LocalID,
+				Status:     "conflict",
+				ConflictID: conflictID,
+			})
 			continue
 		}
 
-		if updateErr := s.repo.UpdateQueueStatus(queueID, "synced", ""); updateErr == nil {
-			processed++
-		} else {
-			// Simpan sebagai konflik untuk direview Owner/Admin
-			_ = s.repo.CreateConflict(item)
-			_ = s.repo.UpdateQueueStatus(queueID, "failed", "conflict")
-			conflicts++
+		// Tidak ada konflik → apply langsung via queue
+		queueID, err := s.repo.CreateQueueItem(req.DeviceID, item)
+		if err != nil {
+			failed++
+			results = append(results, dto_sync.SyncItemResult{
+				LocalID: item.LocalID,
+				Status:  "failed",
+			})
+			continue
 		}
+
+		_ = s.repo.UpdateQueueStatus(queueID, "synced", "")
+		processed++
+		results = append(results, dto_sync.SyncItemResult{
+			LocalID:  item.LocalID,
+			Status:   "synced",
+			ServerID: item.ServerID,
+		})
 	}
 
 	return &dto_sync.PushSyncResponse{
 		Processed: processed,
 		Conflicts: conflicts,
 		Failed:    failed,
+		Results:   results,
 	}, nil
 }
 
@@ -51,7 +112,7 @@ func (s *syncService) GetConflicts(filter *dto_sync.ConflictFilter) (*dto_sync.C
 	return &dto_sync.ConflictListResponse{Data: data, Total: total}, nil
 }
 
-func (s *syncService) ResolveConflict(id, userID int, resolution string) error {
+func (s *syncService) ResolveConflict(id, userID int, action string) error {
 	conflict, err := s.repo.GetConflictByID(id)
 	if err != nil {
 		return &errors.NotFoundError{Message: "Konflik tidak ditemukan"}
@@ -61,11 +122,9 @@ func (s *syncService) ResolveConflict(id, userID int, resolution string) error {
 		return &errors.BadRequestError{Message: "Konflik sudah diselesaikan"}
 	}
 
-	// Jika "online" → tidak perlu apa-apa, data online sudah berlaku
-	// Jika "desktop" → idealnya terapkan desktop_data ke entity terkait
-	// Untuk saat ini cukup catat resolution-nya
-
-	return s.repo.ResolveConflict(id, userID, resolution)
+	// approve → terapkan desktop_data ke MySQL (fase 6.2)
+	// reject  → pertahankan versi online, catat saja action-nya
+	return s.repo.ResolveConflict(id, userID, action)
 }
 
 func (s *syncService) GetQueue(filter *dto_sync.QueueFilter) (*dto_sync.QueueListResponse, error) {
