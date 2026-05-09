@@ -1,6 +1,7 @@
 package repo_sync
 
 import (
+	"encoding/json"
 	"fmt"
 
 	dto_sync "permen_api/domain/sync/dto"
@@ -10,7 +11,7 @@ import (
 )
 
 const (
-	GetConflictsQuery    = `SELECT id, entity_type, entity_id, desktop_data, online_data, desktop_time, online_time, status FROM sync_conflicts WHERE 1=1`
+	GetConflictsQuery    = `SELECT id, entity_type, entity_id, local_id, device_id, desktop_data, online_data, desktop_time, online_time, status, created_at FROM sync_conflicts WHERE 1=1`
 	countConflictsBase   = `SELECT COUNT(*) FROM sync_conflicts WHERE 1=1`
 	getConflictByIDQuery = `SELECT id, entity_type, entity_id, desktop_data, online_data, desktop_time, online_time, status, resolved_by, resolution, resolved_at FROM sync_conflicts WHERE id = ?`
 	ResolveConflictQuery = `UPDATE sync_conflicts SET status='resolved', resolved_by=?, resolved_action=?, resolved_at=NOW() WHERE id=?`
@@ -69,7 +70,13 @@ func (r *syncRepo) GetConflicts(filter *dto_sync.ConflictFilter) ([]dto_sync.Con
 	var items []dto_sync.ConflictResponse
 	for rows.Next() {
 		var item dto_sync.ConflictResponse
-		if err := rows.Scan(&item.ID, &item.EntityType, &item.EntityID, &item.DesktopData, &item.OnlineData, &item.DesktopTime, &item.OnlineTime, &item.Status); err != nil {
+		if err := rows.Scan(
+			&item.ID, &item.EntityType, &item.EntityID,
+			&item.LocalID, &item.DeviceID,
+			&item.DesktopData, &item.OnlineData,
+			&item.DesktopTime, &item.OnlineTime,
+			&item.Status, &item.CreatedAt,
+		); err != nil {
 			return nil, 0, err
 		}
 		items = append(items, item)
@@ -107,25 +114,81 @@ func (r *syncRepo) CreateConflict(deviceID string, item *dto_sync.SyncItem, onli
 	return id, nil
 }
 
-// GetEntitySnapshot mengambil updated_at entity dari tabel aslinya untuk keperluan DetectConflict.
-// Data (JSON snapshot) diisi dengan updated_at saja agar bisa disimpan di online_data pada sync_conflicts.
-func (r *syncRepo) GetEntitySnapshot(entityType string, serverID int) (*model_sync.EntitySnapshot, error) {
-	var tableName string
+// entityTable memetakan entity type ke nama tabel MySQL.
+func entityTable(entityType string) string {
 	switch entityType {
 	case "product":
-		tableName = "products"
+		return "products"
 	case "transaction":
-		tableName = "transactions"
+		return "transactions"
 	case "expense":
-		tableName = "expenses"
-	default:
-		return nil, nil // entity type tidak dikenal → anggap tidak ada konflik
+		return "expenses"
+	}
+	return ""
+}
+
+// GetRawByEntityAndID mengambil seluruh kolom entity sebagai JSON string.
+// Menggunakan map scan agar tidak perlu tahu kolom setiap tabel.
+func (r *syncRepo) GetRawByEntityAndID(entityType string, serverID int) (string, error) {
+	table := entityTable(entityType)
+	if table == "" {
+		return "{}", nil
 	}
 
-	// Ambil updated_at saja; query JSON per-table terlalu kompleks karena kolom berbeda
+	query := fmt.Sprintf(`SELECT * FROM %s WHERE id = ? LIMIT 1`, table)
+	rows, err := r.db.Raw(query, serverID).Rows()
+	if err != nil {
+		return "{}", err
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return "{}", nil
+	}
+
+	cols, err := rows.Columns()
+	if err != nil {
+		return "{}", err
+	}
+
+	values := make([]interface{}, len(cols))
+	valuePtrs := make([]interface{}, len(cols))
+	for i := range values {
+		valuePtrs[i] = &values[i]
+	}
+	if err := rows.Scan(valuePtrs...); err != nil {
+		return "{}", err
+	}
+
+	rowMap := make(map[string]interface{}, len(cols))
+	for i, col := range cols {
+		val := values[i]
+		// []byte dari MySQL (mis. JSON/TEXT) dikonversi ke string
+		if b, ok := val.([]byte); ok {
+			rowMap[col] = string(b)
+		} else {
+			rowMap[col] = val
+		}
+	}
+
+	b, err := json.Marshal(rowMap)
+	if err != nil {
+		return "{}", err
+	}
+	return string(b), nil
+}
+
+// GetEntitySnapshot mengambil updated_at dan full JSON snapshot entity dari tabel aslinya.
+// updated_at dipakai DetectConflict; Data dipakai sebagai online_data di sync_conflicts.
+func (r *syncRepo) GetEntitySnapshot(entityType string, serverID int) (*model_sync.EntitySnapshot, error) {
+	table := entityTable(entityType)
+	if table == "" {
+		return nil, nil
+	}
+
 	query := fmt.Sprintf(
 		`SELECT DATE_FORMAT(updated_at, '%%Y-%%m-%%dT%%H:%%i:%%sZ') FROM %s WHERE id = ? LIMIT 1`,
-		tableName,
+		table,
 	)
 
 	var updatedAt string
@@ -134,9 +197,11 @@ func (r *syncRepo) GetEntitySnapshot(entityType string, serverID int) (*model_sy
 		// Row tidak ditemukan → entity belum ada di server, tidak ada konflik
 		return nil, nil
 	}
+
+	rawJSON, _ := r.GetRawByEntityAndID(entityType, serverID)
 	return &model_sync.EntitySnapshot{
 		UpdatedAt: updatedAt,
-		Data:      fmt.Sprintf(`{"id":%d,"updated_at":"%s"}`, serverID, updatedAt),
+		Data:      rawJSON,
 	}, nil
 }
 

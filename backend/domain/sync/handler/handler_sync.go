@@ -43,12 +43,12 @@ func (h *SyncHandler) PushSync(c *gin.Context) {
 	})
 }
 
-// GET /api/sync/conflicts
+// GET /api/sync/conflicts?status=pending&page=1&limit=20
 func (h *SyncHandler) GetConflicts(c *gin.Context) {
 	filter := &dto_sync.ConflictFilter{
-		Status: c.Query("status"),
-		Page:   parseIntQuery(c.Query("page"), 1),
-		Limit:  parseIntQuery(c.Query("limit"), 20),
+		Status: c.DefaultQuery("status", "pending"),
+		Page:   parseIntQuery(c.DefaultQuery("page", "1"), 1),
+		Limit:  parseIntQuery(c.DefaultQuery("limit", "20"), 20),
 	}
 
 	result, err := h.service.GetConflicts(filter)

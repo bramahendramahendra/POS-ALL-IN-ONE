@@ -109,7 +109,19 @@ func (s *syncService) GetConflicts(filter *dto_sync.ConflictFilter) (*dto_sync.C
 	if err != nil {
 		return nil, &errors.InternalServerError{Message: "Gagal mengambil data konflik"}
 	}
-	return &dto_sync.ConflictListResponse{Data: data, Total: total}, nil
+	page, limit := filter.Page, filter.Limit
+	if page <= 0 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 20
+	}
+	return &dto_sync.ConflictListResponse{
+		Data:  data,
+		Total: total,
+		Page:  page,
+		Limit: limit,
+	}, nil
 }
 
 func (s *syncService) ResolveConflict(id, userID int, action string) error {

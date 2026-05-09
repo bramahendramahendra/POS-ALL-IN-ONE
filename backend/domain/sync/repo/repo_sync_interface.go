@@ -10,6 +10,10 @@ type SyncRepo interface {
 	// Digunakan DetectConflict untuk membandingkan updated_at online vs desktop
 	GetEntitySnapshot(entityType string, serverID int) (*model_sync.EntitySnapshot, error)
 
+	// GetRawByEntityAndID mengambil seluruh kolom entity sebagai JSON string.
+	// Digunakan sebagai online_data saat menyimpan konflik ke sync_conflicts.
+	GetRawByEntityAndID(entityType string, serverID int) (string, error)
+
 	GetConflicts(filter *dto_sync.ConflictFilter) ([]dto_sync.ConflictResponse, int, error)
 	GetConflictByID(id int) (*model_sync.SyncConflict, error)
 	ResolveConflict(id, userID int, action string) error

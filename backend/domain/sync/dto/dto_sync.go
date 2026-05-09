@@ -23,9 +23,10 @@ type PushSyncRequest struct {
 // SyncItemResult adalah hasil per-item saat push sync
 type SyncItemResult struct {
 	LocalID    string `json:"local_id"`
-	Status     string `json:"status"`     // "synced" | "conflict" | "failed"
+	Status     string `json:"status"`               // "synced" | "conflict" | "failed"
 	ServerID   int    `json:"server_id,omitempty"`
 	ConflictID int    `json:"conflict_id,omitempty"`
+	Message    string `json:"message,omitempty"`
 }
 
 type PushSyncResponse struct {
@@ -47,16 +48,21 @@ type ConflictResponse struct {
 	ID          int        `json:"id"`
 	EntityType  string     `json:"entity_type"`
 	EntityID    int        `json:"entity_id"`
+	LocalID     string     `json:"local_id"`
+	DeviceID    string     `json:"device_id"`
 	DesktopData string     `json:"desktop_data"`
 	OnlineData  string     `json:"online_data"`
 	DesktopTime time.Time  `json:"desktop_time"`
 	OnlineTime  time.Time  `json:"online_time"`
 	Status      string     `json:"status"`
+	CreatedAt   time.Time  `json:"created_at"`
 }
 
 type ConflictListResponse struct {
 	Data  []ConflictResponse `json:"data"`
 	Total int                `json:"total"`
+	Page  int                `json:"page"`
+	Limit int                `json:"limit"`
 }
 
 type ResolveConflictRequest struct {
