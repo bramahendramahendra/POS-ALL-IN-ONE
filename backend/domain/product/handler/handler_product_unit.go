@@ -24,7 +24,7 @@ func NewProductUnitHandler(service service_product.ProductUnitService) *ProductU
 
 // GET /api/products/:product_id/units
 func (h *ProductUnitHandler) GetByProduct(c *gin.Context) {
-	productID, err := parseParamID(c, "product_id")
+	productID, err := parseParamID(c, "id")
 	if err != nil {
 		c.Error(err)
 		return
@@ -46,7 +46,7 @@ func (h *ProductUnitHandler) GetByProduct(c *gin.Context) {
 
 // POST /api/products/:product_id/units
 func (h *ProductUnitHandler) Save(c *gin.Context) {
-	productID, err := parseParamID(c, "product_id")
+	productID, err := parseParamID(c, "id")
 	if err != nil {
 		c.Error(err)
 		return
@@ -76,7 +76,7 @@ func (h *ProductUnitHandler) Save(c *gin.Context) {
 
 // DELETE /api/products/:product_id/units/:unit_id
 func (h *ProductUnitHandler) Delete(c *gin.Context) {
-	productID, err := parseParamID(c, "product_id")
+	productID, err := parseParamID(c, "id")
 	if err != nil {
 		c.Error(err)
 		return

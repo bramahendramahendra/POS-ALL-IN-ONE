@@ -39,12 +39,14 @@ func RunMigrations(db *gorm.DB) error {
 			continue
 		}
 
-		content, err := os.ReadFile(filepath.Join(migrationsDir, filename))
+		raw, err := os.ReadFile(filepath.Join(migrationsDir, filename))
 		if err != nil {
 			return fmt.Errorf("read %s: %w", filename, err)
 		}
+		// strip UTF-8 BOM if present
+		content := strings.TrimPrefix(string(raw), "\xef\xbb\xbf")
 
-		if err := execSQL(db, string(content)); err != nil {
+		if err := execSQL(db, content); err != nil {
 			return fmt.Errorf("execute %s: %w", filename, err)
 		}
 
@@ -61,7 +63,7 @@ func ensureMigrationsTable(db *gorm.DB) error {
 		id          INT AUTO_INCREMENT PRIMARY KEY,
 		filename    VARCHAR(255) UNIQUE NOT NULL,
 		executed_at DATETIME DEFAULT CURRENT_TIMESTAMP
-	)`
+	) DEFAULT CHARSET=utf8`
 	return db.Exec(sql).Error
 }
 

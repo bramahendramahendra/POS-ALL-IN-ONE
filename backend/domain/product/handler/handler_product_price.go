@@ -22,7 +22,7 @@ func NewProductPriceHandler(service service_product.ProductPriceService) *Produc
 
 // GET /api/products/:product_id/prices
 func (h *ProductPriceHandler) GetByProduct(c *gin.Context) {
-	productID, err := parseParamID(c, "product_id")
+	productID, err := parseParamID(c, "id")
 	if err != nil {
 		c.Error(err)
 		return
@@ -44,7 +44,7 @@ func (h *ProductPriceHandler) GetByProduct(c *gin.Context) {
 
 // POST /api/products/:product_id/prices
 func (h *ProductPriceHandler) Save(c *gin.Context) {
-	productID, err := parseParamID(c, "product_id")
+	productID, err := parseParamID(c, "id")
 	if err != nil {
 		c.Error(err)
 		return

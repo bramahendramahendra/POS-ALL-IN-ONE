@@ -38,11 +38,11 @@ func ProductRoutes(r *gin.RouterGroup) {
 		g.DELETE("/:id", middleware.RoleMiddleware("owner", "admin"), productHand.Delete)
 		g.PATCH("/:id/toggle-status", middleware.RoleMiddleware("owner", "admin"), productHand.ToggleStatus)
 
-		g.GET("/:product_id/units", productUnitHand.GetByProduct)
-		g.POST("/:product_id/units", middleware.RoleMiddleware("owner", "admin"), productUnitHand.Save)
-		g.DELETE("/:product_id/units/:unit_id", middleware.RoleMiddleware("owner", "admin"), productUnitHand.Delete)
+		g.GET("/:id/units", productUnitHand.GetByProduct)
+		g.POST("/:id/units", middleware.RoleMiddleware("owner", "admin"), productUnitHand.Save)
+		g.DELETE("/:id/units/:unit_id", middleware.RoleMiddleware("owner", "admin"), productUnitHand.Delete)
 
-		g.GET("/:product_id/prices", productPriceHand.GetByProduct)
-		g.POST("/:product_id/prices", middleware.RoleMiddleware("owner", "admin"), productPriceHand.Save)
+		g.GET("/:id/prices", productPriceHand.GetByProduct)
+		g.POST("/:id/prices", middleware.RoleMiddleware("owner", "admin"), productPriceHand.Save)
 	}
 }
