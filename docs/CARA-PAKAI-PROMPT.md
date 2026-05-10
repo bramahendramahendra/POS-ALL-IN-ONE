@@ -142,3 +142,9 @@ Konteks Sync Engine yang wajib diikuti:
 - Kerjakan **urut dari atas ke bawah** — setiap prompt bergantung pada prompt sebelumnya
 - Jika Claude berhenti di tengah: *"Lanjutkan dari bagian [nama bagian]"*
 - Jika ada error: *"Error ini muncul setelah mengerjakan prompt [X.Y]: [paste error]"*
+
+
+
+Kita sedang mengerjakan project POS System frontend (web-v2).
+Baca dan kerjakan instruksi di:
+d:\Develop\Destop\Project_POS\docs\frontend\fase-implementasi\FASE-01-FOUNDATION-API-CLIENT.md
