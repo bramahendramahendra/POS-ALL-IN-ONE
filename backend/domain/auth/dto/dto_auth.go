@@ -26,6 +26,17 @@ type RefreshRequest struct {
 	RefreshToken string `json:"refresh_token" validate:"required"`
 }
 
+type VerifyTokenRequest struct {
+	Token string `json:"token" validate:"required"`
+}
+
+type VerifyTokenResponse struct {
+	Valid       bool           `json:"valid"`
+	Claims      map[string]any `json:"claims,omitempty"`
+	ExpReadable string         `json:"exp_readable,omitempty"`
+	Error       string         `json:"error,omitempty"`
+}
+
 type RefreshResponse struct {
 	Token        string    `json:"token"`
 	RefreshToken string    `json:"refresh_token"`

@@ -123,6 +123,32 @@ func (h *AuthHandler) GetMe(c *gin.Context) {
 	})
 }
 
+// POST /api/auth/verify-token
+func (h *AuthHandler) VerifyToken(c *gin.Context) {
+	var req dto_auth.VerifyTokenRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.Error(&errors.BadRequestError{Message: err.Error()})
+		return
+	}
+	if err := validation.Validate.Struct(req); err != nil {
+		c.Error(&errors.BadRequestError{Message: err.Error()})
+		return
+	}
+
+	resp, err := h.service.VerifyToken(req.Token)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
+		Code:    helper.StatusOk,
+		Status:  true,
+		Message: "Hasil verifikasi token",
+		Data:    resp,
+	})
+}
+
 func extractBearerToken(c *gin.Context) string {
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {

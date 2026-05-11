@@ -11,4 +11,5 @@ type AuthService interface {
 	RefreshToken(refreshToken string) (*dto_auth.RefreshResponse, error)
 	GetMe(userID int) (*dto_auth.UserData, error)
 	ValidateToken(token string) (*model_auth.Session, error)
+	VerifyToken(token string) (*dto_auth.VerifyTokenResponse, error)
 }

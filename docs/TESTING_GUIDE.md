@@ -62,7 +62,7 @@ go run main.go
 | 1.2 | Migration berjalan otomatis | Tidak ada pesan error `migration failed` di terminal | ✅ |
 | 1.3 | Endpoint version aktif | `GET http://localhost:8080/api/version/android?current_version=1.0.0` → 200 OK | ✅ |
 | 1.4 | Semua tabel terbuat | Buka MySQL: `SHOW TABLES;` → minimal 15+ tabel | ✅ |
-| 1.5 | Data seed tersedia | `SHOW TABLES;` lalu cek: `SELECT * FROM users;` → ada 2 akun default | |
+| 1.5 | Data seed tersedia | `SHOW TABLES;` lalu cek: `SELECT * FROM users;` → ada 2 akun default | ✅ |
 
 **Tabel yang wajib ada setelah migration:**
 ```sql
@@ -97,10 +97,10 @@ Body (JSON):
 
 | Ekspektasi | Hasil |
 |---|---|
-| Status: 200 OK | |
-| Response berisi field `token` | |
-| Response berisi field `refresh_token` | |
-| Response berisi field `user` dengan role `admin` | |
+| Status: 200 OK | ✅ |
+| Response berisi field `token` | ✅ |
+| Response berisi field `refresh_token` | ✅ |
+| Response berisi field `user` dengan role `admin` | ✅ |
 
 > **Simpan token dari response ini** — dipakai di semua test selanjutnya.
 
@@ -111,8 +111,8 @@ Body: { "username": "owner", "password": "owner123", "device_info": "desktop" }
 ```
 | Ekspektasi | Hasil |
 |---|---|
-| Status: 200 OK | |
-| field `role` di response = `owner` | |
+| Status: 200 OK | ✅ |
+| field `role` di response = `owner` | ✅ |
 
 **2.3 Login gagal — password salah**
 ```
@@ -121,8 +121,8 @@ Body: { "username": "admin", "password": "salah123", "device_info": "desktop" }
 ```
 | Ekspektasi | Hasil |
 |---|---|
-| Status: 401 Unauthorized | |
-| Response berisi pesan error | |
+| Status: 401 Unauthorized | ✅ |
+| Response berisi pesan error | ✅ |
 
 **2.4 Login gagal — username tidak ada**
 ```
@@ -131,7 +131,7 @@ Body: { "username": "tidakada", "password": "abc", "device_info": "desktop" }
 ```
 | Ekspektasi | Hasil |
 |---|---|
-| Status: 401 atau 404 | |
+| Status: 401 atau 404 | ✅ |
 
 **2.5 Akses endpoint protected tanpa token**
 ```
@@ -140,7 +140,7 @@ Header: (kosong, tidak ada Authorization)
 ```
 | Ekspektasi | Hasil |
 |---|---|
-| Status: 401 Unauthorized | |
+| Status: 401 Unauthorized | ✅ |
 
 **2.6 Akses endpoint protected dengan token valid**
 ```
@@ -149,8 +149,8 @@ Header: Authorization: Bearer <token dari 2.1>
 ```
 | Ekspektasi | Hasil |
 |---|---|
-| Status: 200 OK | |
-| Response berisi array user | |
+| Status: 200 OK | ✅ |
+| Response berisi array user | ✅ |
 
 **2.7 Refresh token**
 ```
@@ -160,7 +160,7 @@ Body: { "refresh_token": "<refresh_token dari 2.1>" }
 | Ekspektasi | Hasil |
 |---|---|
 | Status: 200 OK | |
-| Response berisi token baru | |
+| Response berisi token baru | ✅ |
 
 **2.8 Logout**
 ```
@@ -169,7 +169,7 @@ Header: Authorization: Bearer <token>
 ```
 | Ekspektasi | Hasil |
 |---|---|
-| Status: 200 OK | |
+| Status: 200 OK | ✅ |
 
 **2.9 Token bekas logout tidak bisa dipakai**
 ```
@@ -178,7 +178,7 @@ Header: Authorization: Bearer <token yang sudah logout>
 ```
 | Ekspektasi | Hasil |
 |---|---|
-| Status: 401 Unauthorized | |
+| Status: 401 Unauthorized | ✅ |
 
 ---
 

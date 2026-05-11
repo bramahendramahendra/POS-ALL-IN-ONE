@@ -176,6 +176,32 @@ func (s *authService) GetMe(userID int) (*dto_auth.UserData, error) {
 	}, nil
 }
 
+func (s *authService) VerifyToken(token string) (*dto_auth.VerifyTokenResponse, error) {
+	claims, err := jwt.VerifyToken(token)
+	if err != nil {
+		return &dto_auth.VerifyTokenResponse{
+			Valid:  false,
+			Error:  err.Error(),
+		}, nil
+	}
+
+	claimsMap := make(map[string]any)
+	for k, v := range *claims {
+		claimsMap[k] = v
+	}
+
+	expReadable := ""
+	if exp, ok := (*claims)["exp"].(float64); ok {
+		expReadable = time.Unix(int64(exp), 0).Format(time.RFC3339)
+	}
+
+	return &dto_auth.VerifyTokenResponse{
+		Valid:       true,
+		Claims:      claimsMap,
+		ExpReadable: expReadable,
+	}, nil
+}
+
 func (s *authService) ValidateToken(token string) (*model_auth.Session, error) {
 	if _, err := jwt.VerifyToken(token); err != nil {
 		return nil, err
