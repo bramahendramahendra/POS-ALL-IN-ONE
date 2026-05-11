@@ -3,13 +3,13 @@ package handler_transaction
 import (
 	"strconv"
 
-	global_dto "permen_api/dto"
-	dto_transaction "permen_api/domain/transaction/dto"
-	service_transaction "permen_api/domain/transaction/service"
-	"permen_api/errors"
-	"permen_api/helper"
-	response_helper "permen_api/helper/response"
-	"permen_api/validation"
+	dto_transaction "pos_api/domain/transaction/dto"
+	service_transaction "pos_api/domain/transaction/service"
+	global_dto "pos_api/dto"
+	"pos_api/errors"
+	"pos_api/helper"
+	response_helper "pos_api/helper/response"
+	"pos_api/validation"
 
 	"github.com/gin-gonic/gin"
 )
@@ -49,8 +49,8 @@ func (h *TransactionHandler) GetAll(c *gin.Context) {
 	}
 
 	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
-		Code:   helper.StatusOk,
-		Status: true,
+		Code:    helper.StatusOk,
+		Status:  true,
 		Message: "Daftar transaksi",
 		Data: gin.H{
 			"items": transactions,

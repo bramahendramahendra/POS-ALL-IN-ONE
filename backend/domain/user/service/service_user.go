@@ -1,11 +1,11 @@
 package service_user
 
 import (
-	dto_user "permen_api/domain/user/dto"
-	model_user "permen_api/domain/user/model"
-	repo_user "permen_api/domain/user/repo"
-	"permen_api/errors"
-	"permen_api/pkg/bcrypt"
+	dto_user "pos_api/domain/user/dto"
+	model_user "pos_api/domain/user/model"
+	repo_user "pos_api/domain/user/repo"
+	"pos_api/errors"
+	"pos_api/pkg/bcrypt"
 )
 
 type userService struct {

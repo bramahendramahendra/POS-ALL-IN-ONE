@@ -1,7 +1,7 @@
 package repo_product
 
 import (
-	dto_product "permen_api/domain/product/dto"
+	dto_product "pos_api/domain/product/dto"
 
 	"gorm.io/gorm"
 )

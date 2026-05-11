@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
-	dto_report "permen_api/domain/report/dto"
-	repo_report "permen_api/domain/report/repo"
+	dto_report "pos_api/domain/report/dto"
+	repo_report "pos_api/domain/report/repo"
 
 	"github.com/xuri/excelize/v2"
 )

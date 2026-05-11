@@ -1,11 +1,11 @@
 package segment
 
 import (
-	setting_handler "permen_api/domain/setting/handler"
-	setting_repo "permen_api/domain/setting/repo"
-	setting_service "permen_api/domain/setting/service"
-	middleware "permen_api/middleware"
-	pkgdatabase "permen_api/pkg/database"
+	setting_handler "pos_api/domain/setting/handler"
+	setting_repo "pos_api/domain/setting/repo"
+	setting_service "pos_api/domain/setting/service"
+	middleware "pos_api/middleware"
+	pkgdatabase "pos_api/pkg/database"
 
 	"github.com/gin-gonic/gin"
 )

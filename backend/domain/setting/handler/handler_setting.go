@@ -1,11 +1,11 @@
 package handler_setting
 
 import (
-	global_dto "permen_api/dto"
-	dto_setting "permen_api/domain/setting/dto"
-	service_setting "permen_api/domain/setting/service"
-	"permen_api/helper"
-	response_helper "permen_api/helper/response"
+	dto_setting "pos_api/domain/setting/dto"
+	service_setting "pos_api/domain/setting/service"
+	global_dto "pos_api/dto"
+	"pos_api/helper"
+	response_helper "pos_api/helper/response"
 
 	"github.com/gin-gonic/gin"
 )

@@ -1,8 +1,8 @@
 package service_auth
 
 import (
-	dto_auth "permen_api/domain/auth/dto"
-	model_auth "permen_api/domain/auth/model"
+	dto_auth "pos_api/domain/auth/dto"
+	model_auth "pos_api/domain/auth/model"
 )
 
 type AuthService interface {

@@ -1,11 +1,11 @@
 package segment
 
 import (
-	supplier_return_handler "permen_api/domain/supplier_return/handler"
-	supplier_return_repo "permen_api/domain/supplier_return/repo"
-	supplier_return_service "permen_api/domain/supplier_return/service"
-	middleware "permen_api/middleware"
-	pkgdatabase "permen_api/pkg/database"
+	supplier_return_handler "pos_api/domain/supplier_return/handler"
+	supplier_return_repo "pos_api/domain/supplier_return/repo"
+	supplier_return_service "pos_api/domain/supplier_return/service"
+	middleware "pos_api/middleware"
+	pkgdatabase "pos_api/pkg/database"
 
 	"github.com/gin-gonic/gin"
 )

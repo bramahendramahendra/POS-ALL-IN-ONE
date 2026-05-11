@@ -3,13 +3,13 @@ package handler_purchase
 import (
 	"strconv"
 
-	global_dto "permen_api/dto"
-	dto_purchase "permen_api/domain/purchase/dto"
-	service_purchase "permen_api/domain/purchase/service"
-	"permen_api/errors"
-	"permen_api/helper"
-	response_helper "permen_api/helper/response"
-	"permen_api/validation"
+	dto_purchase "pos_api/domain/purchase/dto"
+	service_purchase "pos_api/domain/purchase/service"
+	global_dto "pos_api/dto"
+	"pos_api/errors"
+	"pos_api/helper"
+	response_helper "pos_api/helper/response"
+	"pos_api/validation"
 
 	"github.com/gin-gonic/gin"
 )
@@ -48,8 +48,8 @@ func (h *PurchaseHandler) GetAll(c *gin.Context) {
 	}
 
 	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
-		Code:   helper.StatusOk,
-		Status: true,
+		Code:    helper.StatusOk,
+		Status:  true,
 		Message: "Daftar purchase order",
 		Data: gin.H{
 			"items": items,

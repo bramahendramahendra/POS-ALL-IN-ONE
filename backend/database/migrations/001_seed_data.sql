@@ -9,9 +9,9 @@
 -- password 'admin123' dan 'owner123' — ganti hash sebelum produksi
 -- Gunakan: SELECT PASSWORD('admin123') atau generate via aplikasi
 -- -------------------------------------------------------------
-INSERT INTO `users` (`username`, `password`, `full_name`, `role`) VALUES
-('admin', '$2a$10$PLACEHOLDER_HASH_ADMIN123_REPLACE_ME_BEFORE_PROD', 'Administrator', 'admin'),
-('owner', '$2a$10$PLACEHOLDER_HASH_OWNER123_REPLACE_ME_BEFORE_PROD', 'Owner',         'owner');
+INSERT IGNORE INTO `users` (`username`, `password`, `full_name`, `role`) VALUES
+('admin', '$argon2id$v=19$m=65536,t=3,p=4$TJxWkwEYoSuvSZ0JtwrfJw$ne9pID5QjltGeu0cNxiKYGCOXkUCRRjunQUYvttxCsM', 'Administrator', 'admin'),
+('owner', '$argon2id$v=19$m=65536,t=3,p=4$gcWNYu+y/FCRuCT6WS/+eg$1qAjwCU3HoK87s/CbDPHYo06W6B4mhoHF1SQmkigukY', 'Owner',         'owner');
 
 -- -------------------------------------------------------------
 -- Satuan default

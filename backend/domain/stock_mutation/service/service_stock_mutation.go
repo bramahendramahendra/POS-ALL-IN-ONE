@@ -1,8 +1,8 @@
 package service_stock_mutation
 
 import (
-	dto_stock_mutation "permen_api/domain/stock_mutation/dto"
-	repo_stock_mutation "permen_api/domain/stock_mutation/repo"
+	dto_stock_mutation "pos_api/domain/stock_mutation/dto"
+	repo_stock_mutation "pos_api/domain/stock_mutation/repo"
 )
 
 type stockMutationService struct {

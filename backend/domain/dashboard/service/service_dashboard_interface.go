@@ -1,6 +1,6 @@
 package service_dashboard
 
-import dto_dashboard "permen_api/domain/dashboard/dto"
+import dto_dashboard "pos_api/domain/dashboard/dto"
 
 type DashboardService interface {
 	GetStats(date string) (*dto_dashboard.StatsResponse, error)

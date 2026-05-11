@@ -3,7 +3,7 @@ package redis
 import (
 	"context"
 	"fmt"
-	"permen_api/config"
+	"pos_api/config"
 
 	"github.com/redis/go-redis/v9"
 )

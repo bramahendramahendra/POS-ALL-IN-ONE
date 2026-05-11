@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	dto_product "permen_api/domain/product/dto"
-	model_product "permen_api/domain/product/model"
+	dto_product "pos_api/domain/product/dto"
+	model_product "pos_api/domain/product/model"
 
 	"gorm.io/gorm"
 )

@@ -3,10 +3,10 @@ package error_helper
 import (
 	"encoding/json"
 	"fmt"
-	global_dto "permen_api/dto"
-	"permen_api/helper"
-	request_helper "permen_api/helper/request"
-	time_helper "permen_api/helper/time"
+	global_dto "pos_api/dto"
+	"pos_api/helper"
+	request_helper "pos_api/helper/request"
+	time_helper "pos_api/helper/time"
 	"runtime"
 
 	"github.com/gin-gonic/gin"

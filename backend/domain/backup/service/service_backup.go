@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"permen_api/config"
-	dto_backup "permen_api/domain/backup/dto"
-	"permen_api/errors"
+	"pos_api/config"
+	dto_backup "pos_api/domain/backup/dto"
+	"pos_api/errors"
 )
 
 const backupDir = "backups"

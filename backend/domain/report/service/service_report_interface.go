@@ -3,7 +3,7 @@ package service_report
 import (
 	"bytes"
 
-	dto_report "permen_api/domain/report/dto"
+	dto_report "pos_api/domain/report/dto"
 )
 
 type ReportService interface {

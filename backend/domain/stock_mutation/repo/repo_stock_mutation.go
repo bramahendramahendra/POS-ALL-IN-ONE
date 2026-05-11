@@ -3,7 +3,7 @@ package repo_stock_mutation
 import (
 	"fmt"
 
-	dto_stock_mutation "permen_api/domain/stock_mutation/dto"
+	dto_stock_mutation "pos_api/domain/stock_mutation/dto"
 
 	"gorm.io/gorm"
 )

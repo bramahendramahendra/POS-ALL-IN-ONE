@@ -3,11 +3,10 @@ package service_receivable
 import (
 	"fmt"
 
-	dto_receivable "permen_api/domain/receivable/dto"
-	repo_receivable "permen_api/domain/receivable/repo"
-	"permen_api/errors"
+	dto_receivable "pos_api/domain/receivable/dto"
+	repo_receivable "pos_api/domain/receivable/repo"
+	"pos_api/errors"
 )
-
 
 type receivableService struct {
 	repo repo_receivable.ReceivableRepo

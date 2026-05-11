@@ -6,18 +6,18 @@ import (
 	"strconv"
 	"strings"
 
-	dto_product "permen_api/domain/product/dto"
-	model_product "permen_api/domain/product/model"
-	repo_category "permen_api/domain/master/repo"
-	repo_product "permen_api/domain/product/repo"
-	"permen_api/errors"
+	repo_category "pos_api/domain/master/repo"
+	dto_product "pos_api/domain/product/dto"
+	model_product "pos_api/domain/product/model"
+	repo_product "pos_api/domain/product/repo"
+	"pos_api/errors"
 
 	"github.com/xuri/excelize/v2"
 )
 
 type productService struct {
-	repo     repo_product.ProductRepo
-	catRepo  repo_category.CategoryRepo
+	repo    repo_product.ProductRepo
+	catRepo repo_category.CategoryRepo
 }
 
 func NewProductService(repo repo_product.ProductRepo, catRepo repo_category.CategoryRepo) ProductService {

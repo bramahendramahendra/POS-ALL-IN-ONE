@@ -1,7 +1,7 @@
 package repo_setting
 
 import (
-	model_setting "permen_api/domain/setting/model"
+	model_setting "pos_api/domain/setting/model"
 )
 
 type SettingRepo interface {

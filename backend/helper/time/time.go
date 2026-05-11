@@ -1,7 +1,7 @@
 package time_helper
 
 import (
-	"permen_api/config"
+	"pos_api/config"
 	"strconv"
 	"time"
 )

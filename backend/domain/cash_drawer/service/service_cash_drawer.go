@@ -1,9 +1,9 @@
 package service_cash_drawer
 
 import (
-	dto_cash_drawer "permen_api/domain/cash_drawer/dto"
-	repo_cash_drawer "permen_api/domain/cash_drawer/repo"
-	"permen_api/errors"
+	dto_cash_drawer "pos_api/domain/cash_drawer/dto"
+	repo_cash_drawer "pos_api/domain/cash_drawer/repo"
+	"pos_api/errors"
 )
 
 type cashDrawerService struct {

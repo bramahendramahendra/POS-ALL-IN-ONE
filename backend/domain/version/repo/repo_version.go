@@ -1,7 +1,7 @@
 package repo_version
 
 import (
-	model_version "permen_api/domain/version/model"
+	model_version "pos_api/domain/version/model"
 
 	"gorm.io/gorm"
 )

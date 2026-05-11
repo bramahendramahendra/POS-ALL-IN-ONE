@@ -1,10 +1,10 @@
 package service
 
 import (
-	config "permen_api/config"
-	globalDTO "permen_api/dto"
-	helper "permen_api/helper"
-	transport "permen_api/pkg/transport"
+	config "pos_api/config"
+	globalDTO "pos_api/dto"
+	helper "pos_api/helper"
+	transport "pos_api/pkg/transport"
 
 	"fmt"
 

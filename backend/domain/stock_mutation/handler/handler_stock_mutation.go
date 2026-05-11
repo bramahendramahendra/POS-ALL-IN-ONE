@@ -3,12 +3,12 @@ package handler_stock_mutation
 import (
 	"strconv"
 
-	global_dto "permen_api/dto"
-	dto_stock_mutation "permen_api/domain/stock_mutation/dto"
-	service_stock_mutation "permen_api/domain/stock_mutation/service"
-	"permen_api/errors"
-	"permen_api/helper"
-	response_helper "permen_api/helper/response"
+	dto_stock_mutation "pos_api/domain/stock_mutation/dto"
+	service_stock_mutation "pos_api/domain/stock_mutation/service"
+	global_dto "pos_api/dto"
+	"pos_api/errors"
+	"pos_api/helper"
+	response_helper "pos_api/helper/response"
 
 	"github.com/gin-gonic/gin"
 )
@@ -48,8 +48,8 @@ func (h *StockMutationHandler) GetAll(c *gin.Context) {
 	}
 
 	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
-		Code:   helper.StatusOk,
-		Status: true,
+		Code:    helper.StatusOk,
+		Status:  true,
 		Message: "Daftar mutasi stok",
 		Data: gin.H{
 			"items": items,

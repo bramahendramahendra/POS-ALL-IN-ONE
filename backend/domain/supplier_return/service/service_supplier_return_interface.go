@@ -1,6 +1,6 @@
 package service_supplier_return
 
-import dto_supplier_return "permen_api/domain/supplier_return/dto"
+import dto_supplier_return "pos_api/domain/supplier_return/dto"
 
 type SupplierReturnService interface {
 	GetAll(filter *dto_supplier_return.SupplierReturnFilter) ([]*dto_supplier_return.SupplierReturnResponse, int, error)

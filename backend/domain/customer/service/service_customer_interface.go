@@ -1,6 +1,6 @@
 package service_customer
 
-import dto_customer "permen_api/domain/customer/dto"
+import dto_customer "pos_api/domain/customer/dto"
 
 type CustomerService interface {
 	GetAll(filter *dto_customer.CustomerFilter) ([]*dto_customer.CustomerResponse, int, error)

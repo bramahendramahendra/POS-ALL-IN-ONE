@@ -1,9 +1,9 @@
 package service_purchase
 
 import (
-	dto_purchase "permen_api/domain/purchase/dto"
-	repo_purchase "permen_api/domain/purchase/repo"
-	"permen_api/errors"
+	dto_purchase "pos_api/domain/purchase/dto"
+	repo_purchase "pos_api/domain/purchase/repo"
+	"pos_api/errors"
 )
 
 type purchaseService struct {

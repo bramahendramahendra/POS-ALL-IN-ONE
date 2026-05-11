@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
-	"permen_api/config"
+	"pos_api/config"
 	"regexp"
 	"strconv"
 	"strings"

@@ -1,6 +1,6 @@
 package service_receivable
 
-import dto_receivable "permen_api/domain/receivable/dto"
+import dto_receivable "pos_api/domain/receivable/dto"
 
 type ReceivableService interface {
 	GetAll(filter *dto_receivable.ReceivableFilter) ([]*dto_receivable.ReceivableResponse, int, error)

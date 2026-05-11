@@ -1,6 +1,6 @@
 package service_transaction
 
-import dto_transaction "permen_api/domain/transaction/dto"
+import dto_transaction "pos_api/domain/transaction/dto"
 
 type TransactionService interface {
 	GetAll(filter *dto_transaction.TransactionFilter) ([]*dto_transaction.TransactionResponse, int, error)

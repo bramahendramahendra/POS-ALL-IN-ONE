@@ -3,9 +3,9 @@ package service_transaction
 import (
 	"strings"
 
-	dto_transaction "permen_api/domain/transaction/dto"
-	repo_transaction "permen_api/domain/transaction/repo"
-	"permen_api/errors"
+	dto_transaction "pos_api/domain/transaction/dto"
+	repo_transaction "pos_api/domain/transaction/repo"
+	"pos_api/errors"
 )
 
 type transactionService struct {

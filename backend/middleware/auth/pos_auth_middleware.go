@@ -3,8 +3,8 @@ package middleware
 import (
 	"strings"
 
-	"permen_api/errors"
-	service_auth "permen_api/domain/auth/service"
+	service_auth "pos_api/domain/auth/service"
+	"pos_api/errors"
 
 	"github.com/gin-gonic/gin"
 )

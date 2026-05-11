@@ -1,6 +1,6 @@
 package service_user
 
-import dto_user "permen_api/domain/user/dto"
+import dto_user "pos_api/domain/user/dto"
 
 type UserService interface {
 	GetAll(filter *dto_user.UserListFilter) ([]*dto_user.UserResponse, error)

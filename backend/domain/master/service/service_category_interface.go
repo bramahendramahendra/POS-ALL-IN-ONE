@@ -1,6 +1,6 @@
 package service_master
 
-import dto_master "permen_api/domain/master/dto"
+import dto_master "pos_api/domain/master/dto"
 
 type CategoryService interface {
 	GetAll() ([]*dto_master.CategoryResponse, error)

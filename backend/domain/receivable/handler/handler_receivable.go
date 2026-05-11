@@ -3,13 +3,13 @@ package handler_receivable
 import (
 	"strconv"
 
-	global_dto "permen_api/dto"
-	dto_receivable "permen_api/domain/receivable/dto"
-	service_receivable "permen_api/domain/receivable/service"
-	"permen_api/errors"
-	"permen_api/helper"
-	response_helper "permen_api/helper/response"
-	"permen_api/validation"
+	dto_receivable "pos_api/domain/receivable/dto"
+	service_receivable "pos_api/domain/receivable/service"
+	global_dto "pos_api/dto"
+	"pos_api/errors"
+	"pos_api/helper"
+	response_helper "pos_api/helper/response"
+	"pos_api/validation"
 
 	"github.com/gin-gonic/gin"
 )

@@ -1,8 +1,8 @@
 package repo_transaction
 
 import (
-	dto_transaction "permen_api/domain/transaction/dto"
-	model_transaction "permen_api/domain/transaction/model"
+	dto_transaction "pos_api/domain/transaction/dto"
+	model_transaction "pos_api/domain/transaction/model"
 )
 
 type TransactionRepo interface {

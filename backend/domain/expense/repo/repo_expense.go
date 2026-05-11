@@ -3,14 +3,14 @@ package repo_expense
 import (
 	"fmt"
 
-	dto_expense "permen_api/domain/expense/dto"
+	dto_expense "pos_api/domain/expense/dto"
 
 	"gorm.io/gorm"
 )
 
 const (
 	getAllExpensesQuery = `SELECT e.id, e.expense_date, e.category, e.description, e.amount, e.payment_method, u.full_name as user_name, e.notes FROM expenses e LEFT JOIN users u ON e.user_id = u.id WHERE 1=1`
-	countExpensesBase  = `SELECT COUNT(*) FROM expenses e WHERE 1=1`
+	countExpensesBase   = `SELECT COUNT(*) FROM expenses e WHERE 1=1`
 	getExpenseByIDQuery = `SELECT e.id, e.expense_date, e.category, e.description, e.amount, e.payment_method, e.user_id, u.full_name as user_name, e.notes FROM expenses e LEFT JOIN users u ON e.user_id = u.id WHERE e.id = ?`
 	createExpenseQuery  = `INSERT INTO expenses (expense_date, category, description, amount, payment_method, user_id, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`
 	updateExpenseQuery  = `UPDATE expenses SET expense_date=?, category=?, description=?, amount=?, payment_method=?, notes=?, updated_at=NOW() WHERE id=?`

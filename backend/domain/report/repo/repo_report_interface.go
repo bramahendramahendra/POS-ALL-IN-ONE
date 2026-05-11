@@ -1,6 +1,6 @@
 package repo_report
 
-import dto_report "permen_api/domain/report/dto"
+import dto_report "pos_api/domain/report/dto"
 
 type ReportRepo interface {
 	GetSalesItems(params dto_report.FilterParams) ([]dto_report.SalesItem, error)

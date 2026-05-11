@@ -1,8 +1,8 @@
 package repo
 
 import (
-	dto "permen_api/domain/sample/dto"
-	model "permen_api/domain/sample/model"
+	dto "pos_api/domain/sample/dto"
+	model "pos_api/domain/sample/model"
 
 	"gorm.io/gorm"
 )

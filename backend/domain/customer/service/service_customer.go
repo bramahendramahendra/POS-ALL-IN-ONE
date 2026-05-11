@@ -3,9 +3,9 @@ package service_customer
 import (
 	"fmt"
 
-	dto_customer "permen_api/domain/customer/dto"
-	repo_customer "permen_api/domain/customer/repo"
-	"permen_api/errors"
+	dto_customer "pos_api/domain/customer/dto"
+	repo_customer "pos_api/domain/customer/repo"
+	"pos_api/errors"
 )
 
 type customerService struct {

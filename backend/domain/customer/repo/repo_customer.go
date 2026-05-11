@@ -3,23 +3,23 @@ package repo_customer
 import (
 	"fmt"
 
-	dto_customer "permen_api/domain/customer/dto"
-	model_customer "permen_api/domain/customer/model"
+	dto_customer "pos_api/domain/customer/dto"
+	model_customer "pos_api/domain/customer/model"
 
 	"gorm.io/gorm"
 )
 
 const (
-	getAllCustomersQuery          = `SELECT id, customer_code, name, phone, address, credit_limit, is_active FROM customers WHERE 1=1`
-	countCustomersBase           = `SELECT COUNT(*) FROM customers WHERE 1=1`
-	getActiveCustomerListQuery   = `SELECT id, name, customer_code, credit_limit FROM customers WHERE is_active = 1 ORDER BY name`
-	getCustomerByIDQuery         = `SELECT id, customer_code, name, phone, address, credit_limit, notes, is_active FROM customers WHERE id = ?`
-	checkCustomerHasReceivable   = `SELECT COUNT(*) FROM receivables WHERE customer_id = ? AND status != 'paid'`
-	generateCustomerCodeQuery    = `SELECT COUNT(*) FROM customers`
-	createCustomerQuery          = `INSERT INTO customers (customer_code, name, phone, address, credit_limit, notes) VALUES (?, ?, ?, ?, ?, ?)`
-	updateCustomerQuery          = `UPDATE customers SET name=?, phone=?, address=?, credit_limit=?, notes=?, updated_at=NOW() WHERE id=?`
-	deleteCustomerQuery          = `DELETE FROM customers WHERE id = ?`
-	toggleCustomerStatusQuery    = `UPDATE customers SET is_active = NOT is_active, updated_at = NOW() WHERE id = ?`
+	getAllCustomersQuery       = `SELECT id, customer_code, name, phone, address, credit_limit, is_active FROM customers WHERE 1=1`
+	countCustomersBase         = `SELECT COUNT(*) FROM customers WHERE 1=1`
+	getActiveCustomerListQuery = `SELECT id, name, customer_code, credit_limit FROM customers WHERE is_active = 1 ORDER BY name`
+	getCustomerByIDQuery       = `SELECT id, customer_code, name, phone, address, credit_limit, notes, is_active FROM customers WHERE id = ?`
+	checkCustomerHasReceivable = `SELECT COUNT(*) FROM receivables WHERE customer_id = ? AND status != 'paid'`
+	generateCustomerCodeQuery  = `SELECT COUNT(*) FROM customers`
+	createCustomerQuery        = `INSERT INTO customers (customer_code, name, phone, address, credit_limit, notes) VALUES (?, ?, ?, ?, ?, ?)`
+	updateCustomerQuery        = `UPDATE customers SET name=?, phone=?, address=?, credit_limit=?, notes=?, updated_at=NOW() WHERE id=?`
+	deleteCustomerQuery        = `DELETE FROM customers WHERE id = ?`
+	toggleCustomerStatusQuery  = `UPDATE customers SET is_active = NOT is_active, updated_at = NOW() WHERE id = ?`
 )
 
 type customerRepo struct {

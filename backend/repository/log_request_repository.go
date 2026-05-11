@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"permen_api/model"
+	"pos_api/model"
 
 	"gorm.io/gorm"
 )

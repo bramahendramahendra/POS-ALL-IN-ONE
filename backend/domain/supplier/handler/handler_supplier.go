@@ -3,13 +3,13 @@ package handler_supplier
 import (
 	"strconv"
 
-	global_dto "permen_api/dto"
-	dto_supplier "permen_api/domain/supplier/dto"
-	service_supplier "permen_api/domain/supplier/service"
-	"permen_api/errors"
-	"permen_api/helper"
-	response_helper "permen_api/helper/response"
-	"permen_api/validation"
+	dto_supplier "pos_api/domain/supplier/dto"
+	service_supplier "pos_api/domain/supplier/service"
+	global_dto "pos_api/dto"
+	"pos_api/errors"
+	"pos_api/helper"
+	response_helper "pos_api/helper/response"
+	"pos_api/validation"
 
 	"github.com/gin-gonic/gin"
 )
@@ -45,8 +45,8 @@ func (h *SupplierHandler) GetAll(c *gin.Context) {
 	}
 
 	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
-		Code:   helper.StatusOk,
-		Status: true,
+		Code:    helper.StatusOk,
+		Status:  true,
 		Message: "Daftar supplier",
 		Data: gin.H{
 			"items": items,

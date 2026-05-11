@@ -1,6 +1,6 @@
 package service_cash_drawer
 
-import dto_cash_drawer "permen_api/domain/cash_drawer/dto"
+import dto_cash_drawer "pos_api/domain/cash_drawer/dto"
 
 type CashDrawerService interface {
 	GetCurrent(userID int) (*dto_cash_drawer.CurrentCashDrawerResponse, error)

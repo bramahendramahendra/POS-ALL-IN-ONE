@@ -3,24 +3,24 @@ package repo_supplier
 import (
 	"fmt"
 
-	dto_supplier "permen_api/domain/supplier/dto"
-	model_supplier "permen_api/domain/supplier/model"
+	dto_supplier "pos_api/domain/supplier/dto"
+	model_supplier "pos_api/domain/supplier/model"
 
 	"gorm.io/gorm"
 )
 
 const (
-	getAllSuppliersQuery      = `SELECT id, supplier_code, name, phone, email, contact_person, is_active FROM suppliers WHERE 1=1`
-	countSuppliersBase       = `SELECT COUNT(*) FROM suppliers WHERE 1=1`
-	getActiveSupplierList    = `SELECT id, name, supplier_code FROM suppliers WHERE is_active = 1 ORDER BY name`
-	getSupplierByID          = `SELECT id, supplier_code, name, address, phone, email, contact_person, notes, is_active FROM suppliers WHERE id = ?`
-	getSupplierPurchases     = `SELECT id, purchase_code, purchase_date, total_amount, payment_status FROM purchases WHERE supplier_id = ? ORDER BY purchase_date DESC LIMIT 10`
-	checkSupplierHasPO       = `SELECT COUNT(*) FROM purchases WHERE supplier_id = ?`
-	generateSupplierCode     = `SELECT COUNT(*) FROM suppliers`
-	createSupplier           = `INSERT INTO suppliers (supplier_code, name, address, phone, email, contact_person, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`
-	updateSupplier           = `UPDATE suppliers SET name=?, address=?, phone=?, email=?, contact_person=?, notes=?, updated_at=NOW() WHERE id=?`
-	deleteSupplier           = `DELETE FROM suppliers WHERE id = ?`
-	toggleSupplierStatus     = `UPDATE suppliers SET is_active = NOT is_active, updated_at = NOW() WHERE id = ?`
+	getAllSuppliersQuery  = `SELECT id, supplier_code, name, phone, email, contact_person, is_active FROM suppliers WHERE 1=1`
+	countSuppliersBase    = `SELECT COUNT(*) FROM suppliers WHERE 1=1`
+	getActiveSupplierList = `SELECT id, name, supplier_code FROM suppliers WHERE is_active = 1 ORDER BY name`
+	getSupplierByID       = `SELECT id, supplier_code, name, address, phone, email, contact_person, notes, is_active FROM suppliers WHERE id = ?`
+	getSupplierPurchases  = `SELECT id, purchase_code, purchase_date, total_amount, payment_status FROM purchases WHERE supplier_id = ? ORDER BY purchase_date DESC LIMIT 10`
+	checkSupplierHasPO    = `SELECT COUNT(*) FROM purchases WHERE supplier_id = ?`
+	generateSupplierCode  = `SELECT COUNT(*) FROM suppliers`
+	createSupplier        = `INSERT INTO suppliers (supplier_code, name, address, phone, email, contact_person, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`
+	updateSupplier        = `UPDATE suppliers SET name=?, address=?, phone=?, email=?, contact_person=?, notes=?, updated_at=NOW() WHERE id=?`
+	deleteSupplier        = `DELETE FROM suppliers WHERE id = ?`
+	toggleSupplierStatus  = `UPDATE suppliers SET is_active = NOT is_active, updated_at = NOW() WHERE id = ?`
 )
 
 type supplierRepo struct {

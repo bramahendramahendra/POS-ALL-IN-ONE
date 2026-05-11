@@ -1,8 +1,8 @@
 package repo_supplier
 
 import (
-	dto_supplier "permen_api/domain/supplier/dto"
-	model_supplier "permen_api/domain/supplier/model"
+	dto_supplier "pos_api/domain/supplier/dto"
+	model_supplier "pos_api/domain/supplier/model"
 )
 
 type SupplierRepo interface {

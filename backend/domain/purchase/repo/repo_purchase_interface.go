@@ -1,8 +1,8 @@
 package repo_purchase
 
 import (
-	dto_purchase "permen_api/domain/purchase/dto"
-	model_purchase "permen_api/domain/purchase/model"
+	dto_purchase "pos_api/domain/purchase/dto"
+	model_purchase "pos_api/domain/purchase/model"
 )
 
 type PurchaseRepo interface {

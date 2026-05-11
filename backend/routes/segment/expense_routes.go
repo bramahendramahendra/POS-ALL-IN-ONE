@@ -1,12 +1,12 @@
 package segment
 
 import (
-	cash_drawer_repo "permen_api/domain/cash_drawer/repo"
-	expense_handler "permen_api/domain/expense/handler"
-	expense_repo "permen_api/domain/expense/repo"
-	expense_service "permen_api/domain/expense/service"
-	middleware "permen_api/middleware"
-	pkgdatabase "permen_api/pkg/database"
+	cash_drawer_repo "pos_api/domain/cash_drawer/repo"
+	expense_handler "pos_api/domain/expense/handler"
+	expense_repo "pos_api/domain/expense/repo"
+	expense_service "pos_api/domain/expense/service"
+	middleware "pos_api/middleware"
+	pkgdatabase "pos_api/pkg/database"
 
 	"github.com/gin-gonic/gin"
 )

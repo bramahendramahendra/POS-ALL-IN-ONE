@@ -1,8 +1,8 @@
 package repo_receivable
 
 import (
-	dto_receivable "permen_api/domain/receivable/dto"
-	model_receivable "permen_api/domain/receivable/model"
+	dto_receivable "pos_api/domain/receivable/dto"
+	model_receivable "pos_api/domain/receivable/model"
 )
 
 type ReceivableRepo interface {

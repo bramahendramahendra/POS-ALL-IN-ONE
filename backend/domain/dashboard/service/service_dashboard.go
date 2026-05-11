@@ -1,8 +1,8 @@
 package service_dashboard
 
 import (
-	dto_dashboard "permen_api/domain/dashboard/dto"
-	repo_dashboard "permen_api/domain/dashboard/repo"
+	dto_dashboard "pos_api/domain/dashboard/dto"
+	repo_dashboard "pos_api/domain/dashboard/repo"
 	"time"
 )
 

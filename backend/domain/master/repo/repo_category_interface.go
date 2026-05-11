@@ -1,6 +1,6 @@
 package repo_master
 
-import model_master "permen_api/domain/master/model"
+import model_master "pos_api/domain/master/model"
 
 type CategoryRepo interface {
 	GetAll() ([]*model_master.Category, error)

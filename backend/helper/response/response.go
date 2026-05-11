@@ -2,7 +2,7 @@ package response_helper
 
 import (
 	"math"
-	global_dto "permen_api/dto"
+	global_dto "pos_api/dto"
 
 	"github.com/gin-gonic/gin"
 )

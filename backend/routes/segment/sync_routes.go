@@ -1,13 +1,13 @@
 package segment
 
 import (
-	sync_handler "permen_api/domain/sync/handler"
-	sync_repo "permen_api/domain/sync/repo"
-	sync_service "permen_api/domain/sync/service"
-	expense_repo "permen_api/domain/expense/repo"
-	transaction_repo "permen_api/domain/transaction/repo"
-	middleware "permen_api/middleware"
-	pkgdatabase "permen_api/pkg/database"
+	expense_repo "pos_api/domain/expense/repo"
+	sync_handler "pos_api/domain/sync/handler"
+	sync_repo "pos_api/domain/sync/repo"
+	sync_service "pos_api/domain/sync/service"
+	transaction_repo "pos_api/domain/transaction/repo"
+	middleware "pos_api/middleware"
+	pkgdatabase "pos_api/pkg/database"
 
 	"github.com/gin-gonic/gin"
 )

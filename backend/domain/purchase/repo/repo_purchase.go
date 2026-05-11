@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	dto_purchase "permen_api/domain/purchase/dto"
-	model_purchase "permen_api/domain/purchase/model"
+	dto_purchase "pos_api/domain/purchase/dto"
+	model_purchase "pos_api/domain/purchase/model"
 
 	"gorm.io/gorm"
 )
@@ -22,7 +22,7 @@ const (
 	deletePurchaseQuery       = `DELETE FROM purchases WHERE id = ?`
 	getPurchaseByIDQuery      = `SELECT p.id, p.purchase_code, p.supplier_id, p.supplier_name, p.purchase_date, p.total_amount, p.payment_status, p.paid_amount, p.remaining_amount, u.full_name as user_name, p.notes FROM purchases p LEFT JOIN users u ON p.user_id = u.id WHERE p.id = ?`
 	getRawPurchaseByIDQuery   = `SELECT id, purchase_code, supplier_id, supplier_name, purchase_date, total_amount, payment_status, paid_amount, remaining_amount, user_id, notes FROM purchases WHERE id = ?`
-	getAllPurchasesBase        = `SELECT p.id, p.purchase_code, p.supplier_id, p.supplier_name, p.purchase_date, p.total_amount, p.payment_status, p.paid_amount, p.remaining_amount, u.full_name as user_name, p.notes FROM purchases p LEFT JOIN users u ON p.user_id = u.id WHERE 1=1`
+	getAllPurchasesBase       = `SELECT p.id, p.purchase_code, p.supplier_id, p.supplier_name, p.purchase_date, p.total_amount, p.payment_status, p.paid_amount, p.remaining_amount, u.full_name as user_name, p.notes FROM purchases p LEFT JOIN users u ON p.user_id = u.id WHERE 1=1`
 	countPurchasesBase        = `SELECT COUNT(*) FROM purchases p WHERE 1=1`
 	createStockMutationQuery  = `INSERT INTO stock_mutations (product_id, mutation_type, quantity, stock_before, stock_after, reference_type, reference_id, notes, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	getProductStockQuery      = `SELECT stock FROM products WHERE id = ? LIMIT 1`

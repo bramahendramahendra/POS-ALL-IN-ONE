@@ -1,19 +1,19 @@
 package repo_master
 
 import (
-	model_master "permen_api/domain/master/model"
+	model_master "pos_api/domain/master/model"
 
 	"gorm.io/gorm"
 )
 
 const (
 	getAllUnitsQuery      = `SELECT id, name, abbreviation, is_active FROM units ORDER BY name`
-	getActiveUnitsQuery  = `SELECT id, name, abbreviation, is_active FROM units WHERE is_active = 1 ORDER BY name`
-	getUnitByIDQuery     = `SELECT id, name, abbreviation, is_active FROM units WHERE id = ? LIMIT 1`
-	checkUnitUsedQuery   = `SELECT COUNT(*) FROM product_units WHERE unit_id = ?`
-	createUnitQuery      = `INSERT INTO units (name, abbreviation) VALUES (?, ?)`
-	updateUnitQuery      = `UPDATE units SET name = ?, abbreviation = ?, updated_at = NOW() WHERE id = ?`
-	deleteUnitQuery      = `DELETE FROM units WHERE id = ?`
+	getActiveUnitsQuery   = `SELECT id, name, abbreviation, is_active FROM units WHERE is_active = 1 ORDER BY name`
+	getUnitByIDQuery      = `SELECT id, name, abbreviation, is_active FROM units WHERE id = ? LIMIT 1`
+	checkUnitUsedQuery    = `SELECT COUNT(*) FROM product_units WHERE unit_id = ?`
+	createUnitQuery       = `INSERT INTO units (name, abbreviation) VALUES (?, ?)`
+	updateUnitQuery       = `UPDATE units SET name = ?, abbreviation = ?, updated_at = NOW() WHERE id = ?`
+	deleteUnitQuery       = `DELETE FROM units WHERE id = ?`
 	toggleUnitStatusQuery = `UPDATE units SET is_active = NOT is_active, updated_at = NOW() WHERE id = ?`
 )
 

@@ -1,12 +1,12 @@
 package middleware
 
 import (
-	"permen_api/errors"
-	error_helper "permen_api/helper/error"
-	log_helper "permen_api/helper/log"
-	request_helper "permen_api/helper/request"
-	"permen_api/helper/security"
-	"permen_api/pkg/jwt"
+	"pos_api/errors"
+	error_helper "pos_api/helper/error"
+	log_helper "pos_api/helper/log"
+	request_helper "pos_api/helper/request"
+	"pos_api/helper/security"
+	"pos_api/pkg/jwt"
 
 	"github.com/gin-gonic/gin"
 	jwtLib "github.com/golang-jwt/jwt/v5"

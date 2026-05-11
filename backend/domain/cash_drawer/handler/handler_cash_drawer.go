@@ -3,12 +3,12 @@ package handler_cash_drawer
 import (
 	"strconv"
 
-	global_dto "permen_api/dto"
-	dto_cash_drawer "permen_api/domain/cash_drawer/dto"
-	service_cash_drawer "permen_api/domain/cash_drawer/service"
-	"permen_api/errors"
-	"permen_api/helper"
-	response_helper "permen_api/helper/response"
+	dto_cash_drawer "pos_api/domain/cash_drawer/dto"
+	service_cash_drawer "pos_api/domain/cash_drawer/service"
+	global_dto "pos_api/dto"
+	"pos_api/errors"
+	"pos_api/helper"
+	response_helper "pos_api/helper/response"
 
 	"github.com/gin-gonic/gin"
 )

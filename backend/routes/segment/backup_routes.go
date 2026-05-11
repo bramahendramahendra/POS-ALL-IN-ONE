@@ -1,9 +1,9 @@
 package segment
 
 import (
-	backup_handler "permen_api/domain/backup/handler"
-	backup_service "permen_api/domain/backup/service"
-	middleware "permen_api/middleware"
+	backup_handler "pos_api/domain/backup/handler"
+	backup_service "pos_api/domain/backup/service"
+	middleware "pos_api/middleware"
 
 	"github.com/gin-gonic/gin"
 )

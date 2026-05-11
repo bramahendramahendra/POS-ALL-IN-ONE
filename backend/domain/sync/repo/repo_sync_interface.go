@@ -1,8 +1,8 @@
 package repo_sync
 
 import (
-	dto_sync "permen_api/domain/sync/dto"
-	model_sync "permen_api/domain/sync/model"
+	dto_sync "pos_api/domain/sync/dto"
+	model_sync "pos_api/domain/sync/model"
 )
 
 type SyncRepo interface {

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	dto_supplier_return "permen_api/domain/supplier_return/dto"
-	model_supplier_return "permen_api/domain/supplier_return/model"
+	dto_supplier_return "pos_api/domain/supplier_return/dto"
+	model_supplier_return "pos_api/domain/supplier_return/model"
 
 	"gorm.io/gorm"
 )
@@ -19,7 +19,7 @@ const (
 	getReturnItemsQuery      = `SELECT sri.id, sri.product_id, sri.product_name, sri.quantity, sri.unit, sri.purchase_price, sri.subtotal FROM supplier_return_items sri WHERE sri.return_id = ?`
 	checkReturnApprovedQuery = `SELECT status FROM supplier_returns WHERE id = ?`
 	getReturnByIDQuery       = `SELECT sr.id, sr.return_code, sr.purchase_id, sr.supplier_id, sr.supplier_name, sr.return_date, sr.total_return_amount, sr.reason, sr.status, u.full_name as user_name, sr.notes FROM supplier_returns sr LEFT JOIN users u ON sr.user_id = u.id WHERE sr.id = ?`
-	getAllReturnsBase         = `SELECT sr.id, sr.return_code, sr.purchase_id, sr.supplier_id, sr.supplier_name, sr.return_date, sr.total_return_amount, sr.reason, sr.status, u.full_name as user_name, sr.notes FROM supplier_returns sr LEFT JOIN users u ON sr.user_id = u.id WHERE 1=1`
+	getAllReturnsBase        = `SELECT sr.id, sr.return_code, sr.purchase_id, sr.supplier_id, sr.supplier_name, sr.return_date, sr.total_return_amount, sr.reason, sr.status, u.full_name as user_name, sr.notes FROM supplier_returns sr LEFT JOIN users u ON sr.user_id = u.id WHERE 1=1`
 	countReturnsBase         = `SELECT COUNT(*) FROM supplier_returns sr WHERE 1=1`
 	deleteReturnItemsQuery   = `DELETE FROM supplier_return_items WHERE return_id = ?`
 	deleteReturnQuery        = `DELETE FROM supplier_returns WHERE id = ?`

@@ -1,12 +1,12 @@
 package handler_version
 
 import (
-	global_dto "permen_api/dto"
-	dto_version "permen_api/domain/version/dto"
-	service_version "permen_api/domain/version/service"
-	"permen_api/errors"
-	"permen_api/helper"
-	response_helper "permen_api/helper/response"
+	dto_version "pos_api/domain/version/dto"
+	service_version "pos_api/domain/version/service"
+	global_dto "pos_api/dto"
+	"pos_api/errors"
+	"pos_api/helper"
+	response_helper "pos_api/helper/response"
 
 	"github.com/gin-gonic/gin"
 )

@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"permen_api/config"
+	"pos_api/config"
 
 	"github.com/gin-gonic/gin"
 )

@@ -1,7 +1,7 @@
 package service_backup
 
 import (
-	dto_backup "permen_api/domain/backup/dto"
+	dto_backup "pos_api/domain/backup/dto"
 
 	"mime/multipart"
 )

@@ -1,7 +1,7 @@
 package repo_setting
 
 import (
-	model_setting "permen_api/domain/setting/model"
+	model_setting "pos_api/domain/setting/model"
 
 	"gorm.io/gorm"
 )
@@ -9,8 +9,8 @@ import (
 const (
 	getAllSettingsQuery  = `SELECT setting_key, setting_value FROM settings ORDER BY setting_key`
 	getSettingByKeyQuery = `SELECT setting_key, setting_value FROM settings WHERE setting_key = ?`
-	upsertSettingQuery  = `INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), updated_at = NOW()`
-	resetSettingsQuery  = `UPDATE settings SET setting_value = CASE setting_key WHEN 'store_name' THEN 'Toko Retail' WHEN 'tax_enabled' THEN '0' WHEN 'tax_percent' THEN '11' WHEN 'receipt_footer' THEN 'Terima kasih telah berbelanja' WHEN 'stock_notification_enabled' THEN '1' ELSE '' END`
+	upsertSettingQuery   = `INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), updated_at = NOW()`
+	resetSettingsQuery   = `UPDATE settings SET setting_value = CASE setting_key WHEN 'store_name' THEN 'Toko Retail' WHEN 'tax_enabled' THEN '0' WHEN 'tax_percent' THEN '11' WHEN 'receipt_footer' THEN 'Terima kasih telah berbelanja' WHEN 'stock_notification_enabled' THEN '1' ELSE '' END`
 )
 
 type settingRepo struct {

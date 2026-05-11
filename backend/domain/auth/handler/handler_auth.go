@@ -3,13 +3,13 @@ package handler_auth
 import (
 	"strings"
 
-	dto_auth "permen_api/domain/auth/dto"
-	service_auth "permen_api/domain/auth/service"
-	"permen_api/errors"
-	"permen_api/helper"
-	response_helper "permen_api/helper/response"
-	"permen_api/validation"
-	global_dto "permen_api/dto"
+	dto_auth "pos_api/domain/auth/dto"
+	service_auth "pos_api/domain/auth/service"
+	global_dto "pos_api/dto"
+	"pos_api/errors"
+	"pos_api/helper"
+	response_helper "pos_api/helper/response"
+	"pos_api/validation"
 
 	"github.com/gin-gonic/gin"
 )

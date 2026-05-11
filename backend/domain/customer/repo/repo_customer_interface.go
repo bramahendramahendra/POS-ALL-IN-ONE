@@ -1,8 +1,8 @@
 package repo_customer
 
 import (
-	dto_customer "permen_api/domain/customer/dto"
-	model_customer "permen_api/domain/customer/model"
+	dto_customer "pos_api/domain/customer/dto"
+	model_customer "pos_api/domain/customer/model"
 )
 
 type CustomerRepo interface {

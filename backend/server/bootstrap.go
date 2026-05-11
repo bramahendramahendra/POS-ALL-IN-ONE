@@ -1,14 +1,14 @@
 package bootstrap
 
 import (
-	error_helper "permen_api/helper/error"
-	"permen_api/database"
-	pkgdatabase "permen_api/pkg/database"
-	"permen_api/pkg/logger"
-	"permen_api/routes"
-	_ "permen_api/validation"
+	"pos_api/database"
+	error_helper "pos_api/helper/error"
+	pkgdatabase "pos_api/pkg/database"
+	"pos_api/pkg/logger"
+	"pos_api/routes"
+	_ "pos_api/validation"
 
-	"permen_api/config"
+	"pos_api/config"
 
 	"github.com/gin-gonic/gin"
 )

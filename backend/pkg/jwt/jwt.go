@@ -2,10 +2,10 @@ package jwt
 
 import (
 	"fmt"
-	"permen_api/config"
-	"permen_api/errors"
-	"permen_api/helper"
-	time_helper "permen_api/helper/time"
+	"pos_api/config"
+	"pos_api/errors"
+	"pos_api/helper"
+	time_helper "pos_api/helper/time"
 	"strings"
 	"time"
 

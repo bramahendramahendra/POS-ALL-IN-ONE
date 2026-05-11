@@ -1,13 +1,13 @@
 package handler
 
 import (
-	dto "permen_api/domain/sample/dto"
-	service "permen_api/domain/sample/service"
-	globalDTO "permen_api/dto"
-	errors "permen_api/errors"
-	response_helper "permen_api/helper/response"
-	binder "permen_api/pkg/binder"
-	validator "permen_api/validation"
+	dto "pos_api/domain/sample/dto"
+	service "pos_api/domain/sample/service"
+	globalDTO "pos_api/dto"
+	errors "pos_api/errors"
+	response_helper "pos_api/helper/response"
+	binder "pos_api/pkg/binder"
+	validator "pos_api/validation"
 
 	"github.com/gin-gonic/gin"
 )

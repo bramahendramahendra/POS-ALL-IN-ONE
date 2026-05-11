@@ -1,6 +1,6 @@
 package service_shift
 
-import dto_shift "permen_api/domain/shift/dto"
+import dto_shift "pos_api/domain/shift/dto"
 
 type ShiftService interface {
 	GetAll() ([]*dto_shift.ShiftResponse, error)

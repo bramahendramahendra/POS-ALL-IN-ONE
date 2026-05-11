@@ -1,11 +1,11 @@
 package routes
 
 import (
-	auth_repo "permen_api/domain/auth/repo"
-	auth_service "permen_api/domain/auth/service"
-	segment "permen_api/routes/segment"
-	pos_middleware "permen_api/middleware/auth"
-	pkgdatabase "permen_api/pkg/database"
+	auth_repo "pos_api/domain/auth/repo"
+	auth_service "pos_api/domain/auth/service"
+	pos_middleware "pos_api/middleware/auth"
+	pkgdatabase "pos_api/pkg/database"
+	segment "pos_api/routes/segment"
 
 	"github.com/gin-gonic/gin"
 )

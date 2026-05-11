@@ -1,9 +1,9 @@
 package service_product
 
 import (
-	dto_product "permen_api/domain/product/dto"
-	repo_product "permen_api/domain/product/repo"
-	"permen_api/errors"
+	dto_product "pos_api/domain/product/dto"
+	repo_product "pos_api/domain/product/repo"
+	"pos_api/errors"
 )
 
 type ProductPriceService interface {

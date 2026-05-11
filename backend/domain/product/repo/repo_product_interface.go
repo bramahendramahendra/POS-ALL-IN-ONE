@@ -1,8 +1,8 @@
 package repo_product
 
 import (
-	dto_product "permen_api/domain/product/dto"
-	model_product "permen_api/domain/product/model"
+	dto_product "pos_api/domain/product/dto"
+	model_product "pos_api/domain/product/model"
 )
 
 type ProductRepo interface {

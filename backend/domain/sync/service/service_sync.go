@@ -5,12 +5,12 @@ import (
 	"strings"
 	"time"
 
-	dto_sync "permen_api/domain/sync/dto"
-	model_sync "permen_api/domain/sync/model"
-	repo_expense "permen_api/domain/expense/repo"
-	repo_sync "permen_api/domain/sync/repo"
-	repo_transaction "permen_api/domain/transaction/repo"
-	"permen_api/errors"
+	repo_expense "pos_api/domain/expense/repo"
+	dto_sync "pos_api/domain/sync/dto"
+	model_sync "pos_api/domain/sync/model"
+	repo_sync "pos_api/domain/sync/repo"
+	repo_transaction "pos_api/domain/transaction/repo"
+	"pos_api/errors"
 )
 
 type syncService struct {

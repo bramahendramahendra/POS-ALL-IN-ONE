@@ -1,13 +1,13 @@
 package segment
 
 import (
-	auth_handler "permen_api/domain/auth/handler"
-	auth_repo "permen_api/domain/auth/repo"
-	auth_service "permen_api/domain/auth/service"
-	pin_handler "permen_api/domain/pin/handler"
-	pin_repo "permen_api/domain/pin/repo"
-	pin_service "permen_api/domain/pin/service"
-	pkgdatabase "permen_api/pkg/database"
+	auth_handler "pos_api/domain/auth/handler"
+	auth_repo "pos_api/domain/auth/repo"
+	auth_service "pos_api/domain/auth/service"
+	pin_handler "pos_api/domain/pin/handler"
+	pin_repo "pos_api/domain/pin/repo"
+	pin_service "pos_api/domain/pin/service"
+	pkgdatabase "pos_api/pkg/database"
 
 	"github.com/gin-gonic/gin"
 )

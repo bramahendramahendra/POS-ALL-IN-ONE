@@ -3,7 +3,7 @@ package service_product
 import (
 	"mime/multipart"
 
-	dto_product "permen_api/domain/product/dto"
+	dto_product "pos_api/domain/product/dto"
 )
 
 type ProductService interface {

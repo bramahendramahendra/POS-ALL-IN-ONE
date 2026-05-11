@@ -1,6 +1,6 @@
 package repo_dashboard
 
-import dto_dashboard "permen_api/domain/dashboard/dto"
+import dto_dashboard "pos_api/domain/dashboard/dto"
 
 type DashboardRepo interface {
 	GetTodayStats(date string) (*dto_dashboard.TodayStats, error)

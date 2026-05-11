@@ -3,9 +3,9 @@ package handler_report
 import (
 	"net/http"
 
-	global_dto "permen_api/dto"
-	"permen_api/helper"
-	response_helper "permen_api/helper/response"
+	global_dto "pos_api/dto"
+	"pos_api/helper"
+	response_helper "pos_api/helper/response"
 
 	"github.com/gin-gonic/gin"
 )

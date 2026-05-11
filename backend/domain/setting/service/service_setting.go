@@ -2,7 +2,7 @@ package service_setting
 
 import (
 	"errors"
-	repo_setting "permen_api/domain/setting/repo"
+	repo_setting "pos_api/domain/setting/repo"
 )
 
 type settingService struct {

@@ -3,9 +3,9 @@ package service_supplier
 import (
 	"fmt"
 
-	dto_supplier "permen_api/domain/supplier/dto"
-	repo_supplier "permen_api/domain/supplier/repo"
-	"permen_api/errors"
+	dto_supplier "pos_api/domain/supplier/dto"
+	repo_supplier "pos_api/domain/supplier/repo"
+	"pos_api/errors"
 )
 
 type supplierService struct {

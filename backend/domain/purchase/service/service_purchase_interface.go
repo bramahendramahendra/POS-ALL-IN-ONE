@@ -1,6 +1,6 @@
 package service_purchase
 
-import dto_purchase "permen_api/domain/purchase/dto"
+import dto_purchase "pos_api/domain/purchase/dto"
 
 type PurchaseService interface {
 	GetAll(filter *dto_purchase.PurchaseFilter) ([]*dto_purchase.PurchaseResponse, int, error)

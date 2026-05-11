@@ -1,6 +1,6 @@
 package service_supplier
 
-import dto_supplier "permen_api/domain/supplier/dto"
+import dto_supplier "pos_api/domain/supplier/dto"
 
 type SupplierService interface {
 	GetAll(filter *dto_supplier.SupplierFilter) ([]*dto_supplier.SupplierResponse, int, error)

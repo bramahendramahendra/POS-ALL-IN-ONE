@@ -1,8 +1,8 @@
 package repo_cash_drawer
 
 import (
-	dto_cash_drawer "permen_api/domain/cash_drawer/dto"
-	model_cash_drawer "permen_api/domain/cash_drawer/model"
+	dto_cash_drawer "pos_api/domain/cash_drawer/dto"
+	model_cash_drawer "pos_api/domain/cash_drawer/model"
 )
 
 type CashDrawerRepo interface {

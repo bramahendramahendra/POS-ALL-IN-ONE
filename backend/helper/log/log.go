@@ -2,10 +2,10 @@ package log_helper
 
 import (
 	"fmt"
-	global_dto "permen_api/dto"
-	request_helper "permen_api/helper/request"
-	time_helper "permen_api/helper/time"
-	"permen_api/pkg/logger"
+	global_dto "pos_api/dto"
+	request_helper "pos_api/helper/request"
+	time_helper "pos_api/helper/time"
+	"pos_api/pkg/logger"
 	"strings"
 
 	"github.com/gin-gonic/gin"

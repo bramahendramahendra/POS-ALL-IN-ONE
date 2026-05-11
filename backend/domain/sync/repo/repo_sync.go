@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	dto_sync "permen_api/domain/sync/dto"
-	model_sync "permen_api/domain/sync/model"
+	dto_sync "pos_api/domain/sync/dto"
+	model_sync "pos_api/domain/sync/model"
 
 	"gorm.io/gorm"
 )
@@ -22,9 +22,9 @@ const (
 	CreateQueueItemQuery   = `INSERT INTO sync_queue (device_id, entity_type, entity_id, action, payload, status) VALUES (?, ?, ?, ?, ?, 'pending')`
 	UpdateQueueStatusQuery = `UPDATE sync_queue SET status=?, synced_at=CASE WHEN ? = 'synced' THEN NOW() ELSE NULL END, error_message=? WHERE id=?`
 
-	insertHistoryQuery  = `INSERT INTO sync_history (device_id, device_type, total_items, synced_items, conflict_items, failed_items, duration_ms, status, started_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	getHistoryQuery     = `SELECT id, device_id, device_type, total_items, synced_items, conflict_items, failed_items, duration_ms, status, DATE_FORMAT(started_at,'%Y-%m-%dT%H:%i:%sZ'), DATE_FORMAT(finished_at,'%Y-%m-%dT%H:%i:%sZ') FROM sync_history WHERE 1=1`
-	countHistoryBase    = `SELECT COUNT(*) FROM sync_history WHERE 1=1`
+	insertHistoryQuery = `INSERT INTO sync_history (device_id, device_type, total_items, synced_items, conflict_items, failed_items, duration_ms, status, started_at, finished_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	getHistoryQuery    = `SELECT id, device_id, device_type, total_items, synced_items, conflict_items, failed_items, duration_ms, status, DATE_FORMAT(started_at,'%Y-%m-%dT%H:%i:%sZ'), DATE_FORMAT(finished_at,'%Y-%m-%dT%H:%i:%sZ') FROM sync_history WHERE 1=1`
+	countHistoryBase   = `SELECT COUNT(*) FROM sync_history WHERE 1=1`
 
 	// entityTableMap menentukan tabel dan kolom JSON per entity type
 	// Format query: SELECT updated_at, JSON_OBJECT(...) AS data FROM <table> WHERE id=?

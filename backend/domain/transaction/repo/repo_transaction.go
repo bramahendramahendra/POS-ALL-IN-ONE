@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	dto_sync "permen_api/domain/sync/dto"
-	dto_transaction "permen_api/domain/transaction/dto"
-	model_transaction "permen_api/domain/transaction/model"
+	dto_sync "pos_api/domain/sync/dto"
+	dto_transaction "pos_api/domain/transaction/dto"
+	model_transaction "pos_api/domain/transaction/model"
 
 	"gorm.io/gorm"
 )
@@ -29,12 +29,12 @@ const (
 		       t.subtotal, t.discount, t.tax, t.total_amount, t.payment_method,
 		       t.payment_amount, t.change_amount, t.customer_id, t.is_credit, t.status, t.device_source
 		FROM transactions t WHERE t.id = ? LIMIT 1`
-	getAllTransactionsBase  = `
+	getAllTransactionsBase = `
 		SELECT t.id, t.transaction_code, t.user_id, t.shift_id, t.transaction_date,
 		       t.subtotal, t.discount, t.tax, t.total_amount, t.payment_method,
 		       t.payment_amount, t.change_amount, t.customer_id, t.is_credit, t.status, t.device_source
 		FROM transactions t WHERE 1=1`
-	countTransactionsBase  = `SELECT COUNT(*) FROM transactions t WHERE 1=1`
+	countTransactionsBase = `SELECT COUNT(*) FROM transactions t WHERE 1=1`
 )
 
 type transactionRepo struct {

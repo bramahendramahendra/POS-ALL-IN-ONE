@@ -1,6 +1,6 @@
 package service_master
 
-import dto_master "permen_api/domain/master/dto"
+import dto_master "pos_api/domain/master/dto"
 
 type UnitService interface {
 	GetAll() ([]*dto_master.UnitResponse, error)

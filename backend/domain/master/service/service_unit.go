@@ -1,10 +1,10 @@
 package service_master
 
 import (
-	dto_master "permen_api/domain/master/dto"
-	model_master "permen_api/domain/master/model"
-	repo_master "permen_api/domain/master/repo"
-	"permen_api/errors"
+	dto_master "pos_api/domain/master/dto"
+	model_master "pos_api/domain/master/model"
+	repo_master "pos_api/domain/master/repo"
+	"pos_api/errors"
 )
 
 type unitService struct {

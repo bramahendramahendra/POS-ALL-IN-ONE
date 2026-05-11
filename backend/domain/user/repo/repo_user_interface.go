@@ -1,8 +1,8 @@
 package repo_user
 
 import (
-	dto_user "permen_api/domain/user/dto"
-	model_user "permen_api/domain/user/model"
+	dto_user "pos_api/domain/user/dto"
+	model_user "pos_api/domain/user/model"
 )
 
 type UserRepo interface {

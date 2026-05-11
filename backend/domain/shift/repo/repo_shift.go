@@ -1,7 +1,7 @@
 package repo_shift
 
 import (
-	dto_shift "permen_api/domain/shift/dto"
+	dto_shift "pos_api/domain/shift/dto"
 
 	"gorm.io/gorm"
 )

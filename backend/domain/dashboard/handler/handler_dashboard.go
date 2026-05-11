@@ -4,11 +4,11 @@ import (
 	"strconv"
 	"time"
 
-	global_dto "permen_api/dto"
-	dto_dashboard "permen_api/domain/dashboard/dto"
-	service_dashboard "permen_api/domain/dashboard/service"
-	"permen_api/helper"
-	response_helper "permen_api/helper/response"
+	dto_dashboard "pos_api/domain/dashboard/dto"
+	service_dashboard "pos_api/domain/dashboard/service"
+	global_dto "pos_api/dto"
+	"pos_api/helper"
+	response_helper "pos_api/helper/response"
 
 	"github.com/gin-gonic/gin"
 )

@@ -1,6 +1,6 @@
 package repo_auth
 
-import model_auth "permen_api/domain/auth/model"
+import model_auth "pos_api/domain/auth/model"
 
 type AuthRepo interface {
 	GetUserByUsername(username string) (*model_auth.User, error)

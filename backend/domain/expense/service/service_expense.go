@@ -1,10 +1,10 @@
 package service_expense
 
 import (
-	dto_expense "permen_api/domain/expense/dto"
-	repo_expense "permen_api/domain/expense/repo"
-	repo_cash_drawer "permen_api/domain/cash_drawer/repo"
-	"permen_api/errors"
+	repo_cash_drawer "pos_api/domain/cash_drawer/repo"
+	dto_expense "pos_api/domain/expense/dto"
+	repo_expense "pos_api/domain/expense/repo"
+	"pos_api/errors"
 )
 
 type expenseService struct {

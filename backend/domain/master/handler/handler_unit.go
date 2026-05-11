@@ -1,13 +1,13 @@
 package handler_master
 
 import (
-	global_dto "permen_api/dto"
-	dto_master "permen_api/domain/master/dto"
-	service_master "permen_api/domain/master/service"
-	"permen_api/errors"
-	"permen_api/helper"
-	response_helper "permen_api/helper/response"
-	"permen_api/validation"
+	dto_master "pos_api/domain/master/dto"
+	service_master "pos_api/domain/master/service"
+	global_dto "pos_api/dto"
+	"pos_api/errors"
+	"pos_api/helper"
+	response_helper "pos_api/helper/response"
+	"pos_api/validation"
 
 	"github.com/gin-gonic/gin"
 )

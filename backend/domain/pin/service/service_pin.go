@@ -1,9 +1,9 @@
 package service_pin
 
 import (
-	repo_pin "permen_api/domain/pin/repo"
-	"permen_api/errors"
-	"permen_api/pkg/bcrypt"
+	repo_pin "pos_api/domain/pin/repo"
+	"pos_api/errors"
+	"pos_api/pkg/bcrypt"
 )
 
 type pinService struct {

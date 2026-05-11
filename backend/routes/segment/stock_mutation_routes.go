@@ -1,11 +1,11 @@
 package segment
 
 import (
-	stock_mutation_handler "permen_api/domain/stock_mutation/handler"
-	stock_mutation_repo "permen_api/domain/stock_mutation/repo"
-	stock_mutation_service "permen_api/domain/stock_mutation/service"
-	middleware "permen_api/middleware"
-	pkgdatabase "permen_api/pkg/database"
+	stock_mutation_handler "pos_api/domain/stock_mutation/handler"
+	stock_mutation_repo "pos_api/domain/stock_mutation/repo"
+	stock_mutation_service "pos_api/domain/stock_mutation/service"
+	middleware "pos_api/middleware"
+	pkgdatabase "pos_api/pkg/database"
 
 	"github.com/gin-gonic/gin"
 )

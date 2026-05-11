@@ -1,15 +1,15 @@
 package repo_product
 
 import (
-	dto_product "permen_api/domain/product/dto"
+	dto_product "pos_api/domain/product/dto"
 
 	"gorm.io/gorm"
 )
 
 const (
-	getProductUnitsQuery      = `SELECT pu.id, pu.product_id, pu.unit_id, pu.unit_name, pu.conversion_qty, pu.selling_price, pu.is_default FROM product_units pu WHERE pu.product_id = ?`
-	deleteProductUnitsQuery   = `DELETE FROM product_units WHERE product_id = ?`
-	insertProductUnitQuery    = `INSERT INTO product_units (product_id, unit_id, unit_name, conversion_qty, selling_price, is_default) VALUES (?, ?, ?, ?, ?, ?)`
+	getProductUnitsQuery       = `SELECT pu.id, pu.product_id, pu.unit_id, pu.unit_name, pu.conversion_qty, pu.selling_price, pu.is_default FROM product_units pu WHERE pu.product_id = ?`
+	deleteProductUnitsQuery    = `DELETE FROM product_units WHERE product_id = ?`
+	insertProductUnitQuery     = `INSERT INTO product_units (product_id, unit_id, unit_name, conversion_qty, selling_price, is_default) VALUES (?, ?, ?, ?, ?, ?)`
 	deleteProductUnitByIDQuery = `DELETE FROM product_units WHERE id = ? AND product_id = ?`
 )
 

@@ -3,13 +3,13 @@ package handler_user
 import (
 	"strconv"
 
-	global_dto "permen_api/dto"
-	dto_user "permen_api/domain/user/dto"
-	service_user "permen_api/domain/user/service"
-	"permen_api/errors"
-	"permen_api/helper"
-	response_helper "permen_api/helper/response"
-	"permen_api/validation"
+	dto_user "pos_api/domain/user/dto"
+	service_user "pos_api/domain/user/service"
+	global_dto "pos_api/dto"
+	"pos_api/errors"
+	"pos_api/helper"
+	response_helper "pos_api/helper/response"
+	"pos_api/validation"
 
 	"github.com/gin-gonic/gin"
 )

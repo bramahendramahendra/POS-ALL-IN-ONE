@@ -1,11 +1,11 @@
 package segment
 
 import (
-	transaction_handler "permen_api/domain/transaction/handler"
-	transaction_repo "permen_api/domain/transaction/repo"
-	transaction_service "permen_api/domain/transaction/service"
-	middleware "permen_api/middleware"
-	pkgdatabase "permen_api/pkg/database"
+	transaction_handler "pos_api/domain/transaction/handler"
+	transaction_repo "pos_api/domain/transaction/repo"
+	transaction_service "pos_api/domain/transaction/service"
+	middleware "pos_api/middleware"
+	pkgdatabase "pos_api/pkg/database"
 
 	"github.com/gin-gonic/gin"
 )

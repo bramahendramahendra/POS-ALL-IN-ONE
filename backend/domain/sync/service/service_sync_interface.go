@@ -1,6 +1,6 @@
 package service_sync
 
-import dto_sync "permen_api/domain/sync/dto"
+import dto_sync "pos_api/domain/sync/dto"
 
 type SyncService interface {
 	PushSync(req *dto_sync.PushSyncRequest) (*dto_sync.PushSyncResponse, error)

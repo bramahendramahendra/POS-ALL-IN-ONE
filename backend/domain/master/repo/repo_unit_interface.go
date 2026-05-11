@@ -1,6 +1,6 @@
 package repo_master
 
-import model_master "permen_api/domain/master/model"
+import model_master "pos_api/domain/master/model"
 
 type UnitRepo interface {
 	GetAll() ([]*model_master.Unit, error)

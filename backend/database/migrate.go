@@ -1,6 +1,7 @@
-﻿package database
+package database
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,12 +9,24 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
 )
 
 func RunMigrations(db *gorm.DB) error {
 	if err := ensureMigrationsTable(db); err != nil {
 		return fmt.Errorf("create migrations_history: %w", err)
+	}
+
+	// Deteksi inkonsistensi: migrations_history sudah terisi tapi tidak ada tabel lain.
+	// Ini terjadi jika DB pernah di-drop/reset tanpa menghapus migrations_history.
+	var recordedCount, tableCount int64
+	db.Raw("SELECT COUNT(*) FROM migrations_history").Scan(&recordedCount)
+	db.Raw("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name != 'migrations_history'").Scan(&tableCount)
+	if recordedCount > 0 && tableCount == 0 {
+		if err := db.Exec("TRUNCATE TABLE migrations_history").Error; err != nil {
+			return fmt.Errorf("reset migrations_history: %w", err)
+		}
 	}
 
 	migrationsDir := migrationsPath()
@@ -80,17 +93,36 @@ func recordMigration(db *gorm.DB, filename string) error {
 // execSQL splits the content on semicolons and runs each statement individually
 // so that GORM (which uses database/sql) can handle multi-statement SQL files.
 func execSQL(db *gorm.DB, content string) error {
-	statements := strings.Split(content, ";")
-	for _, stmt := range statements {
-		stmt = strings.TrimSpace(stmt)
-		if stmt == "" || strings.HasPrefix(stmt, "--") {
+	for stmt := range strings.SplitSeq(content, ";") {
+		// strip leading comment lines before checking if the statement is empty
+		stmt = stripLeadingComments(strings.TrimSpace(stmt))
+		if stmt == "" {
 			continue
 		}
 		if err := db.Exec(stmt).Error; err != nil {
+			var mysqlErr *mysql.MySQLError
+			if errors.As(err, &mysqlErr) && (mysqlErr.Number == 1050 || mysqlErr.Number == 1061 || mysqlErr.Number == 1060) {
+				continue // table/index/column already exists, aman diabaikan
+			}
 			return err
 		}
 	}
 	return nil
+}
+
+// stripLeadingComments removes leading `--` comment lines from a SQL statement
+// so a statement that begins with a comment is not mistakenly skipped.
+func stripLeadingComments(stmt string) string {
+	lines := strings.Split(stmt, "\n")
+	for len(lines) > 0 {
+		trimmed := strings.TrimSpace(lines[0])
+		if trimmed == "" || strings.HasPrefix(trimmed, "--") {
+			lines = lines[1:]
+		} else {
+			break
+		}
+	}
+	return strings.TrimSpace(strings.Join(lines, "\n"))
 }
 
 // migrationsPath resolves the migrations directory relative to this source file.

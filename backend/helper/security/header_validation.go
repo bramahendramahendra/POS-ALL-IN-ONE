@@ -2,7 +2,7 @@ package security
 
 import (
 	"fmt"
-	"permen_api/helper"
+	"pos_api/helper"
 	"strings"
 
 	"github.com/gin-gonic/gin"

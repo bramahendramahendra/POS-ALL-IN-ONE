@@ -1,9 +1,9 @@
 package service_supplier_return
 
 import (
-	dto_supplier_return "permen_api/domain/supplier_return/dto"
-	repo_supplier_return "permen_api/domain/supplier_return/repo"
-	"permen_api/errors"
+	dto_supplier_return "pos_api/domain/supplier_return/dto"
+	repo_supplier_return "pos_api/domain/supplier_return/repo"
+	"pos_api/errors"
 )
 
 type supplierReturnService struct {

@@ -1,7 +1,7 @@
 package repo_report
 
 import (
-	dto_report "permen_api/domain/report/dto"
+	dto_report "pos_api/domain/report/dto"
 
 	"gorm.io/gorm"
 )

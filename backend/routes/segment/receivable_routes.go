@@ -1,11 +1,11 @@
 package segment
 
 import (
-	receivable_handler "permen_api/domain/receivable/handler"
-	receivable_repo "permen_api/domain/receivable/repo"
-	receivable_service "permen_api/domain/receivable/service"
-	middleware "permen_api/middleware"
-	pkgdatabase "permen_api/pkg/database"
+	receivable_handler "pos_api/domain/receivable/handler"
+	receivable_repo "pos_api/domain/receivable/repo"
+	receivable_service "pos_api/domain/receivable/service"
+	middleware "pos_api/middleware"
+	pkgdatabase "pos_api/pkg/database"
 
 	"github.com/gin-gonic/gin"
 )

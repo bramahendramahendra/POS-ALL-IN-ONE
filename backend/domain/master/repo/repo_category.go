@@ -1,20 +1,20 @@
 package repo_master
 
 import (
-	model_master "permen_api/domain/master/model"
+	model_master "pos_api/domain/master/model"
 
 	"gorm.io/gorm"
 )
 
 const (
-	getAllCategoriesQuery    = `SELECT id, name, description, created_at FROM categories ORDER BY name`
-	getCategoryByIDQuery    = `SELECT id, name, description, created_at FROM categories WHERE id = ? LIMIT 1`
-	getCategoryByNameQuery  = `SELECT id, name, description, created_at FROM categories WHERE name = ? LIMIT 1`
-	checkCategoryNameQuery  = `SELECT id FROM categories WHERE name = ? AND id != ? LIMIT 1`
+	getAllCategoriesQuery  = `SELECT id, name, description, created_at FROM categories ORDER BY name`
+	getCategoryByIDQuery   = `SELECT id, name, description, created_at FROM categories WHERE id = ? LIMIT 1`
+	getCategoryByNameQuery = `SELECT id, name, description, created_at FROM categories WHERE name = ? LIMIT 1`
+	checkCategoryNameQuery = `SELECT id FROM categories WHERE name = ? AND id != ? LIMIT 1`
 	checkCategoryUsedQuery = `SELECT COUNT(*) FROM products WHERE category_id = ?`
-	createCategoryQuery   = `INSERT INTO categories (name, description) VALUES (?, ?)`
-	updateCategoryQuery   = `UPDATE categories SET name = ?, description = ?, updated_at = NOW() WHERE id = ?`
-	deleteCategoryQuery   = `DELETE FROM categories WHERE id = ?`
+	createCategoryQuery    = `INSERT INTO categories (name, description) VALUES (?, ?)`
+	updateCategoryQuery    = `UPDATE categories SET name = ?, description = ?, updated_at = NOW() WHERE id = ?`
+	deleteCategoryQuery    = `DELETE FROM categories WHERE id = ?`
 )
 
 type categoryRepo struct {

@@ -1,13 +1,13 @@
 package routes
 
 import (
-	auth_handler "permen_api/domain/auth/handler"
-	auth_repo "permen_api/domain/auth/repo"
-	auth_service "permen_api/domain/auth/service"
-	version_handler "permen_api/domain/version/handler"
-	version_repo "permen_api/domain/version/repo"
-	version_service "permen_api/domain/version/service"
-	pkgdatabase "permen_api/pkg/database"
+	auth_handler "pos_api/domain/auth/handler"
+	auth_repo "pos_api/domain/auth/repo"
+	auth_service "pos_api/domain/auth/service"
+	version_handler "pos_api/domain/version/handler"
+	version_repo "pos_api/domain/version/repo"
+	version_service "pos_api/domain/version/service"
+	pkgdatabase "pos_api/pkg/database"
 
 	"github.com/gin-gonic/gin"
 )

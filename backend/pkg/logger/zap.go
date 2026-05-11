@@ -2,7 +2,7 @@ package logger
 
 import (
 	"fmt"
-	time_helper "permen_api/helper/time"
+	time_helper "pos_api/helper/time"
 	"sync"
 
 	"go.uber.org/zap"

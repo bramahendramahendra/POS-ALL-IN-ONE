@@ -3,9 +3,9 @@ package middleware
 import (
 	"crypto/subtle"
 	"encoding/base64"
-	"permen_api/errors"
-	error_helper "permen_api/helper/error"
-	log_helper "permen_api/helper/log"
+	"pos_api/errors"
+	error_helper "pos_api/helper/error"
+	log_helper "pos_api/helper/log"
 	"strings"
 
 	"github.com/gin-gonic/gin"

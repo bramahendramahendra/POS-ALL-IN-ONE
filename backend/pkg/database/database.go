@@ -3,7 +3,7 @@ package database
 import (
 	"errors"
 	"fmt"
-	"permen_api/config"
+	"pos_api/config"
 	"time"
 
 	"gorm.io/driver/mysql"

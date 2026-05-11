@@ -1,16 +1,16 @@
 package main
 
 import (
-	"permen_api/config"
-	"permen_api/helper"
-	error_helper "permen_api/helper/error"
-	time_helper "permen_api/helper/time"
-	"permen_api/pkg/database"
-	"permen_api/pkg/logger"
-	"permen_api/routes"
-	bootstrap "permen_api/server"
+	"pos_api/config"
+	"pos_api/helper"
+	error_helper "pos_api/helper/error"
+	time_helper "pos_api/helper/time"
+	"pos_api/pkg/database"
+	"pos_api/pkg/logger"
+	"pos_api/routes"
+	bootstrap "pos_api/server"
 
-	// "permen_api/pkg/redis"
+	// "pos_api/pkg/redis"
 
 	"context"
 	"errors"

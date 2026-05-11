@@ -1,13 +1,13 @@
 package handler_pin
 
 import (
-	global_dto "permen_api/dto"
-	dto_pin "permen_api/domain/pin/dto"
-	service_pin "permen_api/domain/pin/service"
-	"permen_api/errors"
-	"permen_api/helper"
-	response_helper "permen_api/helper/response"
-	"permen_api/validation"
+	dto_pin "pos_api/domain/pin/dto"
+	service_pin "pos_api/domain/pin/service"
+	global_dto "pos_api/dto"
+	"pos_api/errors"
+	"pos_api/helper"
+	response_helper "pos_api/helper/response"
+	"pos_api/validation"
 
 	"github.com/gin-gonic/gin"
 )

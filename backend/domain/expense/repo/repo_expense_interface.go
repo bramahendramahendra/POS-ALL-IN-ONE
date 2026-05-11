@@ -1,6 +1,6 @@
 package repo_expense
 
-import dto_expense "permen_api/domain/expense/dto"
+import dto_expense "pos_api/domain/expense/dto"
 
 type ExpenseRepo interface {
 	GetAll(filter *dto_expense.ExpenseFilter) ([]*dto_expense.ExpenseResponse, int, error)

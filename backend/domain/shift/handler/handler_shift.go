@@ -3,13 +3,13 @@ package handler_shift
 import (
 	"strconv"
 
-	global_dto "permen_api/dto"
-	dto_shift "permen_api/domain/shift/dto"
-	service_shift "permen_api/domain/shift/service"
-	"permen_api/errors"
-	"permen_api/helper"
-	response_helper "permen_api/helper/response"
-	"permen_api/validation"
+	dto_shift "pos_api/domain/shift/dto"
+	service_shift "pos_api/domain/shift/service"
+	global_dto "pos_api/dto"
+	"pos_api/errors"
+	"pos_api/helper"
+	response_helper "pos_api/helper/response"
+	"pos_api/validation"
 
 	"github.com/gin-gonic/gin"
 )

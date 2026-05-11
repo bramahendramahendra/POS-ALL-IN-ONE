@@ -1,6 +1,6 @@
 package service_version
 
-import dto_version "permen_api/domain/version/dto"
+import dto_version "pos_api/domain/version/dto"
 
 type VersionService interface {
 	CheckAndroid(currentVersion string) (*dto_version.VersionCheckResponse, error)

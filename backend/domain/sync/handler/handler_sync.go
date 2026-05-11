@@ -3,12 +3,12 @@ package handler_sync
 import (
 	"strconv"
 
-	global_dto "permen_api/dto"
-	dto_sync "permen_api/domain/sync/dto"
-	service_sync "permen_api/domain/sync/service"
-	"permen_api/errors"
-	"permen_api/helper"
-	response_helper "permen_api/helper/response"
+	dto_sync "pos_api/domain/sync/dto"
+	service_sync "pos_api/domain/sync/service"
+	global_dto "pos_api/dto"
+	"pos_api/errors"
+	"pos_api/helper"
+	response_helper "pos_api/helper/response"
 
 	"github.com/gin-gonic/gin"
 )

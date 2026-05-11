@@ -1,8 +1,8 @@
 package service
 
 import (
-	dto "permen_api/domain/sample/dto"
-	bycrypt "permen_api/pkg/bcrypt"
+	dto "pos_api/domain/sample/dto"
+	bycrypt "pos_api/pkg/bcrypt"
 )
 
 func (s *userIntegrationService) CreateUserIntegration(req *dto.CreateUserIntegrationRequest) (data dto.CreateUserIntegrationResponse, err error) {

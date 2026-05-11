@@ -5,14 +5,14 @@ import (
 	"encoding/hex"
 	"time"
 
-	"permen_api/config"
-	dto_auth "permen_api/domain/auth/dto"
-	model_auth "permen_api/domain/auth/model"
-	repo_auth "permen_api/domain/auth/repo"
-	"permen_api/errors"
-	time_helper "permen_api/helper/time"
-	"permen_api/pkg/bcrypt"
-	"permen_api/pkg/jwt"
+	"pos_api/config"
+	dto_auth "pos_api/domain/auth/dto"
+	model_auth "pos_api/domain/auth/model"
+	repo_auth "pos_api/domain/auth/repo"
+	"pos_api/errors"
+	time_helper "pos_api/helper/time"
+	"pos_api/pkg/bcrypt"
+	"pos_api/pkg/jwt"
 )
 
 type authService struct {
@@ -41,9 +41,11 @@ func (s *authService) Login(req *dto_auth.LoginRequest, ip string) (*dto_auth.Lo
 	expiresAt := time_helper.GetTimeNow().Add(time.Second * time.Duration(config.Cfg.TokenExpire))
 
 	claims := map[string]any{
-		"user_id":  user.ID,
-		"username": user.Username,
-		"role":     user.Role,
+		"user_id":   user.ID,
+		"username":  user.Username,
+		"full_name": user.FullName,
+		"role":      user.Role,
+		"apps":      req.DeviceInfo,
 	}
 	jwt.CreateClaims(claims)
 	token, err := jwt.GenerateToken()
@@ -117,9 +119,11 @@ func (s *authService) RefreshToken(refreshToken string) (*dto_auth.RefreshRespon
 	expiresAt := time_helper.GetTimeNow().Add(time.Second * time.Duration(config.Cfg.TokenExpire))
 
 	claims := map[string]any{
-		"user_id":  user.ID,
-		"username": user.Username,
-		"role":     user.Role,
+		"user_id":   user.ID,
+		"username":  user.Username,
+		"full_name": user.FullName,
+		"role":      user.Role,
+		"apps":      session.DeviceInfo,
 	}
 	jwt.CreateClaims(claims)
 	newToken, err := jwt.GenerateToken()

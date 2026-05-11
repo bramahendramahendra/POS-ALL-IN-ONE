@@ -1,9 +1,9 @@
 package service_version
 
 import (
-	dto_version "permen_api/domain/version/dto"
-	repo_version "permen_api/domain/version/repo"
-	"permen_api/errors"
+	dto_version "pos_api/domain/version/dto"
+	repo_version "pos_api/domain/version/repo"
+	"pos_api/errors"
 )
 
 type versionService struct {

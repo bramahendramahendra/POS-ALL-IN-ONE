@@ -2,8 +2,8 @@
 
 -- User default (admin: admin123, owner: owner123)
 INSERT IGNORE INTO users (username, password, full_name, role) VALUES
-('admin', '$2a$10$lZ2KqEXQRZxRd8qfxtc1I.HJ9iSwNV3r7oGzIQtEXGupG06qdwOYG', 'Administrator', 'admin'),
-('owner', '$2a$10$s5FZMNzMUicUHOwx/wOQ4ejKA0gHUkD6WEp32k.i64N1aXHuSdYhK', 'Owner', 'owner');
+('admin', '$argon2id$v=19$m=65536,t=3,p=4$TJxWkwEYoSuvSZ0JtwrfJw$ne9pID5QjltGeu0cNxiKYGCOXkUCRRjunQUYvttxCsM', 'Administrator', 'admin'),
+('owner', '$argon2id$v=19$m=65536,t=3,p=4$gcWNYu+y/FCRuCT6WS/+eg$1qAjwCU3HoK87s/CbDPHYo06W6B4mhoHF1SQmkigukY', 'Owner', 'owner');
 
 -- Satuan default
 INSERT IGNORE INTO units (name, abbreviation) VALUES

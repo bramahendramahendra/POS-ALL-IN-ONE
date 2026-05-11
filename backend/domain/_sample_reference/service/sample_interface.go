@@ -1,10 +1,10 @@
 package service
 
 import (
-	dto "permen_api/domain/sample/dto"
-	repo "permen_api/domain/sample/repo"
-	globalDTO "permen_api/dto"
-	transport "permen_api/pkg/transport"
+	dto "pos_api/domain/sample/dto"
+	repo "pos_api/domain/sample/repo"
+	globalDTO "pos_api/dto"
+	transport "pos_api/pkg/transport"
 
 	"github.com/gin-gonic/gin"
 )

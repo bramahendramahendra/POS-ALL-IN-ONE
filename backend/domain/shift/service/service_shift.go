@@ -1,9 +1,9 @@
 package service_shift
 
 import (
-	dto_shift "permen_api/domain/shift/dto"
-	repo_shift "permen_api/domain/shift/repo"
-	"permen_api/errors"
+	dto_shift "pos_api/domain/shift/dto"
+	repo_shift "pos_api/domain/shift/repo"
+	"pos_api/errors"
 )
 
 type shiftService struct {

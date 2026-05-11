@@ -3,7 +3,7 @@ package repo_dashboard
 import (
 	"fmt"
 
-	dto_dashboard "permen_api/domain/dashboard/dto"
+	dto_dashboard "pos_api/domain/dashboard/dto"
 
 	"gorm.io/gorm"
 )
@@ -70,8 +70,8 @@ const (
 		FROM transactions WHERE transaction_date BETWEEN ? AND ? AND status = 'completed'
 		GROUP BY payment_method`
 
-	lowStockCountQuery          = `SELECT COUNT(*) FROM products WHERE stock <= min_stock AND is_active = 1`
-	openReceivablesCountQuery   = `SELECT COUNT(*) FROM receivables WHERE status != 'paid'`
+	lowStockCountQuery        = `SELECT COUNT(*) FROM products WHERE stock <= min_stock AND is_active = 1`
+	openReceivablesCountQuery = `SELECT COUNT(*) FROM receivables WHERE status != 'paid'`
 )
 
 type dashboardRepo struct {
