@@ -1,0 +1,2 @@
+﻿cd web-v2
+npx lint-staged
