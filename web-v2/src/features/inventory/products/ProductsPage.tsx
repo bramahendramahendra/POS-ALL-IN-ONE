@@ -14,6 +14,7 @@ import {
 import { useProductsStore } from './products.store'
 import type { ProductFilter } from './products.types'
 import { ProductFilterBar } from './components/ProductFilter'
+import { ProductFormModal } from './components/ProductFormModal'
 import { ProductTable } from './components/ProductTable'
 
 const TABS = [
@@ -25,8 +26,17 @@ const TABS = [
 export function ProductsPage() {
   const [filter, setFilter] = useState<ProductFilter>({})
   const { page, pageSize, onPageChange, onPageSizeChange, reset } = usePagination()
-  const { activeTab, setActiveTab, openProductModal, deleteConfirmOpen, deleteTarget, closeDeleteConfirm } =
-    useProductsStore()
+  const {
+    activeTab,
+    setActiveTab,
+    openProductModal,
+    productModalOpen,
+    editingProductId,
+    closeProductModal,
+    deleteConfirmOpen,
+    deleteTarget,
+    closeDeleteConfirm,
+  } = useProductsStore()
 
   const { data: productData, isLoading } = useProductListQuery({ ...filter, page, page_size: pageSize })
   const { data: categories = [] } = useCategoryListQuery()
@@ -118,6 +128,13 @@ export function ProductsPage() {
           Manajemen Unit — Coming in FASE 15
         </div>
       )}
+
+      {/* Product form modal */}
+      <ProductFormModal
+        open={productModalOpen}
+        onOpenChange={(open) => { if (!open) closeProductModal() }}
+        productId={editingProductId ?? undefined}
+      />
 
       {/* Delete confirm */}
       <ConfirmDialog
