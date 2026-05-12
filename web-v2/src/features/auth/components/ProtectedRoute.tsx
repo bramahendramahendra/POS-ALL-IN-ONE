@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom'
 
+import { AppLayout } from '@/shared/components/layouts'
 import { ROUTES } from '@/shared/constants/routes'
 import type { Role } from '@/shared/types'
 import { useAuthStore } from '../auth.store'
@@ -24,5 +25,9 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
     return <Navigate to={ROUTES.DASHBOARD} replace />
   }
 
-  return <Outlet />
+  return (
+    <AppLayout>
+      <Outlet />
+    </AppLayout>
+  )
 }

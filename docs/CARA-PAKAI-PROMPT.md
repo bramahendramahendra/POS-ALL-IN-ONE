@@ -147,12 +147,10 @@ Konteks Sync Engine yang wajib diikuti:
 
 Kita sedang mengerjakan project POS System frontend (web-v2).
 Baca dan kerjakan instruksi di:
-docs\frontend\fase-implementasi\FASE-00-PROJECT-SETUP.md
-
-
-docs\frontend\fase-implementasi\FASE-01-FOUNDATION-API-CLIENT.md
-docs\frontend\fase-implementasi\FASE-02-FOUNDATION-UTILS-CONSTANTS-STYLES.md
-docs\frontend\fase-implementasi\FASE-03-AUTH-STORE-TYPES-API.md
-docs\frontend\fase-implementasi\FASE-04-AUTH-LOGIN-PAGE.md
-docs\frontend\fase-implementasi\FASE-05-AUTH-ROUTER-BOOTSTRAP.md
 docs\frontend\fase-implementasi\FASE-06-LAYOUT-NAVBAR.md
+
+
+
+docs\frontend\fase-implementasi\FASE-07-LAYOUT-SIDEBAR.md
+docs\frontend\fase-implementasi\FASE-08-SHARED-DATATABLE.md
+docs\frontend\fase-implementasi\FASE-09-SHARED-FORMMODAL-CONFIRMDIALOG.md
