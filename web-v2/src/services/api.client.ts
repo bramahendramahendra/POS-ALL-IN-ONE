@@ -1,25 +1,7 @@
 import axios, { type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios'
 
+import { useAuthStore } from '@/features/auth/auth.store'
 import { ApiError } from '@/shared/types'
-
-// Lazy import pattern — auth store dibuat di FASE 2
-// Gunakan dynamic require agar tidak circular dependency saat store belum ada
-type AuthStore = {
-  accessToken: string | null
-  refreshToken: string | null
-  setSession: (accessToken: string, refreshToken: string) => void
-  clearSession: () => void
-}
-
-const getAuthStore = (): AuthStore | null => {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mod = (globalThis as any).__authStore as AuthStore | undefined
-    return mod ?? null
-  } catch {
-    return null
-  }
-}
 
 // Queue untuk concurrent 401 requests
 type QueueItem = {
@@ -48,8 +30,7 @@ const apiClient = axios.create({
 
 // Request interceptor — attach token
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const store = getAuthStore()
-  const token = store?.accessToken
+  const token = useAuthStore.getState().accessToken
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
@@ -72,7 +53,6 @@ apiClient.interceptors.response.use(
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-        // Antri request yang sedang menunggu refresh
         return new Promise<string>((resolve, reject) => {
           failedQueue.push({ resolve, reject })
         })
@@ -88,16 +68,23 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true
       isRefreshing = true
 
-      const store = getAuthStore()
-      const refreshToken = store?.refreshToken
+      const { refreshToken, setSession, clearSession } = useAuthStore.getState()
 
       try {
-        const { data } = await axios.post<{ data: { access_token: string; refresh_token: string } }>(
+        const { data } = await axios.post<{ data: { access_token: string; refresh_token: string; expires_at: string } }>(
           `${import.meta.env.VITE_API_URL}/auth/refresh`,
           { refresh_token: refreshToken },
         )
-        const { access_token, refresh_token } = data.data
-        store?.setSession(access_token, refresh_token)
+        const { access_token, refresh_token, expires_at } = data.data
+        const currentUser = useAuthStore.getState().user
+        if (currentUser) {
+          setSession({
+            accessToken: access_token,
+            refreshToken: refresh_token,
+            expiresAt: expires_at,
+            user: currentUser,
+          })
+        }
         processQueue(null, access_token)
 
         if (originalRequest.headers) {
@@ -106,7 +93,7 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest)
       } catch (refreshError) {
         processQueue(refreshError, null)
-        store?.clearSession()
+        clearSession()
         window.location.href = '/login'
         return Promise.reject(refreshError)
       } finally {
