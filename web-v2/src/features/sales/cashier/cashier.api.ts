@@ -10,13 +10,6 @@ import type { Product, ProductUnit } from '@/features/inventory/products'
 import { useCashierStore } from './cashier.store'
 import type { CheckoutResponse, PaymentPayload } from './cashier.types'
 
-// ─── Simple Customer type for autocomplete ───────────────────────────────────
-export interface CustomerOption {
-  id: number
-  name: string
-  phone?: string
-}
-
 // ─── Queries ─────────────────────────────────────────────────────────────────
 
 export function useProductSearchQuery(keyword: string, enabled: boolean) {
@@ -35,12 +28,7 @@ export function useProductBarcodeSearchQuery(code: string, enabled: boolean) {
   })
 }
 
-export function useCustomerListQuery() {
-  return useQuery({
-    queryKey: queryKeys.customers.list(),
-    queryFn: () => api.get<CustomerOption[]>('/customers'),
-  })
-}
+export { useCustomerListQuery } from '@/features/customers'
 
 export function useActiveShiftQuery() {
   return useQuery({
