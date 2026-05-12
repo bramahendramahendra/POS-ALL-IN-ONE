@@ -1,15 +1,2 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Toaster } from 'sonner'
-
-import { LoginPage } from '@/features/auth'
-
-const queryClient = new QueryClient()
-
-export default function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <Toaster richColors position="top-right" />
-      <LoginPage />
-    </QueryClientProvider>
-  )
-}
+// Entry point dipindahkan ke src/app/App.tsx
+export { App as default } from './app/App'

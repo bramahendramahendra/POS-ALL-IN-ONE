@@ -1,0 +1,59 @@
+import { createBrowserRouter, Navigate } from 'react-router-dom'
+
+import { LoginPage, ProtectedRoute, RootRedirect } from '@/features/auth'
+import { ROLES } from '@/shared/constants/roles'
+import { ROUTES } from '@/shared/constants/routes'
+
+const ALL_ROLES = [ROLES.OWNER, ROLES.ADMIN, ROLES.KASIR] as const
+const MANAGEMENT_ROLES = [ROLES.OWNER, ROLES.ADMIN] as const
+const OWNER_ONLY = [ROLES.OWNER] as const
+
+const Placeholder = ({ name }: { name: string }) => (
+  <div className="p-8 text-xl font-semibold text-gray-600">{name} (coming soon)</div>
+)
+
+export const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <RootRedirect />,
+  },
+  {
+    path: ROUTES.LOGIN,
+    element: <LoginPage />,
+  },
+  // Protected — semua role
+  {
+    element: <ProtectedRoute allowedRoles={[...ALL_ROLES]} />,
+    children: [
+      { path: ROUTES.KASIR, element: <Placeholder name="Kasir" /> },
+    ],
+  },
+  // Protected — owner & admin
+  {
+    element: <ProtectedRoute allowedRoles={[...MANAGEMENT_ROLES]} />,
+    children: [
+      { path: ROUTES.DASHBOARD, element: <Placeholder name="Dashboard" /> },
+      { path: ROUTES.PRODUCTS, element: <Placeholder name="Products" /> },
+      { path: ROUTES.SUPPLIERS, element: <Placeholder name="Suppliers" /> },
+      { path: ROUTES.TRANSACTIONS, element: <Placeholder name="Transactions" /> },
+      { path: ROUTES.CUSTOMERS, element: <Placeholder name="Customers" /> },
+      { path: ROUTES.RECEIVABLES, element: <Placeholder name="Receivables" /> },
+      { path: ROUTES.FINANCE, element: <Placeholder name="Finance" /> },
+      { path: ROUTES.REPORTS, element: <Placeholder name="Reports" /> },
+      { path: ROUTES.SHIFTS, element: <Placeholder name="Shifts" /> },
+      { path: ROUTES.SYNC, element: <Placeholder name="Sync" /> },
+    ],
+  },
+  // Protected — owner only
+  {
+    element: <ProtectedRoute allowedRoles={[...OWNER_ONLY]} />,
+    children: [
+      { path: ROUTES.SETTINGS, element: <Placeholder name="Settings" /> },
+    ],
+  },
+  // 404
+  {
+    path: '*',
+    element: <Navigate to="/" replace />,
+  },
+])
