@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 
 import { LoginPage, ProtectedRoute, RootRedirect } from '@/features/auth'
 import { ProductsPage } from '@/features/inventory/products'
+import { SuppliersPage } from '@/features/inventory/suppliers'
 import { ROLES } from '@/shared/constants/roles'
 import { ROUTES } from '@/shared/constants/routes'
 
@@ -35,7 +36,7 @@ export const router = createBrowserRouter([
     children: [
       { path: ROUTES.DASHBOARD, element: <Placeholder name="Dashboard" /> },
       { path: ROUTES.PRODUCTS, element: <ProductsPage /> },
-      { path: ROUTES.SUPPLIERS, element: <Placeholder name="Suppliers" /> },
+      { path: ROUTES.SUPPLIERS, element: <SuppliersPage /> },
       { path: ROUTES.TRANSACTIONS, element: <Placeholder name="Transactions" /> },
       { path: ROUTES.CUSTOMERS, element: <Placeholder name="Customers" /> },
       { path: ROUTES.RECEIVABLES, element: <Placeholder name="Receivables" /> },
