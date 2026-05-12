@@ -1,3 +1,4 @@
+export { ProductsPage } from './ProductsPage'
 export { useProductsStore } from './products.store'
 export {
   useProductListQuery,

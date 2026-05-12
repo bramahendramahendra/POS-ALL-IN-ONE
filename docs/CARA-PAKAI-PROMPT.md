@@ -147,15 +147,28 @@ Konteks Sync Engine yang wajib diikuti:
 
 Kita sedang mengerjakan project POS System frontend (web-v2).
 Baca dan kerjakan instruksi di:
-docs\frontend\fase-implementasi\FASE-12-PRODUCTS-TYPES-API-STORE.md
-
-
-
-
-
-
-docs\frontend\fase-implementasi\FASE-13-PRODUCTS-PAGE-TABLE.md
 docs\frontend\fase-implementasi\FASE-14-PRODUCTS-FORM-MODAL.md
+
+
+
+
+
+
+
+
 docs\frontend\fase-implementasi\FASE-15-PRODUCTS-CATEGORY-UNIT-TABS.md
 docs\frontend\fase-implementasi\FASE-16-PRODUCTS-PRICETIER-IMPORT-LABEL.md
 docs\frontend\fase-implementasi\FASE-17-SUPPLIERS.md
+docs\frontend\fase-implementasi\FASE-18-CASHIER-TYPES-STORE-UTILS.md
+docs\frontend\fase-implementasi\FASE-19-CASHIER-PAGE-SEARCH-CART.md
+docs\frontend\fase-implementasi\FASE-20-CASHIER-CART-ITEM-DISCOUNT-TAX.md
+docs\frontend\fase-implementasi\FASE-21-CASHIER-PAYMENT-UNIT-RECEIPT.md
+docs\frontend\fase-implementasi\FASE-22-TRANSACTIONS.md
+docs\frontend\fase-implementasi\FASE-23-CUSTOMERS.md
+docs\frontend\fase-implementasi\FASE-24-RECEIVABLES.md
+docs\frontend\fase-implementasi\FASE-25-FINANCE.md
+docs\frontend\fase-implementasi\FASE-26-DASHBOARD.md
+docs\frontend\fase-implementasi\FASE-27-REPORTS.md
+docs\frontend\fase-implementasi\FASE-28-SHIFTS.md
+docs\frontend\fase-implementasi\FASE-29-SETTINGS.md
+docs\frontend\fase-implementasi\FASE-30-SYNC-TYPES-STORE-API.md

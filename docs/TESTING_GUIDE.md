@@ -193,8 +193,8 @@ Header: Authorization: Bearer <token owner>
 ```
 | Ekspektasi | Hasil |
 |---|---|
-| Status: 200 OK | |
-| Response array minimal 2 user | |
+| Status: 200 OK | ✅ |
+| Response array minimal 2 user | ✅ |
 
 **3.2 Buat user baru (kasir)**
 ```
@@ -202,7 +202,7 @@ POST /users
 Header: Authorization: Bearer <token owner>
 Body:
 {
-  "name": "Kasir Test",
+  "full_name": "Kasir Test",
   "username": "kasirtest",
   "password": "kasir123",
   "role": "kasir"
@@ -210,8 +210,8 @@ Body:
 ```
 | Ekspektasi | Hasil |
 |---|---|
-| Status: 201 Created | |
-| Response berisi data user baru | |
+| Status: 201 Created | ✅ |
+| Response berisi data user baru | ✅ |
 
 > **Catat ID user baru** dari response — dipakai di test berikutnya.
 
@@ -219,18 +219,23 @@ Body:
 ```
 PUT /users/<id>
 Header: Authorization: Bearer <token owner>
-Body: { "name": "Kasir Testing Satu" }
+Body: { "full_name": "Kasir Testing Satu", "role": "kasir" }
 ```
 | Ekspektasi | Hasil |
 |---|---|
-| Status: 200 OK | |
-| Nama berubah di response | |
+| Status: 200 OK | ✅ |
+| Nama berubah di response | ✅ |
 
 **3.4 Kasir tidak bisa akses user management**
 ```
 # Login sebagai kasir dulu:
 POST /auth/login
-Body: { "username": "kasirtest", "password": "kasir123" }
+Body: 
+{
+    "username": "kasirtest",
+    "password": "kasir123",
+    "device_info": "desktop"
+}
 # Ambil token kasir, lalu:
 
 GET /users
@@ -238,7 +243,7 @@ Header: Authorization: Bearer <token kasir>
 ```
 | Ekspektasi | Hasil |
 |---|---|
-| Status: 403 Forbidden | |
+| Status: 403 Forbidden | ✅ |
 
 ---
 

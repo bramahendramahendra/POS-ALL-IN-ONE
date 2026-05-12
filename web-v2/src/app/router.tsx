@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 
 import { LoginPage, ProtectedRoute, RootRedirect } from '@/features/auth'
+import { ProductsPage } from '@/features/inventory/products'
 import { ROLES } from '@/shared/constants/roles'
 import { ROUTES } from '@/shared/constants/routes'
 
@@ -33,7 +34,7 @@ export const router = createBrowserRouter([
     element: <ProtectedRoute allowedRoles={[...MANAGEMENT_ROLES]} />,
     children: [
       { path: ROUTES.DASHBOARD, element: <Placeholder name="Dashboard" /> },
-      { path: ROUTES.PRODUCTS, element: <Placeholder name="Products" /> },
+      { path: ROUTES.PRODUCTS, element: <ProductsPage /> },
       { path: ROUTES.SUPPLIERS, element: <Placeholder name="Suppliers" /> },
       { path: ROUTES.TRANSACTIONS, element: <Placeholder name="Transactions" /> },
       { path: ROUTES.CUSTOMERS, element: <Placeholder name="Customers" /> },
