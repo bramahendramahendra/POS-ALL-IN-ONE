@@ -150,22 +150,20 @@ Konteks Sync Engine yang wajib diikuti:
 
 Kita sedang mengerjakan project POS System frontend (web-v2).
 Baca dan kerjakan instruksi di:
-docs\frontend\fase-implementasi\FASE-18-CASHIER-TYPES-STORE-UTILS.md
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 docs\frontend\fase-implementasi\FASE-19-CASHIER-PAGE-SEARCH-CART.md
+
+
+
+
+
+
+
+
+
+
+
+
+
 docs\frontend\fase-implementasi\FASE-20-CASHIER-CART-ITEM-DISCOUNT-TAX.md
 docs\frontend\fase-implementasi\FASE-21-CASHIER-PAYMENT-UNIT-RECEIPT.md
 docs\frontend\fase-implementasi\FASE-22-TRANSACTIONS.md
