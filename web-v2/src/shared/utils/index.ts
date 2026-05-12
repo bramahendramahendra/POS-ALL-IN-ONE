@@ -1,3 +1,4 @@
+export { cn } from './cn'
 export { formatRupiah, parseRupiah, formatNumber } from './currency'
 export { formatDate, formatDateTime, formatRelative, toISODate } from './date'
 export { truncate, capitalize, slugify } from './string'
