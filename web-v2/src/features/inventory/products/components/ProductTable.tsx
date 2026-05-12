@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 
 import { ROLES } from '@/shared/constants'
@@ -14,6 +15,9 @@ interface ProductTableProps {
   data: Product[]
   isLoading: boolean
   pagination: PaginationProps
+  onSelectionChange?: (products: Product[]) => void
+  onPrintLabel?: () => void
+  onImportCsv?: () => void
 }
 
 function getDefaultPrice(product: Product): number | null {
@@ -23,10 +27,22 @@ function getDefaultPrice(product: Product): number | null {
   return price?.price ?? null
 }
 
-export function ProductTable({ data, isLoading, pagination }: ProductTableProps) {
+export function ProductTable({
+  data,
+  isLoading,
+  pagination,
+  onSelectionChange,
+  onPrintLabel,
+  onImportCsv,
+}: ProductTableProps) {
   const { openProductModal, openDeleteConfirm } = useProductsStore()
-  const { selectedKeys, toggle, selectAll, clearSelection, hasSelection, count } =
+  const { selectedKeys, selectedItems, toggle, selectAll, clearSelection, hasSelection, count } =
     useTableSelection<Product & { id: number }>()
+
+  // Notify parent when selection changes
+  useEffect(() => {
+    onSelectionChange?.(selectedItems as Product[])
+  }, [selectedItems, onSelectionChange])
 
   const columns: ColumnDef<Product>[] = [
     {
@@ -117,8 +133,8 @@ export function ProductTable({ data, isLoading, pagination }: ProductTableProps)
         <div className="flex items-center gap-3 rounded-lg border bg-blue-50 px-4 py-2 text-sm">
           <span className="font-medium text-blue-700">{count} produk dipilih</span>
           <div className="ml-auto flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => {}}>Ekspor</Button>
-            <Button variant="outline" size="sm" onClick={() => {}}>Cetak Label</Button>
+            <Button variant="outline" size="sm" onClick={onImportCsv}>Import CSV</Button>
+            <Button variant="outline" size="sm" onClick={onPrintLabel}>Cetak Label</Button>
             <Button variant="destructive" size="sm" onClick={() => clearSelection()}>
               Hapus Semua
             </Button>

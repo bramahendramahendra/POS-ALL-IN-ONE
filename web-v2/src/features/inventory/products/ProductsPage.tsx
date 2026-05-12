@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Upload } from 'lucide-react'
 
 import { ROLES } from '@/shared/constants'
 import { ConfirmDialog, PageHeader, RoleGuard } from '@/shared/components'
 import { Button } from '@/shared/components/ui/button'
-import { usePagination } from '@/shared/hooks'
+import { usePagination, useDisclosure } from '@/shared/hooks'
 
 import {
   useCategoryListQuery,
@@ -12,8 +12,10 @@ import {
   useProductListQuery,
 } from './products.api'
 import { useProductsStore } from './products.store'
-import type { ProductFilter } from './products.types'
+import type { Product, ProductFilter } from './products.types'
 import { CategoryTab } from './components/CategoryTab'
+import { ImportCsvModal } from './components/ImportCsvModal'
+import { LabelPrintModal } from './components/LabelPrintModal'
 import { ProductFilterBar } from './components/ProductFilter'
 import { ProductFormModal } from './components/ProductFormModal'
 import { ProductTable } from './components/ProductTable'
@@ -27,6 +29,7 @@ const TABS = [
 
 export function ProductsPage() {
   const [filter, setFilter] = useState<ProductFilter>({})
+  const [selectedProducts, setSelectedProducts] = useState<Product[]>([])
   const { page, pageSize, onPageChange, onPageSizeChange, reset } = usePagination()
   const {
     activeTab,
@@ -39,6 +42,9 @@ export function ProductsPage() {
     deleteTarget,
     closeDeleteConfirm,
   } = useProductsStore()
+
+  const { isOpen: importOpen, open: openImport, close: closeImport } = useDisclosure()
+  const { isOpen: labelOpen, open: openLabel, close: closeLabel } = useDisclosure()
 
   const { data: productData, isLoading } = useProductListQuery({ ...filter, page, page_size: pageSize })
   const { data: categories = [] } = useCategoryListQuery()
@@ -70,10 +76,16 @@ export function ProductsPage() {
         breadcrumbs={[{ label: 'Inventori' }, { label: 'Produk' }]}
         actions={
           <RoleGuard allowedRoles={[ROLES.OWNER, ROLES.ADMIN]}>
-            <Button onClick={() => openProductModal()} className="gap-1">
-              <Plus size={16} />
-              Tambah Produk
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={openImport} className="gap-1">
+                <Upload size={16} />
+                Import CSV
+              </Button>
+              <Button onClick={() => openProductModal()} className="gap-1">
+                <Plus size={16} />
+                Tambah Produk
+              </Button>
+            </div>
           </RoleGuard>
         }
       />
@@ -115,6 +127,9 @@ export function ProductsPage() {
               onPageSizeChange,
               pageSizeOptions: [10, 20, 50],
             }}
+            onSelectionChange={setSelectedProducts}
+            onPrintLabel={() => openLabel()}
+            onImportCsv={() => openImport()}
           />
         </div>
       )}
@@ -140,6 +155,16 @@ export function ProductsPage() {
         variant="destructive"
         isLoading={isDeleting}
         onConfirm={handleDelete}
+      />
+
+      {/* Import CSV */}
+      <ImportCsvModal open={importOpen} onOpenChange={(open) => { if (!open) closeImport() }} />
+
+      {/* Label Print */}
+      <LabelPrintModal
+        open={labelOpen}
+        onOpenChange={(open) => { if (!open) closeLabel() }}
+        products={selectedProducts}
       />
     </div>
   )
