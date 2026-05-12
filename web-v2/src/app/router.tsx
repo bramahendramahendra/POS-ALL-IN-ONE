@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 
 import { LoginPage, ProtectedRoute, RootRedirect } from '@/features/auth'
 import { CashierPage } from '@/features/sales/cashier'
+import { TransactionsPage } from '@/features/sales/transactions'
 import { ProductsPage } from '@/features/inventory/products'
 import { SuppliersPage } from '@/features/inventory/suppliers'
 import { ROLES } from '@/shared/constants/roles'
@@ -38,7 +39,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.DASHBOARD, element: <Placeholder name="Dashboard" /> },
       { path: ROUTES.PRODUCTS, element: <ProductsPage /> },
       { path: ROUTES.SUPPLIERS, element: <SuppliersPage /> },
-      { path: ROUTES.TRANSACTIONS, element: <Placeholder name="Transactions" /> },
+      { path: ROUTES.TRANSACTIONS, element: <TransactionsPage /> },
       { path: ROUTES.CUSTOMERS, element: <Placeholder name="Customers" /> },
       { path: ROUTES.RECEIVABLES, element: <Placeholder name="Receivables" /> },
       { path: ROUTES.FINANCE, element: <Placeholder name="Finance" /> },
