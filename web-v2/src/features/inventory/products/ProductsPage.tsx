@@ -13,9 +13,11 @@ import {
 } from './products.api'
 import { useProductsStore } from './products.store'
 import type { ProductFilter } from './products.types'
+import { CategoryTab } from './components/CategoryTab'
 import { ProductFilterBar } from './components/ProductFilter'
 import { ProductFormModal } from './components/ProductFormModal'
 import { ProductTable } from './components/ProductTable'
+import { UnitTab } from './components/UnitTab'
 
 const TABS = [
   { key: 'products', label: 'Produk' },
@@ -117,17 +119,9 @@ export function ProductsPage() {
         </div>
       )}
 
-      {activeTab === 'categories' && (
-        <div className="rounded-lg border bg-white p-8 text-center text-gray-400">
-          Manajemen Kategori — Coming in FASE 15
-        </div>
-      )}
+      {activeTab === 'categories' && <CategoryTab />}
 
-      {activeTab === 'units' && (
-        <div className="rounded-lg border bg-white p-8 text-center text-gray-400">
-          Manajemen Unit — Coming in FASE 15
-        </div>
-      )}
+      {activeTab === 'units' && <UnitTab />}
 
       {/* Product form modal */}
       <ProductFormModal
