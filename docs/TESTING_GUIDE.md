@@ -256,7 +256,7 @@ Header: Authorization: Bearer <token>
 ```
 | Ekspektasi | Hasil |
 |---|---|
-| Status: 200 OK | |
+| Status: 200 OK | ✅ |
 
 **4.2 Buat kategori baru**
 ```
@@ -266,7 +266,7 @@ Body: { "name": "Minuman" }
 ```
 | Ekspektasi | Hasil |
 |---|---|
-| Status: 201 Created | |
+| Status: 201 Created | ✅ |
 
 **4.3 List satuan**
 ```

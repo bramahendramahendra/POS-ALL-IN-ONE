@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 
 import { LoginPage, ProtectedRoute, RootRedirect } from '@/features/auth'
+import { CashierPage } from '@/features/sales/cashier'
 import { ProductsPage } from '@/features/inventory/products'
 import { SuppliersPage } from '@/features/inventory/suppliers'
 import { ROLES } from '@/shared/constants/roles'
@@ -27,7 +28,7 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute allowedRoles={[...ALL_ROLES]} />,
     children: [
-      { path: ROUTES.KASIR, element: <Placeholder name="Kasir" /> },
+      { path: ROUTES.KASIR, element: <CashierPage /> },
     ],
   },
   // Protected — owner & admin

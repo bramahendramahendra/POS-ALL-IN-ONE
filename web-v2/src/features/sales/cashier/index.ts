@@ -1,3 +1,4 @@
+export { CashierPage } from './CashierPage'
 export { useCashierStore } from './cashier.store'
 export * from './cashier.utils'
 export type {
