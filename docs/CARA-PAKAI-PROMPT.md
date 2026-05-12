@@ -147,12 +147,14 @@ Konteks Sync Engine yang wajib diikuti:
 
 Kita sedang mengerjakan project POS System frontend (web-v2).
 Baca dan kerjakan instruksi di:
-docs\frontend\fase-implementasi\FASE-09-SHARED-FORMMODAL-CONFIRMDIALOG.md
-
-
-docs\frontend\fase-implementasi\FASE-09-SHARED-FORMMODAL-CONFIRMDIALOG.md
-docs\frontend\fase-implementasi\FASE-10-SHARED-PAGEHEADER-BADGES-EMPTY-ROLEGUAR.md
 docs\frontend\fase-implementasi\FASE-11-SHARED-HOOKS.md
+
+
+
+
+
+
+
 docs\frontend\fase-implementasi\FASE-12-PRODUCTS-TYPES-API-STORE.md
 docs\frontend\fase-implementasi\FASE-13-PRODUCTS-PAGE-TABLE.md
 docs\frontend\fase-implementasi\FASE-14-PRODUCTS-FORM-MODAL.md
