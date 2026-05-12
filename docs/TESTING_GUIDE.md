@@ -275,7 +275,7 @@ Header: Authorization: Bearer <token>
 ```
 | Ekspektasi | Hasil |
 |---|---|
-| Status: 200 OK | |
+| Status: 200 OK | ✅ |
 
 **4.4 Buat satuan baru**
 ```
@@ -285,7 +285,7 @@ Body: { "name": "Pcs", "abbreviation": "pcs" }
 ```
 | Ekspektasi | Hasil |
 |---|---|
-| Status: 201 Created | |
+| Status: 201 Created | ✅ |
 
 ---
 

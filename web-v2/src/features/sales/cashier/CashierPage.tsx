@@ -2,11 +2,15 @@ import { useEffect } from 'react'
 import { toast } from 'sonner'
 
 import { useActiveShiftQuery } from './cashier.api'
+import { useCashierStore } from './cashier.store'
 import { CartPanel } from './components/CartPanel'
+import { PaymentModal } from './components/PaymentModal'
 import { ProductSearch } from './components/ProductSearch'
+import { UnitSelectModal } from './components/UnitSelectModal'
 
 export function CashierPage() {
   const { data: activeShift, isLoading: isLoadingShift } = useActiveShiftQuery()
+  const { paymentModalOpen, closePaymentModal } = useCashierStore()
 
   useEffect(() => {
     if (!isLoadingShift && !activeShift) {
@@ -45,6 +49,13 @@ export function CashierPage() {
       >
         <CartPanel />
       </div>
+
+      {/* Modals */}
+      <UnitSelectModal />
+      <PaymentModal
+        open={paymentModalOpen}
+        onOpenChange={(open) => { if (!open) closePaymentModal() }}
+      />
     </div>
   )
 }

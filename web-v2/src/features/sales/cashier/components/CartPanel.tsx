@@ -1,9 +1,8 @@
 import { useState } from 'react'
-import { Minus, Plus, ShoppingCart, Trash2, X } from 'lucide-react'
+import { ShoppingCart, Trash2 } from 'lucide-react'
 
 import { ConfirmDialog } from '@/shared/components'
 import { Button } from '@/shared/components/ui/button'
-import { Input } from '@/shared/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -16,6 +15,9 @@ import { formatRupiah } from '@/shared/utils'
 import { useCustomerListQuery } from '../cashier.api'
 import { useCashierStore } from '../cashier.store'
 import { calcCartSummary } from '../cashier.utils'
+import { CartItemRow } from './CartItemRow'
+import { DiscountInput } from './DiscountInput'
+import { TaxInput } from './TaxInput'
 
 export function CartPanel() {
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false)
@@ -26,8 +28,6 @@ export function CartPanel() {
     tax,
     selectedCustomer,
     setCustomer,
-    removeFromCart,
-    updateQty,
     clearCart,
     openPaymentModal,
   } = useCashierStore()
@@ -39,7 +39,7 @@ export function CartPanel() {
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center gap-2 border-b px-4 py-3">
+      <div className="flex items-center gap-2 border-b px-4 py-3 shrink-0">
         <ShoppingCart size={18} className="text-gray-600" />
         <h2 className="font-semibold text-gray-800">
           Keranjang
@@ -52,7 +52,7 @@ export function CartPanel() {
       </div>
 
       {/* Customer selector */}
-      <div className="border-b px-4 py-2">
+      <div className="border-b px-4 py-2 shrink-0">
         <Select
           value={selectedCustomer ? String(selectedCustomer.id) : 'none'}
           onValueChange={(v) => {
@@ -88,62 +88,25 @@ export function CartPanel() {
         ) : (
           <ul className="divide-y">
             {cart.map((item) => (
-              <li key={`${item.product_id}-${item.unit_id}`} className="px-4 py-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 truncate">{item.product_name}</p>
-                    <p className="text-xs text-gray-500">{item.unit_name} · {formatRupiah(item.price)}</p>
-                  </div>
-                  <button
-                    onClick={() => removeFromCart(item.product_id, item.unit_id)}
-                    className="text-gray-300 hover:text-red-500 transition-colors mt-0.5"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-
-                <div className="mt-2 flex items-center justify-between">
-                  {/* Qty control */}
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => updateQty(item.product_id, item.unit_id, item.qty - 1)}
-                    >
-                      <Minus size={10} />
-                    </Button>
-                    <Input
-                      type="number"
-                      value={item.qty}
-                      onChange={(e) => {
-                        const v = Number(e.target.value)
-                        if (v > 0) updateQty(item.product_id, item.unit_id, v)
-                      }}
-                      className="h-6 w-12 text-center text-sm px-1"
-                      min={1}
-                    />
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => updateQty(item.product_id, item.unit_id, item.qty + 1)}
-                    >
-                      <Plus size={10} />
-                    </Button>
-                  </div>
-                  <span className="text-sm font-semibold text-gray-800">
-                    {formatRupiah(item.subtotal)}
-                  </span>
-                </div>
-              </li>
+              <CartItemRow
+                key={`${item.product_id}-${item.unit_id}`}
+                item={item}
+              />
             ))}
           </ul>
         )}
       </div>
 
+      {/* Discount & Tax */}
+      {cart.length > 0 && (
+        <>
+          <DiscountInput />
+          <TaxInput />
+        </>
+      )}
+
       {/* Summary */}
-      <div className="border-t px-4 py-3 space-y-1.5 bg-gray-50 text-sm">
+      <div className="border-t px-4 py-3 space-y-1.5 bg-gray-50 text-sm shrink-0">
         <div className="flex justify-between text-gray-600">
           <span>Subtotal</span>
           <span>{formatRupiah(summary.subtotal)}</span>
@@ -151,8 +114,7 @@ export function CartPanel() {
         {summary.discountAmount > 0 && (
           <div className="flex justify-between text-green-600">
             <span>
-              Diskon
-              {discount.type === 'percent' ? ` (-${discount.value}%)` : ''}
+              Diskon{discount.type === 'percent' ? ` (-${discount.value}%)` : ''}
             </span>
             <span>-{formatRupiah(summary.discountAmount)}</span>
           </div>
@@ -160,7 +122,7 @@ export function CartPanel() {
         {summary.taxAmount > 0 && (
           <div className="flex justify-between text-gray-600">
             <span>Pajak ({tax.percent}%)</span>
-            <span>{formatRupiah(summary.taxAmount)}</span>
+            <span>+{formatRupiah(summary.taxAmount)}</span>
           </div>
         )}
         <div className="flex justify-between border-t pt-2 font-bold text-gray-900 text-base">
@@ -170,7 +132,7 @@ export function CartPanel() {
       </div>
 
       {/* Footer buttons */}
-      <div className="flex gap-2 border-t px-4 py-3">
+      <div className="flex gap-2 border-t px-4 py-3 shrink-0">
         <Button
           variant="outline"
           size="sm"
