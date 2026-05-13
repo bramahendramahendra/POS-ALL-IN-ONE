@@ -29,13 +29,7 @@ export function useProductBarcodeSearchQuery(code: string, enabled: boolean) {
 }
 
 export { useCustomerListQuery } from '@/features/customers'
-
-export function useActiveShiftQuery() {
-  return useQuery({
-    queryKey: queryKeys.shifts.active(),
-    queryFn: () => api.get<{ id: number; opened_at: string } | null>('/shifts/active'),
-  })
-}
+export { useActiveShiftQuery } from '@/features/shifts'
 
 // ─── Mutations ────────────────────────────────────────────────────────────────
 

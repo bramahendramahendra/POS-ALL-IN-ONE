@@ -4,6 +4,7 @@ import { LoginPage, ProtectedRoute, RootRedirect } from '@/features/auth'
 import { CashierPage } from '@/features/sales/cashier'
 import { TransactionsPage } from '@/features/sales/transactions'
 import { CustomersPage } from '@/features/customers'
+import { ShiftsPage } from '@/features/shifts'
 import { DashboardPage } from '@/features/reporting/dashboard'
 import { ReportsPage } from '@/features/reporting/reports'
 import { FinancePage } from '@/features/finance/overview'
@@ -49,7 +50,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.RECEIVABLES, element: <ReceivablesPage /> },
       { path: ROUTES.FINANCE, element: <FinancePage /> },
       { path: ROUTES.REPORTS, element: <ReportsPage /> },
-      { path: ROUTES.SHIFTS, element: <Placeholder name="Shifts" /> },
+      { path: ROUTES.SHIFTS, element: <ShiftsPage /> },
       { path: ROUTES.SYNC, element: <Placeholder name="Sync" /> },
     ],
   },
