@@ -150,10 +150,5 @@ Konteks Sync Engine yang wajib diikuti:
 
 Kita sedang mengerjakan project POS System frontend (web-v2).
 Baca dan kerjakan instruksi di:
-docs\frontend\fase-implementasi\FASE-33-HUSKY-LINT-FINAL.md
-
-
-
-
-
+docs\frontend\fase-implementasi\FASE-35-PRODUCTION-READY.md
 
