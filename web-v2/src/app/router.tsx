@@ -5,6 +5,7 @@ import { CashierPage } from '@/features/sales/cashier'
 import { TransactionsPage } from '@/features/sales/transactions'
 import { CustomersPage } from '@/features/customers'
 import { ShiftsPage } from '@/features/shifts'
+import { SettingsPage } from '@/features/settings'
 import { DashboardPage } from '@/features/reporting/dashboard'
 import { ReportsPage } from '@/features/reporting/reports'
 import { FinancePage } from '@/features/finance/overview'
@@ -58,7 +59,7 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute allowedRoles={[...OWNER_ONLY]} />,
     children: [
-      { path: ROUTES.SETTINGS, element: <Placeholder name="Settings" /> },
+      { path: ROUTES.SETTINGS, element: <SettingsPage /> },
     ],
   },
   // 404
