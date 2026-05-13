@@ -1,6 +1,9 @@
+import { useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from 'react-router-dom'
 import { Toaster } from 'sonner'
+
+import { initOfflineDetection } from '@/services/notification.service'
 
 import { router } from './router'
 
@@ -18,6 +21,11 @@ const queryClient = new QueryClient({
 })
 
 export function Providers() {
+  useEffect(() => {
+    const cleanup = initOfflineDetection()
+    return cleanup
+  }, [])
+
   return (
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />

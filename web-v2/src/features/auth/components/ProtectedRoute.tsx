@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom'
 
+import { ErrorBoundary } from '@/shared/components'
 import { AppLayout } from '@/shared/components/layouts'
 import { ROUTES } from '@/shared/constants/routes'
 import type { Role } from '@/shared/types'
@@ -27,7 +28,9 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
 
   return (
     <AppLayout>
-      <Outlet />
+      <ErrorBoundary>
+        <Outlet />
+      </ErrorBoundary>
     </AppLayout>
   )
 }
