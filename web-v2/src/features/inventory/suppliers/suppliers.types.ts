@@ -24,4 +24,4 @@ export interface CreateSupplierPayload {
   notes?: string
 }
 
-export interface UpdateSupplierPayload extends Partial<CreateSupplierPayload> {}
+export type UpdateSupplierPayload = Partial<CreateSupplierPayload>

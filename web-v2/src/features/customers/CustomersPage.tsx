@@ -56,7 +56,10 @@ export function CustomersPage() {
   const handleDelete = () => {
     if (deletingId === null) return
     deleteCustomer(deletingId, {
-      onSuccess: () => { closeDelete(); setDeletingId(null) },
+      onSuccess: () => {
+        closeDelete()
+        setDeletingId(null)
+      },
     })
   }
 
@@ -87,7 +90,12 @@ export function CustomersPage() {
           />
         </div>
         {search && (
-          <Button variant="outline" size="sm" onClick={() => handleSearchChange('')} className="h-9 gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleSearchChange('')}
+            className="h-9 gap-1"
+          >
             <RotateCcw size={13} />
             Reset
           </Button>
@@ -97,20 +105,34 @@ export function CustomersPage() {
       <CustomerTable
         data={customers}
         isLoading={isLoading}
-        pagination={{ page, pageSize, total, onPageChange, onPageSizeChange, pageSizeOptions: [10, 20, 50] }}
+        pagination={{
+          page,
+          pageSize,
+          total,
+          onPageChange,
+          onPageSizeChange,
+          pageSizeOptions: [10, 20, 50],
+        }}
         onEdit={handleOpenEdit}
         onDelete={handleOpenDelete}
       />
 
       <CustomerFormModal
         open={formOpen}
-        onOpenChange={(open) => { if (!open) handleCloseForm() }}
+        onOpenChange={(open) => {
+          if (!open) handleCloseForm()
+        }}
         customerId={editingCustomer?.id}
       />
 
       <ConfirmDialog
         open={deleteOpen}
-        onOpenChange={(open) => { if (!open) { closeDelete(); setDeletingId(null) } }}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeDelete()
+            setDeletingId(null)
+          }
+        }}
         title="Hapus Pelanggan"
         description="Pelanggan yang dihapus tidak bisa dikembalikan. Yakin ingin melanjutkan?"
         confirmLabel="Ya, Hapus"

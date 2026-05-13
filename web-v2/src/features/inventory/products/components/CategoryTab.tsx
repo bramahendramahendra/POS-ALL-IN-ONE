@@ -42,9 +42,7 @@ export function CategoryTab() {
   const isPending = isCreating || isUpdating
 
   const filtered = debouncedSearch
-    ? categories.filter((c) =>
-        c.name.toLowerCase().includes(debouncedSearch.toLowerCase())
-      )
+    ? categories.filter((c) => c.name.toLowerCase().includes(debouncedSearch.toLowerCase()))
     : categories
 
   const {
@@ -186,7 +184,9 @@ export function CategoryTab() {
       {/* Form Modal */}
       <FormModal
         open={formOpen}
-        onOpenChange={(open) => { if (!open) handleCloseForm() }}
+        onOpenChange={(open) => {
+          if (!open) handleCloseForm()
+        }}
         title={editingId !== null ? 'Edit Kategori' : 'Tambah Kategori'}
         size="sm"
         isLoading={isPending}
@@ -202,16 +202,19 @@ export function CategoryTab() {
             placeholder="Nama kategori"
             className={errors.name ? 'border-red-500' : ''}
           />
-          {errors.name && (
-            <p className="text-xs text-red-500">{errors.name.message}</p>
-          )}
+          {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
         </div>
       </FormModal>
 
       {/* Delete Confirm */}
       <ConfirmDialog
         open={deleteOpen}
-        onOpenChange={(open) => { if (!open) { closeDelete(); setDeletingId(null) } }}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeDelete()
+            setDeletingId(null)
+          }
+        }}
         title="Hapus Kategori"
         description="Kategori yang dihapus tidak bisa dikembalikan. Yakin ingin melanjutkan?"
         confirmLabel="Ya, Hapus"

@@ -5,7 +5,7 @@ import { config } from '@/shared/constants'
 import { ROUTES } from '@/shared/constants/routes'
 
 interface PageErrorProps {
-  error?:   Error
+  error?: Error
   onReset?: () => void
 }
 

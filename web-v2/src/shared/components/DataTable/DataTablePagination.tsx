@@ -1,7 +1,13 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 import { Button } from '@/shared/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/select'
 import type { PaginationProps } from './DataTable.types'
 
 const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 50, 100]
@@ -40,8 +46,11 @@ export function DataTablePagination({
     <div className="flex flex-wrap items-center justify-between gap-4 border-t px-4 py-3">
       {/* Info */}
       <p className="text-sm text-gray-500">
-        Menampilkan <span className="font-medium">{from}–{to}</span> dari{' '}
-        <span className="font-medium">{total}</span> data
+        Menampilkan{' '}
+        <span className="font-medium">
+          {from}–{to}
+        </span>{' '}
+        dari <span className="font-medium">{total}</span> data
       </p>
 
       <div className="flex items-center gap-2">
@@ -49,10 +58,7 @@ export function DataTablePagination({
         {pageSizeOptions && onPageSizeChange && (
           <div className="flex items-center gap-1">
             <span className="text-sm text-gray-500">Tampilkan</span>
-            <Select
-              value={String(pageSize)}
-              onValueChange={(v) => onPageSizeChange(Number(v))}
-            >
+            <Select value={String(pageSize)} onValueChange={(v) => onPageSizeChange(Number(v))}>
               <SelectTrigger className="h-8 w-16 text-sm">
                 <SelectValue />
               </SelectTrigger>

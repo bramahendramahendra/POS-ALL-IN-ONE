@@ -49,7 +49,10 @@ export function CloseShiftModal({ open, onOpenChange, shift }: CloseShiftModalPr
   const onSubmit = (values: CloseShiftForm) => {
     if (!shift) return
     closeShift(
-      { id: shift.id, payload: { closing_balance: values.closing_balance, notes: values.notes || undefined } },
+      {
+        id: shift.id,
+        payload: { closing_balance: values.closing_balance, notes: values.notes || undefined },
+      },
       { onSuccess: () => onOpenChange(false) }
     )
   }
@@ -78,7 +81,9 @@ export function CloseShiftModal({ open, onOpenChange, shift }: CloseShiftModalPr
             </div>
             <div className="flex justify-between text-gray-600">
               <span>Total Pendapatan</span>
-              <span className="text-green-600 font-medium">{formatRupiah(shift.total_revenue)}</span>
+              <span className="text-green-600 font-medium">
+                {formatRupiah(shift.total_revenue)}
+              </span>
             </div>
             <div className="flex justify-between text-gray-600">
               <span>Modal Awal</span>
@@ -109,19 +114,20 @@ export function CloseShiftModal({ open, onOpenChange, shift }: CloseShiftModalPr
           </div>
 
           {/* Selisih */}
-          <div className={`rounded-lg p-3 text-sm flex justify-between font-semibold ${selisih < 0 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>
+          <div
+            className={`rounded-lg p-3 text-sm flex justify-between font-semibold ${selisih < 0 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}
+          >
             <span>Selisih</span>
-            <span>{selisih >= 0 ? '+' : ''}{formatRupiah(selisih)}</span>
+            <span>
+              {selisih >= 0 ? '+' : ''}
+              {formatRupiah(selisih)}
+            </span>
           </div>
 
           {/* Notes */}
           <div className="space-y-1.5">
             <Label htmlFor="close-notes">Catatan</Label>
-            <Input
-              id="close-notes"
-              {...register('notes')}
-              placeholder="Catatan (opsional)"
-            />
+            <Input id="close-notes" {...register('notes')} placeholder="Catatan (opsional)" />
           </div>
         </div>
       )}

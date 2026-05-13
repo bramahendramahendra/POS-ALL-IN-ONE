@@ -90,13 +90,19 @@ export function CustomerFormModal({ open, onOpenChange, customerId }: CustomerFo
       update(
         { id: customerId as number, ...payload },
         {
-          onSuccess: () => { toast.success('Pelanggan berhasil diperbarui'); onOpenChange(false) },
+          onSuccess: () => {
+            toast.success('Pelanggan berhasil diperbarui')
+            onOpenChange(false)
+          },
           onError: (e) => toast.error(e.message),
         }
       )
     } else {
       create(payload, {
-        onSuccess: () => { toast.success('Pelanggan berhasil ditambahkan'); onOpenChange(false) },
+        onSuccess: () => {
+          toast.success('Pelanggan berhasil ditambahkan')
+          onOpenChange(false)
+        },
         onError: (e) => toast.error(e.message),
       })
     }

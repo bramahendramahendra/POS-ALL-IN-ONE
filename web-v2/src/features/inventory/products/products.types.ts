@@ -61,10 +61,14 @@ export interface CreateProductPayload {
 
 export type UpdateProductPayload = Partial<CreateProductPayload>
 
-export interface CreateCategoryPayload { name: string }
+export interface CreateCategoryPayload {
+  name: string
+}
 export type UpdateCategoryPayload = Partial<CreateCategoryPayload>
 
-export interface CreateUnitPayload { name: string }
+export interface CreateUnitPayload {
+  name: string
+}
 export type UpdateUnitPayload = Partial<CreateUnitPayload>
 
 export interface CreateProductUnitPayload {

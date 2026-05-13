@@ -16,9 +16,7 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-      <div className="text-gray-300">
-        {icon ?? <Inbox size={52} />}
-      </div>
+      <div className="text-gray-300">{icon ?? <Inbox size={52} />}</div>
       <div>
         <p className="text-base font-medium text-gray-500">{title}</p>
         {description && <p className="mt-1 text-sm text-gray-400">{description}</p>}

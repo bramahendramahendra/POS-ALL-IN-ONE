@@ -1,4 +1,11 @@
-import { TableBody, TableCell, TableHead, TableHeader, TableRow, Table } from '@/shared/components/ui/table'
+import {
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  Table,
+} from '@/shared/components/ui/table'
 import { cn } from '@/shared/utils'
 
 interface DataTableSkeletonProps {

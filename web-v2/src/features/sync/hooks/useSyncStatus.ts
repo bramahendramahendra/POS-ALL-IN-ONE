@@ -23,9 +23,9 @@ export function useSyncStatus() {
 
   return {
     status,
-    hasConflicts:  (status?.conflict_count ?? 0) > 0,
-    isSyncing:     status?.status === 'syncing',
-    pendingCount:  status?.pending_count ?? 0,
+    hasConflicts: (status?.conflict_count ?? 0) > 0,
+    isSyncing: status?.status === 'syncing',
+    pendingCount: status?.pending_count ?? 0,
     conflictCount: status?.conflict_count ?? 0,
   }
 }

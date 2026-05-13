@@ -21,7 +21,15 @@ function formatShort(value: number): string {
   return `Rp ${value}`
 }
 
-function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; name: string }[]; label?: string }) {
+function CustomTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean
+  payload?: { value: number; name: string }[]
+  label?: string
+}) {
   if (!active || !payload?.length) return null
   return (
     <div className="rounded-lg border bg-white p-3 shadow text-sm space-y-1">

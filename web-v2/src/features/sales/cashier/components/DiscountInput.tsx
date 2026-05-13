@@ -17,8 +17,11 @@ export function DiscountInput() {
     const v = parseFloat(raw)
     if (isNaN(v) || v < 0) return
     const capped =
-      discount.type === 'percent' ? Math.min(v, 100) :
-      discount.type === 'amount' ? Math.min(v, subtotal) : 0
+      discount.type === 'percent'
+        ? Math.min(v, 100)
+        : discount.type === 'amount'
+          ? Math.min(v, subtotal)
+          : 0
     setDiscount({ type: discount.type, value: capped })
   }
 

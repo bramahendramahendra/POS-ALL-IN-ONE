@@ -3,23 +3,37 @@ import { useState } from 'react'
 import { ConfirmDialog } from '@/shared/components'
 import { Button } from '@/shared/components/ui/button'
 
-import { useApproveConflictMutation, useRejectConflictMutation, useSyncConflictsQuery } from '../sync.api'
+import {
+  useApproveConflictMutation,
+  useRejectConflictMutation,
+  useSyncConflictsQuery,
+} from '../sync.api'
 import type { SyncConflict } from '../sync.types'
 
 const CONFLICT_TYPE_LABEL: Record<string, string> = {
-  product:     'PRODUK',
+  product: 'PRODUK',
   transaction: 'TRANSAKSI',
-  customer:    'PELANGGAN',
-  stock:       'STOK',
+  customer: 'PELANGGAN',
+  stock: 'STOK',
 }
 
 function formatDateTime(str: string): string {
   return new Date(str).toLocaleString('id-ID', {
-    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   })
 }
 
-function DataDiff({ serverData, localData }: { serverData: Record<string, unknown>; localData: Record<string, unknown> }) {
+function DataDiff({
+  serverData,
+  localData,
+}: {
+  serverData: Record<string, unknown>
+  localData: Record<string, unknown>
+}) {
   const allKeys = Array.from(new Set([...Object.keys(serverData), ...Object.keys(localData)]))
 
   return (
@@ -29,7 +43,10 @@ function DataDiff({ serverData, localData }: { serverData: Record<string, unknow
         {allKeys.map((key) => {
           const isDiff = String(serverData[key]) !== String(localData[key])
           return (
-            <div key={key} className={`flex justify-between px-2 py-1 rounded ${isDiff ? 'bg-yellow-100' : 'bg-gray-50'}`}>
+            <div
+              key={key}
+              className={`flex justify-between px-2 py-1 rounded ${isDiff ? 'bg-yellow-100' : 'bg-gray-50'}`}
+            >
               <span className="text-gray-500">{key}</span>
               <span className="font-medium text-gray-800">{String(serverData[key] ?? '—')}</span>
             </div>
@@ -41,7 +58,10 @@ function DataDiff({ serverData, localData }: { serverData: Record<string, unknow
         {allKeys.map((key) => {
           const isDiff = String(serverData[key]) !== String(localData[key])
           return (
-            <div key={key} className={`flex justify-between px-2 py-1 rounded ${isDiff ? 'bg-yellow-100' : 'bg-gray-50'}`}>
+            <div
+              key={key}
+              className={`flex justify-between px-2 py-1 rounded ${isDiff ? 'bg-yellow-100' : 'bg-gray-50'}`}
+            >
               <span className="text-gray-500">{key}</span>
               <span className="font-medium text-gray-800">{String(localData[key] ?? '—')}</span>
             </div>
@@ -65,13 +85,15 @@ function ConflictCard({ conflict }: { conflict: SyncConflict }) {
         <div className="flex items-center gap-2">
           <span>⚠️</span>
           <span className="font-semibold text-gray-800">
-            KONFLIK {CONFLICT_TYPE_LABEL[conflict.conflict_type] ?? conflict.conflict_type} — {conflict.entity_name}
+            KONFLIK {CONFLICT_TYPE_LABEL[conflict.conflict_type] ?? conflict.conflict_type} —{' '}
+            {conflict.entity_name}
           </span>
         </div>
       </div>
 
       <p className="text-xs text-gray-500">
-        Perangkat: <span className="font-medium">{conflict.device_info}</span> · {formatDateTime(conflict.created_at)}
+        Perangkat: <span className="font-medium">{conflict.device_info}</span> ·{' '}
+        {formatDateTime(conflict.created_at)}
       </p>
 
       <DataDiff serverData={conflict.server_data} localData={conflict.local_data} />

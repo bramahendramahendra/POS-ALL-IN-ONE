@@ -68,7 +68,9 @@ export function LabelPrintModal({ open, onOpenChange, products }: LabelPrintModa
               </SelectTrigger>
               <SelectContent>
                 {Object.entries(SIZE_CONFIG).map(([key, cfg]) => (
-                  <SelectItem key={key} value={key}>{cfg.label}</SelectItem>
+                  <SelectItem key={key} value={key}>
+                    {cfg.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -109,12 +111,14 @@ export function LabelPrintModal({ open, onOpenChange, products }: LabelPrintModa
 
           <div
             className="label-grid print-root"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: `repeat(${cols}, 1fr)`,
-              gap: '8px',
-              '--cols': cols,
-            } as React.CSSProperties}
+            style={
+              {
+                display: 'grid',
+                gridTemplateColumns: `repeat(${cols}, 1fr)`,
+                gap: '8px',
+                '--cols': cols,
+              } as React.CSSProperties
+            }
           >
             {products.map((product) => {
               const price = getDefaultPrice(product)
@@ -128,15 +132,11 @@ export function LabelPrintModal({ open, onOpenChange, products }: LabelPrintModa
                   style={{ width, fontSize, boxSizing: 'border-box' }}
                 >
                   <p className="font-bold leading-tight line-clamp-2">{product.name}</p>
-                  {product.sku && (
-                    <p className="font-mono text-gray-500">{product.sku}</p>
-                  )}
+                  {product.sku && <p className="font-mono text-gray-500">{product.sku}</p>}
                   {price !== null && (
                     <p className="font-semibold text-gray-800">{formatRupiah(price)}</p>
                   )}
-                  {barcode && (
-                    <p className="font-mono text-gray-400 text-[0.7em]">{barcode}</p>
-                  )}
+                  {barcode && <p className="font-mono text-gray-400 text-[0.7em]">{barcode}</p>}
                 </div>
               )
             })}

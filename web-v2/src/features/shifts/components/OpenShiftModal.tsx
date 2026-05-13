@@ -74,11 +74,7 @@ export function OpenShiftModal({ open, onOpenChange }: OpenShiftModalProps) {
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="open-notes">Catatan</Label>
-          <Input
-            id="open-notes"
-            {...register('notes')}
-            placeholder="Catatan (opsional)"
-          />
+          <Input id="open-notes" {...register('notes')} placeholder="Catatan (opsional)" />
         </div>
       </div>
     </FormModal>

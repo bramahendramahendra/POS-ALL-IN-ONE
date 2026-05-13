@@ -4,11 +4,7 @@ import { persist } from 'zustand/middleware'
 import type { Product, ProductUnit } from '@/features/inventory/products'
 
 import type { CartItem, Discount, DiscountType, Tax } from './cashier.types'
-import {
-  calcDiscountAmount,
-  calcItemSubtotal,
-  calcTaxAmount,
-} from './cashier.utils'
+import { calcDiscountAmount, calcItemSubtotal, calcTaxAmount } from './cashier.utils'
 
 const DEFAULT_DISCOUNT: Discount = { type: 'none', value: 0, amount: 0 }
 const DEFAULT_TAX: Tax = { percent: 0, amount: 0 }
@@ -100,9 +96,7 @@ export const useCashierStore = create<CashierState>()(
 
       removeFromCart: (productId, unitId) => {
         const { cart, discount, tax } = get()
-        const newCart = cart.filter(
-          (i) => !(i.product_id === productId && i.unit_id === unitId)
-        )
+        const newCart = cart.filter((i) => !(i.product_id === productId && i.unit_id === unitId))
         const { discount: newDiscount, tax: newTax } = recalcDiscountAndTax(newCart, discount, tax)
         set({ cart: newCart, discount: newDiscount, tax: newTax })
       },
@@ -180,8 +174,7 @@ export const useCashierStore = create<CashierState>()(
 
       openUnitSelectModal: (product, availableUnits) =>
         set({ unitSelectModalOpen: true, pendingProduct: { product, availableUnits } }),
-      closeUnitSelectModal: () =>
-        set({ unitSelectModalOpen: false, pendingProduct: null }),
+      closeUnitSelectModal: () => set({ unitSelectModalOpen: false, pendingProduct: null }),
     }),
     {
       name: 'cashier-draft',

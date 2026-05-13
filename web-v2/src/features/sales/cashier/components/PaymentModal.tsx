@@ -107,19 +107,27 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
   const { mutate: checkout, isPending } = useCheckoutMutation()
 
   const makeSchema = (grandTotal: number) =>
-    z.object({
-      payment_method: z.enum(['cash', 'transfer', 'qris', 'card'] as const),
-      amount_paid: z.number().min(0, 'Jumlah bayar wajib diisi'),
-    }).refine(
-      (d) => d.amount_paid >= grandTotal,
-      { message: 'Jumlah bayar kurang dari total', path: ['amount_paid'] }
-    )
+    z
+      .object({
+        payment_method: z.enum(['cash', 'transfer', 'qris', 'card'] as const),
+        amount_paid: z.number().min(0, 'Jumlah bayar wajib diisi'),
+      })
+      .refine((d) => d.amount_paid >= grandTotal, {
+        message: 'Jumlah bayar kurang dari total',
+        path: ['amount_paid'],
+      })
 
-  const { register, handleSubmit, watch, setValue, reset, formState: { errors } } =
-    useForm<PaymentFormValues>({
-      resolver: zodResolver(makeSchema(summary.grandTotal)),
-      defaultValues: { payment_method: 'cash', amount_paid: 0 },
-    })
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<PaymentFormValues>({
+    resolver: zodResolver(makeSchema(summary.grandTotal)),
+    defaultValues: { payment_method: 'cash', amount_paid: 0 },
+  })
 
   const paymentMethod = watch('payment_method')
   const amountPaid = watch('amount_paid') ?? 0
@@ -194,8 +202,12 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
             <form onSubmit={handleSubmit(onSubmit)} className="p-5 space-y-5">
               {/* Grand total */}
               <div className="rounded-lg bg-gray-50 px-4 py-3 text-center">
-                <p className="text-xs text-gray-500 uppercase tracking-wide mb-0.5">Total Belanja</p>
-                <p className="text-2xl font-bold text-gray-900">{formatRupiah(summary.grandTotal)}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-0.5">
+                  Total Belanja
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatRupiah(summary.grandTotal)}
+                </p>
               </div>
 
               {/* Payment method */}
@@ -229,7 +241,8 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                   {...register('amount_paid', { valueAsNumber: true })}
                   ref={(el) => {
                     register('amount_paid').ref(el)
-                    ;(amountInputRef as React.MutableRefObject<HTMLInputElement | null>).current = el
+                    ;(amountInputRef as React.MutableRefObject<HTMLInputElement | null>).current =
+                      el
                   }}
                   className={`text-right text-lg h-11 ${errors.amount_paid ? 'border-red-500' : ''}`}
                   placeholder="0"
@@ -256,13 +269,17 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
               )}
 
               {/* Change */}
-              <div className={`flex justify-between rounded-lg px-4 py-3 ${
-                sufficient ? 'bg-green-50' : 'bg-red-50'
-              }`}>
+              <div
+                className={`flex justify-between rounded-lg px-4 py-3 ${
+                  sufficient ? 'bg-green-50' : 'bg-red-50'
+                }`}
+              >
                 <span className={`font-medium ${sufficient ? 'text-green-700' : 'text-red-600'}`}>
                   Kembalian
                 </span>
-                <span className={`font-bold text-lg ${sufficient ? 'text-green-700' : 'text-red-600'}`}>
+                <span
+                  className={`font-bold text-lg ${sufficient ? 'text-green-700' : 'text-red-600'}`}
+                >
                   {sufficient ? formatRupiah(change) : `Kurang ${formatRupiah(Math.abs(change))}`}
                 </span>
               </div>
@@ -278,11 +295,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                 >
                   Batal
                 </Button>
-                <Button
-                  type="submit"
-                  className="flex-1"
-                  disabled={!sufficient || isPending}
-                >
+                <Button type="submit" className="flex-1" disabled={!sufficient || isPending}>
                   {isPending ? 'Memproses...' : '✓ Proses Bayar'}
                 </Button>
               </div>

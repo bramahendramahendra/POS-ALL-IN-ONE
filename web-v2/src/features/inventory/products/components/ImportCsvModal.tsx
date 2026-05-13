@@ -29,7 +29,9 @@ function parseCsv(text: string): ParsedRow[] {
   for (let i = 1; i < lines.length; i++) {
     const values = lines[i].split(',').map((v) => v.trim().replace(/^"|"$/g, ''))
     const data: Record<string, string> = {}
-    headers.forEach((h, idx) => { data[h] = values[idx] ?? '' })
+    headers.forEach((h, idx) => {
+      data[h] = values[idx] ?? ''
+    })
 
     // Validate price
     const rowObj: Record<string, unknown> = { ...data }
@@ -141,10 +143,16 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
         {/* Stats */}
         {rows.length > 0 && (
           <div className="flex gap-3 text-sm">
-            <span className="text-gray-500">Total: <strong>{rows.length}</strong> baris</span>
-            <span className="text-green-600">Valid: <strong>{validRows.length}</strong></span>
+            <span className="text-gray-500">
+              Total: <strong>{rows.length}</strong> baris
+            </span>
+            <span className="text-green-600">
+              Valid: <strong>{validRows.length}</strong>
+            </span>
             {invalidRows.length > 0 && (
-              <span className="text-red-500">Invalid: <strong>{invalidRows.length}</strong></span>
+              <span className="text-red-500">
+                Invalid: <strong>{invalidRows.length}</strong>
+              </span>
             )}
           </div>
         )}
@@ -165,10 +173,7 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
               </thead>
               <tbody>
                 {rows.map((row) => (
-                  <tr
-                    key={row.index}
-                    className={row.valid ? 'bg-green-50' : 'bg-red-50'}
-                  >
+                  <tr key={row.index} className={row.valid ? 'bg-green-50' : 'bg-red-50'}>
                     <td className="px-3 py-1.5 text-gray-400">{row.index}</td>
                     <td className="px-3 py-1.5 font-medium">{row.data['name'] || '—'}</td>
                     <td className="px-3 py-1.5 font-mono">{row.data['sku'] || '—'}</td>
@@ -192,7 +197,8 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
 
         {/* Download template hint */}
         <p className="text-xs text-gray-400">
-          Contoh baris: <code className="bg-gray-100 px-1 rounded">Kopi Hitam,KH001,Minuman,5000,100</code>
+          Contoh baris:{' '}
+          <code className="bg-gray-100 px-1 rounded">Kopi Hitam,KH001,Minuman,5000,100</code>
         </p>
       </div>
     </FormModal>

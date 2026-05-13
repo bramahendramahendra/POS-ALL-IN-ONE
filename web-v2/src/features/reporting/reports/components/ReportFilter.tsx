@@ -41,7 +41,13 @@ export function ReportFilter({ onApply, onExport, isExporting }: ReportFilterPro
   const [groupBy, setGroupBy] = useState<GroupBy>('day')
 
   const handleApply = () => {
-    onApply({ type, date_from: dateFrom, date_to: dateTo, group_by: type === 'sales' ? groupBy : undefined, page: 1 })
+    onApply({
+      type,
+      date_from: dateFrom,
+      date_to: dateTo,
+      group_by: type === 'sales' ? groupBy : undefined,
+      page: 1,
+    })
   }
 
   return (

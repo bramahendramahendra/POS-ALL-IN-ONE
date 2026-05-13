@@ -52,7 +52,9 @@ export function TransactionFilterBar({ filter, onChange, onReset }: TransactionF
       {/* Payment method */}
       <Select
         value={filter.payment_method ?? 'all'}
-        onValueChange={(v) => set({ payment_method: v === 'all' ? '' : v as TransactionFilter['payment_method'] })}
+        onValueChange={(v) =>
+          set({ payment_method: v === 'all' ? '' : (v as TransactionFilter['payment_method']) })
+        }
       >
         <SelectTrigger className="h-9 w-[140px] text-sm">
           <SelectValue placeholder="Semua Metode" />
@@ -69,7 +71,9 @@ export function TransactionFilterBar({ filter, onChange, onReset }: TransactionF
       {/* Status */}
       <Select
         value={filter.status ?? 'all'}
-        onValueChange={(v) => set({ status: v === 'all' ? '' : v as TransactionFilter['status'] })}
+        onValueChange={(v) =>
+          set({ status: v === 'all' ? '' : (v as TransactionFilter['status']) })
+        }
       >
         <SelectTrigger className="h-9 w-[140px] text-sm">
           <SelectValue placeholder="Semua Status" />

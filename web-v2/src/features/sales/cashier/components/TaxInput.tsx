@@ -32,9 +32,7 @@ export function TaxInput() {
       <span className="text-gray-400 text-xs">%</span>
 
       {previewTax > 0 && (
-        <span className="ml-auto text-gray-600 text-xs shrink-0">
-          +{formatRupiah(previewTax)}
-        </span>
+        <span className="ml-auto text-gray-600 text-xs shrink-0">+{formatRupiah(previewTax)}</span>
       )}
     </div>
   )

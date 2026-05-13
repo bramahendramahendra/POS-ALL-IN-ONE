@@ -39,11 +39,7 @@ export const calcGrandTotal = (
   return Math.max(0, subtotal - discountAmount + taxAmount)
 }
 
-export const calcCartSummary = (
-  items: CartItem[],
-  discount: Discount,
-  tax: Tax
-): CartSummary => {
+export const calcCartSummary = (items: CartItem[], discount: Discount, tax: Tax): CartSummary => {
   const subtotal = calcSubtotal(items)
   const discountAmount = calcDiscountAmount(subtotal, discount)
   const taxAmount = calcTaxAmount(subtotal, discountAmount, tax.percent)

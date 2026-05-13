@@ -42,11 +42,7 @@ export function TransactionsPage() {
         breadcrumbs={[{ label: 'Penjualan' }, { label: 'Transaksi' }]}
       />
 
-      <TransactionFilterBar
-        filter={filter}
-        onChange={handleFilterChange}
-        onReset={handleReset}
-      />
+      <TransactionFilterBar filter={filter} onChange={handleFilterChange} onReset={handleReset} />
 
       <TransactionTable
         data={transactions}
@@ -63,10 +59,7 @@ export function TransactionsPage() {
         onVoid={(t) => setSelectedId(t.id)}
       />
 
-      <TransactionDetailModal
-        transactionId={selectedId}
-        onClose={() => setSelectedId(null)}
-      />
+      <TransactionDetailModal transactionId={selectedId} onClose={() => setSelectedId(null)} />
     </div>
   )
 }

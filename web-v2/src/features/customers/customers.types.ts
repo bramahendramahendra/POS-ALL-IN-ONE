@@ -22,4 +22,4 @@ export interface CreateCustomerPayload {
   notes?: string
 }
 
-export interface UpdateCustomerPayload extends Partial<CreateCustomerPayload> {}
+export type UpdateCustomerPayload = Partial<CreateCustomerPayload>

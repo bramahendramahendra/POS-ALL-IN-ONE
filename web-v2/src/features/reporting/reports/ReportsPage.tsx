@@ -63,22 +63,20 @@ export function ReportsPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <PageHeader
-        title="Laporan"
-        breadcrumbs={[{ label: 'Reporting' }, { label: 'Laporan' }]}
-      />
+      <PageHeader title="Laporan" breadcrumbs={[{ label: 'Reporting' }, { label: 'Laporan' }]} />
 
-      <ReportFilterBar
-        onApply={handleApply}
-        onExport={handleExport}
-        isExporting={isExporting}
-      />
+      <ReportFilterBar onApply={handleApply} onExport={handleExport} isExporting={isExporting} />
 
       <ReportTable
         reportType={activeFilter.type as ReportType}
         data={rows}
         isLoading={isLoading}
-        pagination={{ page: activeFilter.page ?? 1, pageSize: PAGE_SIZE, total, onPageChange: handlePageChange }}
+        pagination={{
+          page: activeFilter.page ?? 1,
+          pageSize: PAGE_SIZE,
+          total,
+          onPageChange: handlePageChange,
+        }}
       />
     </div>
   )

@@ -15,7 +15,13 @@ interface SupplierTableProps {
   onDelete: (id: number) => void
 }
 
-export function SupplierTable({ data, isLoading, pagination, onEdit, onDelete }: SupplierTableProps) {
+export function SupplierTable({
+  data,
+  isLoading,
+  pagination,
+  onEdit,
+  onDelete,
+}: SupplierTableProps) {
   const columns: ColumnDef<Supplier>[] = [
     {
       key: 'name',

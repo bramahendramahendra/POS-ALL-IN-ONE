@@ -1,33 +1,33 @@
 import type { Platform, Role } from '@/shared/types'
 
 export interface StoreProfile {
-  name:        string
-  address?:    string
-  phone?:      string
-  email?:      string
-  logo_url?:   string
+  name: string
+  address?: string
+  phone?: string
+  email?: string
+  logo_url?: string
   tax_default?: number
 }
 
 export interface AppUser {
-  id:         number
-  username:   string
-  full_name:  string
-  role:       Role
-  is_active:  boolean
+  id: number
+  username: string
+  full_name: string
+  role: Role
+  is_active: boolean
   created_at: string
 }
 
 export interface CreateUserPayload {
-  username:  string
-  password:  string
+  username: string
+  password: string
   full_name: string
-  role:      Role
+  role: Role
 }
 
 export interface UpdateUserPayload {
   full_name?: string
-  role?:      Role
+  role?: Role
   is_active?: boolean
 }
 
@@ -36,11 +36,11 @@ export interface ChangePasswordPayload {
 }
 
 export interface AppVersion {
-  id:            number
-  platform:      Platform
-  version:       string
-  download_url:  string
-  is_mandatory:  boolean
+  id: number
+  platform: Platform
+  version: string
+  download_url: string
+  is_mandatory: boolean
   release_notes?: string
-  created_at:    string
+  created_at: string
 }

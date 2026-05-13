@@ -81,7 +81,10 @@ export function TransactionDetailModal({ transactionId, onClose }: TransactionDe
   const handleVoid = () => {
     if (!transactionId) return
     voidTransaction(transactionId, {
-      onSuccess: () => { setVoidConfirmOpen(false); onClose() },
+      onSuccess: () => {
+        setVoidConfirmOpen(false)
+        onClose()
+      },
     })
   }
 
@@ -120,7 +123,9 @@ export function TransactionDetailModal({ transactionId, onClose }: TransactionDe
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Status</p>
-                    <StatusBadge status={transaction.status === 'completed' ? 'success' : 'error'} />
+                    <StatusBadge
+                      status={transaction.status === 'completed' ? 'success' : 'error'}
+                    />
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Kasir</p>
@@ -138,7 +143,9 @@ export function TransactionDetailModal({ transactionId, onClose }: TransactionDe
 
                 {/* Items table */}
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Item</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                    Item
+                  </p>
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b text-xs text-gray-500">
@@ -157,7 +164,9 @@ export function TransactionDetailModal({ transactionId, onClose }: TransactionDe
                           </td>
                           <td className="text-center py-1.5">{item.qty}</td>
                           <td className="text-right py-1.5">{formatRupiah(item.price)}</td>
-                          <td className="text-right py-1.5 font-medium">{formatRupiah(item.subtotal)}</td>
+                          <td className="text-right py-1.5 font-medium">
+                            {formatRupiah(item.subtotal)}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -241,7 +250,8 @@ export function TransactionDetailModal({ transactionId, onClose }: TransactionDe
       />
 
       {/* Reprint receipt */}
-      {transaction && receiptOpen && (
+      {transaction &&
+        receiptOpen &&
         (() => {
           const { cart, summary, discount, tax } = buildReceiptData(transaction)
           return (
@@ -265,8 +275,7 @@ export function TransactionDetailModal({ transactionId, onClose }: TransactionDe
               customerName={transaction.customer_name}
             />
           )
-        })()
-      )}
+        })()}
     </>
   )
 }

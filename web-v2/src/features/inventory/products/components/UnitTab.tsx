@@ -42,9 +42,7 @@ export function UnitTab() {
   const isPending = isCreating || isUpdating
 
   const filtered = debouncedSearch
-    ? units.filter((u) =>
-        u.name.toLowerCase().includes(debouncedSearch.toLowerCase())
-      )
+    ? units.filter((u) => u.name.toLowerCase().includes(debouncedSearch.toLowerCase()))
     : units
 
   const {
@@ -186,7 +184,9 @@ export function UnitTab() {
       {/* Form Modal */}
       <FormModal
         open={formOpen}
-        onOpenChange={(open) => { if (!open) handleCloseForm() }}
+        onOpenChange={(open) => {
+          if (!open) handleCloseForm()
+        }}
         title={editingId !== null ? 'Edit Unit' : 'Tambah Unit'}
         size="sm"
         isLoading={isPending}
@@ -202,16 +202,19 @@ export function UnitTab() {
             placeholder="Nama unit (contoh: Pcs, Lusin, Kardus)"
             className={errors.name ? 'border-red-500' : ''}
           />
-          {errors.name && (
-            <p className="text-xs text-red-500">{errors.name.message}</p>
-          )}
+          {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
         </div>
       </FormModal>
 
       {/* Delete Confirm */}
       <ConfirmDialog
         open={deleteOpen}
-        onOpenChange={(open) => { if (!open) { closeDelete(); setDeletingId(null) } }}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeDelete()
+            setDeletingId(null)
+          }
+        }}
         title="Hapus Unit"
         description="Unit yang dihapus tidak bisa dikembalikan. Yakin ingin melanjutkan?"
         confirmLabel="Ya, Hapus"

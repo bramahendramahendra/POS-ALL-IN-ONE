@@ -3,13 +3,13 @@ import React from 'react'
 import { PageError } from '../PageError/PageError'
 
 interface ErrorBoundaryProps {
-  children:  React.ReactNode
+  children: React.ReactNode
   fallback?: React.ReactNode
 }
 
 interface ErrorBoundaryState {
   hasError: boolean
-  error?:   Error
+  error?: Error
 }
 
 export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
@@ -25,11 +25,10 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
   render() {
     if (this.state.hasError) {
-      return this.props.fallback ?? (
-        <PageError
-          error={this.state.error}
-          onReset={() => this.setState({ hasError: false })}
-        />
+      return (
+        this.props.fallback ?? (
+          <PageError error={this.state.error} onReset={() => this.setState({ hasError: false })} />
+        )
       )
     }
     return this.props.children

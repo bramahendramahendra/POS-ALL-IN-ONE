@@ -56,7 +56,11 @@ export function PaymentRecordModal({ open, onOpenChange, receivable }: PaymentRe
 
   const onSubmit = (values: PaymentFormValues) => {
     addPayment(
-      { amount: values.amount, payment_date: values.payment_date, notes: values.notes || undefined },
+      {
+        amount: values.amount,
+        payment_date: values.payment_date,
+        notes: values.notes || undefined,
+      },
       { onSuccess: () => onOpenChange(false) }
     )
   }
@@ -140,11 +144,7 @@ export function PaymentRecordModal({ open, onOpenChange, receivable }: PaymentRe
           {/* Notes */}
           <div className="space-y-1.5">
             <Label htmlFor="pay-notes">Catatan</Label>
-            <Input
-              id="pay-notes"
-              {...register('notes')}
-              placeholder="Catatan (opsional)"
-            />
+            <Input id="pay-notes" {...register('notes')} placeholder="Catatan (opsional)" />
           </div>
         </div>
       )}

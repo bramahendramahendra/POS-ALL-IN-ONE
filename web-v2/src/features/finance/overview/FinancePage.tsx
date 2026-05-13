@@ -57,10 +57,7 @@ export function FinancePage() {
 
   return (
     <div className="p-6 space-y-6">
-      <PageHeader
-        title="Keuangan"
-        breadcrumbs={[{ label: 'Finance' }, { label: 'Keuangan' }]}
-      />
+      <PageHeader title="Keuangan" breadcrumbs={[{ label: 'Finance' }, { label: 'Keuangan' }]} />
 
       {/* Period filter */}
       <div className="flex flex-wrap gap-3 items-end">
@@ -69,7 +66,10 @@ export function FinancePage() {
           <Input
             type="date"
             value={dateFrom}
-            onChange={(e) => { setDateFrom(e.target.value); setPage(1) }}
+            onChange={(e) => {
+              setDateFrom(e.target.value)
+              setPage(1)
+            }}
             className="w-40"
           />
         </div>
@@ -78,7 +78,10 @@ export function FinancePage() {
           <Input
             type="date"
             value={dateTo}
-            onChange={(e) => { setDateTo(e.target.value); setPage(1) }}
+            onChange={(e) => {
+              setDateTo(e.target.value)
+              setPage(1)
+            }}
             className="w-40"
           />
         </div>
@@ -89,7 +92,11 @@ export function FinancePage() {
           <Button variant="outline" size="sm" onClick={() => applyPreset(weekStartString(), today)}>
             Minggu ini
           </Button>
-          <Button variant="outline" size="sm" onClick={() => applyPreset(monthStartString(), today)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => applyPreset(monthStartString(), today)}
+          >
             Bulan ini
           </Button>
         </div>

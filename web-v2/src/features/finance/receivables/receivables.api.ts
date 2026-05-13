@@ -5,11 +5,7 @@ import { api } from '@/services/api.client'
 import { queryKeys } from '@/shared/constants'
 import type { PaginatedResponse } from '@/shared/types'
 
-import type {
-  CreatePaymentPayload,
-  Receivable,
-  ReceivableFilter,
-} from './receivables.types'
+import type { CreatePaymentPayload, Receivable, ReceivableFilter } from './receivables.types'
 
 export function useReceivableListQuery(filter?: ReceivableFilter) {
   return useQuery({

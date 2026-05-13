@@ -6,11 +6,7 @@ import { ConfirmDialog, PageHeader, RoleGuard } from '@/shared/components'
 import { Button } from '@/shared/components/ui/button'
 import { usePagination, useDisclosure } from '@/shared/hooks'
 
-import {
-  useCategoryListQuery,
-  useDeleteProductMutation,
-  useProductListQuery,
-} from './products.api'
+import { useCategoryListQuery, useDeleteProductMutation, useProductListQuery } from './products.api'
 import { useProductsStore } from './products.store'
 import type { Product, ProductFilter } from './products.types'
 import { CategoryTab } from './components/CategoryTab'
@@ -46,7 +42,11 @@ export function ProductsPage() {
   const { isOpen: importOpen, open: openImport, close: closeImport } = useDisclosure()
   const { isOpen: labelOpen, open: openLabel, close: closeLabel } = useDisclosure()
 
-  const { data: productData, isLoading } = useProductListQuery({ ...filter, page, page_size: pageSize })
+  const { data: productData, isLoading } = useProductListQuery({
+    ...filter,
+    page,
+    page_size: pageSize,
+  })
   const { data: categories = [] } = useCategoryListQuery()
   const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProductMutation()
 
@@ -141,14 +141,18 @@ export function ProductsPage() {
       {/* Product form modal */}
       <ProductFormModal
         open={productModalOpen}
-        onOpenChange={(open) => { if (!open) closeProductModal() }}
+        onOpenChange={(open) => {
+          if (!open) closeProductModal()
+        }}
         productId={editingProductId ?? undefined}
       />
 
       {/* Delete confirm */}
       <ConfirmDialog
         open={deleteConfirmOpen}
-        onOpenChange={(open) => { if (!open) closeDeleteConfirm() }}
+        onOpenChange={(open) => {
+          if (!open) closeDeleteConfirm()
+        }}
         title="Hapus Produk"
         description="Produk yang dihapus tidak bisa dikembalikan. Yakin ingin melanjutkan?"
         confirmLabel="Ya, Hapus"
@@ -158,12 +162,19 @@ export function ProductsPage() {
       />
 
       {/* Import CSV */}
-      <ImportCsvModal open={importOpen} onOpenChange={(open) => { if (!open) closeImport() }} />
+      <ImportCsvModal
+        open={importOpen}
+        onOpenChange={(open) => {
+          if (!open) closeImport()
+        }}
+      />
 
       {/* Label Print */}
       <LabelPrintModal
         open={labelOpen}
-        onOpenChange={(open) => { if (!open) closeLabel() }}
+        onOpenChange={(open) => {
+          if (!open) closeLabel()
+        }}
         products={selectedProducts}
       />
     </div>

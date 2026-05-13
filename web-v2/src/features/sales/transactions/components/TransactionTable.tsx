@@ -33,19 +33,29 @@ interface TransactionTableProps {
   onVoid: (transaction: Transaction) => void
 }
 
-export function TransactionTable({ data, isLoading, pagination, onDetail, onVoid }: TransactionTableProps) {
+export function TransactionTable({
+  data,
+  isLoading,
+  pagination,
+  onDetail,
+  onVoid,
+}: TransactionTableProps) {
   const columns: ColumnDef<Transaction>[] = [
     {
       key: 'transaction_code',
       header: 'Kode',
       cell: (row) => (
-        <span className="font-mono font-semibold text-gray-800 text-sm">{row.transaction_code}</span>
+        <span className="font-mono font-semibold text-gray-800 text-sm">
+          {row.transaction_code}
+        </span>
       ),
     },
     {
       key: 'created_at',
       header: 'Tanggal',
-      cell: (row) => <span className="text-sm text-gray-600">{formatDateTime(row.created_at)}</span>,
+      cell: (row) => (
+        <span className="text-sm text-gray-600">{formatDateTime(row.created_at)}</span>
+      ),
     },
     {
       key: 'customer_name',
@@ -82,9 +92,7 @@ export function TransactionTable({ data, isLoading, pagination, onDetail, onVoid
       key: 'status',
       header: 'Status',
       align: 'center',
-      cell: (row) => (
-        <StatusBadge status={row.status === 'completed' ? 'success' : 'error'} />
-      ),
+      cell: (row) => <StatusBadge status={row.status === 'completed' ? 'success' : 'error'} />,
     },
     {
       key: 'actions',

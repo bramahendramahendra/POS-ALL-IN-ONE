@@ -15,10 +15,7 @@ export function useTableSelection<T extends { id: number | string }>(): UseTable
   const [selectedKeys, setSelectedKeys] = useState<Set<number | string>>(new Set())
   const [selectedItems, setSelectedItems] = useState<T[]>([])
 
-  const isSelected = useCallback(
-    (key: number | string) => selectedKeys.has(key),
-    [selectedKeys]
-  )
+  const isSelected = useCallback((key: number | string) => selectedKeys.has(key), [selectedKeys])
 
   const toggle = useCallback((key: number | string) => {
     setSelectedKeys((prev) => {

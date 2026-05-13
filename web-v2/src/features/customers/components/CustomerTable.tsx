@@ -15,7 +15,13 @@ interface CustomerTableProps {
   onDelete: (id: number) => void
 }
 
-export function CustomerTable({ data, isLoading, pagination, onEdit, onDelete }: CustomerTableProps) {
+export function CustomerTable({
+  data,
+  isLoading,
+  pagination,
+  onEdit,
+  onDelete,
+}: CustomerTableProps) {
   const columns: ColumnDef<Customer>[] = [
     {
       key: 'name',

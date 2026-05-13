@@ -71,10 +71,9 @@ apiClient.interceptors.response.use(
       const { refreshToken, setSession, clearSession } = useAuthStore.getState()
 
       try {
-        const { data } = await axios.post<{ data: { access_token: string; refresh_token: string; expires_at: string } }>(
-          `${import.meta.env.VITE_API_URL}/auth/refresh`,
-          { refresh_token: refreshToken },
-        )
+        const { data } = await axios.post<{
+          data: { access_token: string; refresh_token: string; expires_at: string }
+        }>(`${import.meta.env.VITE_API_URL}/auth/refresh`, { refresh_token: refreshToken })
         const { access_token, refresh_token, expires_at } = data.data
         const currentUser = useAuthStore.getState().user
         if (currentUser) {
@@ -101,24 +100,18 @@ apiClient.interceptors.response.use(
       }
     }
 
-    const message: string =
-      error.response?.data?.message ?? error.message ?? 'Terjadi kesalahan'
+    const message: string = error.response?.data?.message ?? error.message ?? 'Terjadi kesalahan'
     const statusCode: number = error.response?.status ?? 0
     return Promise.reject(new ApiError(message, statusCode))
-  },
+  }
 )
 
 export { apiClient }
 
 export const api = {
-  get: <T>(url: string, params?: object) =>
-    apiClient.get<T>(url, { params }).then((r) => r.data),
-  post: <T>(url: string, data?: unknown) =>
-    apiClient.post<T>(url, data).then((r) => r.data),
-  put: <T>(url: string, data?: unknown) =>
-    apiClient.put<T>(url, data).then((r) => r.data),
-  patch: <T>(url: string, data?: unknown) =>
-    apiClient.patch<T>(url, data).then((r) => r.data),
-  delete: <T>(url: string) =>
-    apiClient.delete<T>(url).then((r) => r.data),
+  get: <T>(url: string, params?: object) => apiClient.get<T>(url, { params }).then((r) => r.data),
+  post: <T>(url: string, data?: unknown) => apiClient.post<T>(url, data).then((r) => r.data),
+  put: <T>(url: string, data?: unknown) => apiClient.put<T>(url, data).then((r) => r.data),
+  patch: <T>(url: string, data?: unknown) => apiClient.patch<T>(url, data).then((r) => r.data),
+  delete: <T>(url: string) => apiClient.delete<T>(url).then((r) => r.data),
 }

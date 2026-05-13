@@ -77,9 +77,7 @@ export function ProductTable({
       key: 'is_active',
       header: 'Status',
       align: 'center',
-      cell: (row) => (
-        <StatusBadge status={row.is_active ? 'active' : 'inactive'} />
-      ),
+      cell: (row) => <StatusBadge status={row.is_active ? 'active' : 'inactive'} />,
     },
     {
       key: 'price',
@@ -133,8 +131,12 @@ export function ProductTable({
         <div className="flex items-center gap-3 rounded-lg border bg-blue-50 px-4 py-2 text-sm">
           <span className="font-medium text-blue-700">{count} produk dipilih</span>
           <div className="ml-auto flex gap-2">
-            <Button variant="outline" size="sm" onClick={onImportCsv}>Import CSV</Button>
-            <Button variant="outline" size="sm" onClick={onPrintLabel}>Cetak Label</Button>
+            <Button variant="outline" size="sm" onClick={onImportCsv}>
+              Import CSV
+            </Button>
+            <Button variant="outline" size="sm" onClick={onPrintLabel}>
+              Cetak Label
+            </Button>
             <Button variant="destructive" size="sm" onClick={() => clearSelection()}>
               Hapus Semua
             </Button>

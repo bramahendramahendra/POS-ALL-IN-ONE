@@ -13,8 +13,7 @@ export function useLoginMutation() {
   const setSession = useAuthStore((s) => s.setSession)
 
   return useMutation({
-    mutationFn: (payload: LoginRequest) =>
-      api.post<LoginResponse>('/auth/login', payload),
+    mutationFn: (payload: LoginRequest) => api.post<LoginResponse>('/auth/login', payload),
 
     onSuccess: (data) => {
       const user: AuthUser = {

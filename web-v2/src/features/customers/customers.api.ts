@@ -31,7 +31,9 @@ export function useCreateCustomerMutation() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: CreateCustomerPayload) => api.post<Customer>('/customers', payload),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.customers.all() }) },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.customers.all() })
+    },
     onError: (e: Error) => toast.error(e.message),
   })
 }
@@ -53,7 +55,9 @@ export function useDeleteCustomerMutation() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => api.delete<void>(`/customers/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.customers.all() }) },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.customers.all() })
+    },
     onError: (e: Error) => toast.error(e.message),
   })
 }

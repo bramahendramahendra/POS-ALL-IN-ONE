@@ -30,10 +30,7 @@ export function CashierPage() {
       }}
     >
       {/* Panel Kiri */}
-      <div
-        style={{ flex: 1, padding: '16px', overflowY: 'auto' }}
-        className="bg-gray-50"
-      >
+      <div style={{ flex: 1, padding: '16px', overflowY: 'auto' }} className="bg-gray-50">
         <ProductSearch />
       </div>
 
@@ -54,7 +51,9 @@ export function CashierPage() {
       <UnitSelectModal />
       <PaymentModal
         open={paymentModalOpen}
-        onOpenChange={(open) => { if (!open) closePaymentModal() }}
+        onOpenChange={(open) => {
+          if (!open) closePaymentModal()
+        }}
       />
     </div>
   )

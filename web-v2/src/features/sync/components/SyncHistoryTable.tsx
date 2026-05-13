@@ -9,18 +9,22 @@ import type { SyncHistoryItem } from '../sync.types'
 const STATUS_STYLE: Record<string, string> = {
   success: 'bg-green-100 text-green-700',
   partial: 'bg-yellow-100 text-yellow-700',
-  error:   'bg-red-100 text-red-700',
+  error: 'bg-red-100 text-red-700',
 }
 
 const STATUS_LABEL: Record<string, string> = {
   success: 'Sukses',
   partial: 'Sebagian',
-  error:   'Error',
+  error: 'Error',
 }
 
 function formatDateTime(str: string): string {
   return new Date(str).toLocaleString('id-ID', {
-    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   })
 }
 
@@ -40,7 +44,9 @@ export function SyncHistoryTable() {
     {
       key: 'created_at',
       header: 'Waktu Sync',
-      cell: (row) => <span className="text-sm text-gray-600">{formatDateTime(row.created_at)}</span>,
+      cell: (row) => (
+        <span className="text-sm text-gray-600">{formatDateTime(row.created_at)}</span>
+      ),
     },
     {
       key: 'device_info',
@@ -52,7 +58,9 @@ export function SyncHistoryTable() {
       header: 'Status',
       align: 'center',
       cell: (row) => (
-        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLE[row.status] ?? ''}`}>
+        <span
+          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLE[row.status] ?? ''}`}
+        >
           {STATUS_LABEL[row.status] ?? row.status}
         </span>
       ),
@@ -86,7 +94,9 @@ export function SyncHistoryTable() {
               {expandedId === row.id ? 'Sembunyikan' : 'Lihat pesan'}
             </button>
             {expandedId === row.id && (
-              <p className="mt-1 text-xs text-gray-600 bg-gray-50 rounded p-2 max-w-xs">{row.message}</p>
+              <p className="mt-1 text-xs text-gray-600 bg-gray-50 rounded p-2 max-w-xs">
+                {row.message}
+              </p>
             )}
           </div>
         ) : (

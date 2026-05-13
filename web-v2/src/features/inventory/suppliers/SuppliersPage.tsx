@@ -90,7 +90,12 @@ export function SuppliersPage() {
           />
         </div>
         {search && (
-          <Button variant="outline" size="sm" onClick={() => handleSearchChange('')} className="h-9 gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleSearchChange('')}
+            className="h-9 gap-1"
+          >
             <RotateCcw size={13} />
             Reset
           </Button>
@@ -100,20 +105,34 @@ export function SuppliersPage() {
       <SupplierTable
         data={suppliers}
         isLoading={isLoading}
-        pagination={{ page, pageSize, total, onPageChange, onPageSizeChange, pageSizeOptions: [10, 20, 50] }}
+        pagination={{
+          page,
+          pageSize,
+          total,
+          onPageChange,
+          onPageSizeChange,
+          pageSizeOptions: [10, 20, 50],
+        }}
         onEdit={handleOpenEdit}
         onDelete={handleOpenDelete}
       />
 
       <SupplierFormModal
         open={formOpen}
-        onOpenChange={(open) => { if (!open) handleCloseForm() }}
+        onOpenChange={(open) => {
+          if (!open) handleCloseForm()
+        }}
         supplierId={editingSupplier?.id}
       />
 
       <ConfirmDialog
         open={deleteOpen}
-        onOpenChange={(open) => { if (!open) { closeDelete(); setDeletingId(null) } }}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeDelete()
+            setDeletingId(null)
+          }
+        }}
         title="Hapus Supplier"
         description="Supplier yang dihapus tidak bisa dikembalikan. Yakin ingin melanjutkan?"
         confirmLabel="Ya, Hapus"

@@ -55,12 +55,17 @@ export function CartItemRow({ item }: CartItemRowProps) {
             value={priceInput}
             onChange={(e) => setPriceInput(e.target.value)}
             onBlur={handlePriceCommit}
-            onKeyDown={(e) => { if (e.key === 'Enter') handlePriceCommit() }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handlePriceCommit()
+            }}
             className="h-6 w-28 text-xs px-2"
           />
         ) : (
           <button
-            onClick={() => { setPriceInput(String(item.price)); setEditingPrice(true) }}
+            onClick={() => {
+              setPriceInput(String(item.price))
+              setEditingPrice(true)
+            }}
             className="text-xs text-blue-600 hover:underline"
             title="Klik untuk ubah harga"
           >

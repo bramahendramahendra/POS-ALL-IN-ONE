@@ -98,13 +98,19 @@ export function SupplierFormModal({ open, onOpenChange, supplierId }: SupplierFo
       updateSupplier(
         { id: supplierId as number, ...payload },
         {
-          onSuccess: () => { toast.success('Supplier berhasil diperbarui'); onOpenChange(false) },
+          onSuccess: () => {
+            toast.success('Supplier berhasil diperbarui')
+            onOpenChange(false)
+          },
           onError: (e) => toast.error(e.message),
         }
       )
     } else {
       createSupplier(payload, {
-        onSuccess: () => { toast.success('Supplier berhasil ditambahkan'); onOpenChange(false) },
+        onSuccess: () => {
+          toast.success('Supplier berhasil ditambahkan')
+          onOpenChange(false)
+        },
         onError: (e) => toast.error(e.message),
       })
     }

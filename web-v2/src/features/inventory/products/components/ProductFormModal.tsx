@@ -189,9 +189,7 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
                   placeholder="Nama produk"
                   className={errors.name ? 'border-red-500' : ''}
                 />
-                {errors.name && (
-                  <p className="text-xs text-red-500">{errors.name.message}</p>
-                )}
+                {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
               </div>
 
               {/* SKU + Kategori */}
@@ -266,9 +264,7 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
         </>
       )}
 
-      {activeTab === 'prices' && isEdit && (
-        <PriceTierTab productId={productId as number} />
-      )}
+      {activeTab === 'prices' && isEdit && <PriceTierTab productId={productId as number} />}
     </FormModal>
   )
 }

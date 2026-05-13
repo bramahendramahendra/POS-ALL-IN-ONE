@@ -43,7 +43,10 @@ export function UnitSelectModal() {
             <p className="text-sm text-gray-500">{product.name}</p>
           </div>
           <button
-            onClick={() => { closeUnitSelectModal(); setQty(1) }}
+            onClick={() => {
+              closeUnitSelectModal()
+              setQty(1)
+            }}
             className="text-gray-400 hover:text-gray-600"
           >
             <X size={18} />

@@ -84,7 +84,15 @@ export function ProductFilterBar({ filter, onChange, onReset, categories }: Prod
       </Select>
 
       {/* Reset */}
-      <Button variant="outline" size="sm" onClick={() => { setSearch(''); onReset() }} className="h-9 gap-1">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => {
+          setSearch('')
+          onReset()
+        }}
+        className="h-9 gap-1"
+      >
         <RotateCcw size={13} />
         Reset
       </Button>

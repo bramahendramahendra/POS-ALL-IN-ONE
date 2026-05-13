@@ -39,22 +39,25 @@ export function ReceivablesPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <PageHeader
-        title="Piutang"
-        breadcrumbs={[{ label: 'Finance' }, { label: 'Piutang' }]}
-      />
+      <PageHeader title="Piutang" breadcrumbs={[{ label: 'Finance' }, { label: 'Piutang' }]} />
 
       {/* Filters */}
       <div className="flex gap-3 flex-wrap">
         <Input
           placeholder="Cari kode transaksi / pelanggan..."
           value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+          onChange={(e) => {
+            setSearch(e.target.value)
+            setPage(1)
+          }}
           className="max-w-xs"
         />
         <Select
           value={status}
-          onValueChange={(v) => { setStatus(v as ReceivableStatus | ''); setPage(1) }}
+          onValueChange={(v) => {
+            setStatus(v as ReceivableStatus | '')
+            setPage(1)
+          }}
         >
           <SelectTrigger className="w-44">
             <SelectValue placeholder="Semua Status" />
@@ -77,7 +80,9 @@ export function ReceivablesPage() {
 
       <PaymentRecordModal
         open={!!payTarget}
-        onOpenChange={(open) => { if (!open) setPayTarget(null) }}
+        onOpenChange={(open) => {
+          if (!open) setPayTarget(null)
+        }}
         receivable={payTarget}
       />
     </div>

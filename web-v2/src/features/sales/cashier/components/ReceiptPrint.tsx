@@ -108,9 +108,13 @@ export function ReceiptPrint({
           <div className="space-y-1.5 py-1">
             {cart.map((item) => (
               <div key={`${item.product_id}-${item.unit_id}`}>
-                <p className="font-medium">{item.product_name} x{item.qty}</p>
+                <p className="font-medium">
+                  {item.product_name} x{item.qty}
+                </p>
                 <div className="flex justify-between pl-2 text-gray-600">
-                  <span>{item.unit_name} @ {formatRupiah(item.price)}</span>
+                  <span>
+                    {item.unit_name} @ {formatRupiah(item.price)}
+                  </span>
                   <span>{formatRupiah(item.subtotal)}</span>
                 </div>
               </div>
@@ -127,9 +131,7 @@ export function ReceiptPrint({
             </div>
             {summary.discountAmount > 0 && (
               <div className="flex justify-between">
-                <span>
-                  Diskon{discount.type === 'percent' ? ` (${discount.value}%)` : ''}
-                </span>
+                <span>Diskon{discount.type === 'percent' ? ` (${discount.value}%)` : ''}</span>
                 <span>-{formatRupiah(summary.discountAmount)}</span>
               </div>
             )}

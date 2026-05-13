@@ -31,7 +31,9 @@ export function ReceivableTable({ data, isLoading, pagination, onPay }: Receivab
       key: 'transaction_code',
       header: 'Kode Transaksi',
       cell: (row) => (
-        <span className="font-mono font-semibold text-sm text-gray-800">{row.transaction_code}</span>
+        <span className="font-mono font-semibold text-sm text-gray-800">
+          {row.transaction_code}
+        </span>
       ),
     },
     {
@@ -72,7 +74,13 @@ export function ReceivableTable({ data, isLoading, pagination, onPay }: Receivab
       header: 'Jatuh Tempo',
       cell: (row) =>
         row.due_date ? (
-          <span className={isOverdue(row.due_date) && row.status !== 'paid' ? 'text-red-600 font-medium' : 'text-gray-600'}>
+          <span
+            className={
+              isOverdue(row.due_date) && row.status !== 'paid'
+                ? 'text-red-600 font-medium'
+                : 'text-gray-600'
+            }
+          >
             {formatDate(row.due_date)}
             {isOverdue(row.due_date) && row.status !== 'paid' && ' ⚠'}
           </span>

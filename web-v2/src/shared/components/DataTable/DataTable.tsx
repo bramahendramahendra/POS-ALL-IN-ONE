@@ -99,9 +99,7 @@ export function DataTable<TData extends Record<string, unknown>>({
               >
                 <span className="inline-flex items-center gap-1">
                   {col.header}
-                  {col.sortable && (
-                    <ArrowUpDown size={12} className="text-gray-400" />
-                  )}
+                  {col.sortable && <ArrowUpDown size={12} className="text-gray-400" />}
                 </span>
               </TableHead>
             ))}
@@ -125,13 +123,8 @@ export function DataTable<TData extends Record<string, unknown>>({
                   </TableCell>
                 )}
                 {columns.map((col) => (
-                  <TableCell
-                    key={col.key}
-                    style={{ textAlign: col.align ?? 'left' }}
-                  >
-                    {col.cell
-                      ? col.cell(row)
-                      : String(row[col.key as keyof TData] ?? '')}
+                  <TableCell key={col.key} style={{ textAlign: col.align ?? 'left' }}>
+                    {col.cell ? col.cell(row) : String(row[col.key as keyof TData] ?? '')}
                   </TableCell>
                 ))}
               </TableRow>

@@ -71,7 +71,9 @@ export function ShiftTable({ data, isLoading, pagination, onClose }: ShiftTableP
       key: 'total_revenue',
       header: 'Revenue',
       align: 'right',
-      cell: (row) => <span className="font-semibold text-blue-600">{formatRupiah(row.total_revenue)}</span>,
+      cell: (row) => (
+        <span className="font-semibold text-blue-600">{formatRupiah(row.total_revenue)}</span>
+      ),
     },
     {
       key: 'status',

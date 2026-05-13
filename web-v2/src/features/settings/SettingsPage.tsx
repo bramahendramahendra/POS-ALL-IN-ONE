@@ -20,10 +20,7 @@ export function SettingsPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <PageHeader
-        title="Pengaturan"
-        breadcrumbs={[{ label: 'Settings' }]}
-      />
+      <PageHeader title="Pengaturan" breadcrumbs={[{ label: 'Settings' }]} />
 
       {/* Tab bar */}
       <div className="flex gap-1 border-b">

@@ -42,23 +42,15 @@ export const useProductsStore = create<ProductsState>((set) => ({
 
   setActiveTab: (tab) => set({ activeTab: tab }),
 
-  openProductModal: (id) =>
-    set({ productModalOpen: true, editingProductId: id ?? null }),
-  closeProductModal: () =>
-    set({ productModalOpen: false, editingProductId: null }),
+  openProductModal: (id) => set({ productModalOpen: true, editingProductId: id ?? null }),
+  closeProductModal: () => set({ productModalOpen: false, editingProductId: null }),
 
-  openCategoryModal: (id) =>
-    set({ categoryModalOpen: true, editingCategoryId: id ?? null }),
-  closeCategoryModal: () =>
-    set({ categoryModalOpen: false, editingCategoryId: null }),
+  openCategoryModal: (id) => set({ categoryModalOpen: true, editingCategoryId: id ?? null }),
+  closeCategoryModal: () => set({ categoryModalOpen: false, editingCategoryId: null }),
 
-  openUnitModal: (id) =>
-    set({ unitModalOpen: true, editingUnitId: id ?? null }),
-  closeUnitModal: () =>
-    set({ unitModalOpen: false, editingUnitId: null }),
+  openUnitModal: (id) => set({ unitModalOpen: true, editingUnitId: id ?? null }),
+  closeUnitModal: () => set({ unitModalOpen: false, editingUnitId: null }),
 
-  openDeleteConfirm: (target) =>
-    set({ deleteConfirmOpen: true, deleteTarget: target }),
-  closeDeleteConfirm: () =>
-    set({ deleteConfirmOpen: false, deleteTarget: null }),
+  openDeleteConfirm: (target) => set({ deleteConfirmOpen: true, deleteTarget: target }),
+  closeDeleteConfirm: () => set({ deleteConfirmOpen: false, deleteTarget: null }),
 }))

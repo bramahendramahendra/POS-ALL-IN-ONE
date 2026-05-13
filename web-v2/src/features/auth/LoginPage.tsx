@@ -31,9 +31,7 @@ export function LoginPage() {
       </div>
 
       {/* Footer */}
-      <p className="mt-6 text-white/40 text-xs text-center">
-        v1.0.0 &middot; {config.appName}
-      </p>
+      <p className="mt-6 text-white/40 text-xs text-center">v1.0.0 &middot; {config.appName}</p>
     </div>
   )
 }

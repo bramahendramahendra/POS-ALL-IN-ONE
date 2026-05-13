@@ -31,7 +31,9 @@ export function useCreateSupplierMutation() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: CreateSupplierPayload) => api.post<Supplier>('/suppliers', payload),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.suppliers.all() }) },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.suppliers.all() })
+    },
     onError: (e: Error) => toast.error(e.message),
   })
 }
@@ -41,7 +43,9 @@ export function useUpdateSupplierMutation() {
   return useMutation({
     mutationFn: ({ id, ...payload }: UpdateSupplierPayload & { id: number }) =>
       api.put<Supplier>(`/suppliers/${id}`, payload),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.suppliers.all() }) },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.suppliers.all() })
+    },
     onError: (e: Error) => toast.error(e.message),
   })
 }
@@ -50,7 +54,9 @@ export function useDeleteSupplierMutation() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => api.delete<void>(`/suppliers/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.suppliers.all() }) },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.suppliers.all() })
+    },
     onError: (e: Error) => toast.error(e.message),
   })
 }

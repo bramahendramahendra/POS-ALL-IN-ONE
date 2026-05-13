@@ -54,10 +54,7 @@ export function ShiftsPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <PageHeader
-        title="Manajemen Shift"
-        breadcrumbs={[{ label: 'Shifts' }]}
-      />
+      <PageHeader title="Manajemen Shift" breadcrumbs={[{ label: 'Shifts' }]} />
 
       {/* Active shift banner */}
       {activeShift && (
@@ -66,8 +63,8 @@ export function ShiftsPage() {
             <Clock size={16} />
             <span>
               Shift sedang berjalan sejak{' '}
-              <span className="font-semibold">{formatDateTime(activeShift.opened_at)}</span>
-              {' '}oleh {activeShift.kasir_name}
+              <span className="font-semibold">{formatDateTime(activeShift.opened_at)}</span> oleh{' '}
+              {activeShift.kasir_name}
             </span>
           </div>
           <Button
@@ -88,7 +85,10 @@ export function ShiftsPage() {
           <Input
             type="date"
             value={dateFrom}
-            onChange={(e) => { setDateFrom(e.target.value); setPage(1) }}
+            onChange={(e) => {
+              setDateFrom(e.target.value)
+              setPage(1)
+            }}
             className="w-40"
           />
         </div>
@@ -97,13 +97,19 @@ export function ShiftsPage() {
           <Input
             type="date"
             value={dateTo}
-            onChange={(e) => { setDateTo(e.target.value); setPage(1) }}
+            onChange={(e) => {
+              setDateTo(e.target.value)
+              setPage(1)
+            }}
             className="w-40"
           />
         </div>
         <Select
           value={status}
-          onValueChange={(v) => { setStatus(v as ShiftStatus | ''); setPage(1) }}
+          onValueChange={(v) => {
+            setStatus(v as ShiftStatus | '')
+            setPage(1)
+          }}
         >
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Semua Status" />
@@ -132,7 +138,9 @@ export function ShiftsPage() {
       <OpenShiftModal open={openShiftOpen} onOpenChange={setOpenShiftOpen} />
       <CloseShiftModal
         open={!!closeTarget}
-        onOpenChange={(open) => { if (!open) setCloseTarget(null) }}
+        onOpenChange={(open) => {
+          if (!open) setCloseTarget(null)
+        }}
         shift={closeTarget}
       />
     </div>

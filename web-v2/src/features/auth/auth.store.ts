@@ -30,6 +30,6 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
         }),
     }),
-    { name: 'auth-session' },
-  ),
+    { name: 'auth-session' }
+  )
 )

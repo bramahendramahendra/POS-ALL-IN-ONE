@@ -80,7 +80,7 @@ export function ProductSearch() {
 
   const getDefaultUnitName = (product: Product): string => {
     const defaultUnit = product.units.find((u) => u.is_default)
-    return defaultUnit?.unit_name ?? (product.units[0]?.unit_name ?? '')
+    return defaultUnit?.unit_name ?? product.units[0]?.unit_name ?? ''
   }
 
   return (
@@ -89,7 +89,10 @@ export function ProductSearch() {
       <div className="relative">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         {(isLoading || isScanning) && (
-          <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 animate-spin" />
+          <Loader2
+            size={16}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 animate-spin"
+          />
         )}
         <Input
           ref={inputRef}
@@ -126,7 +129,8 @@ export function ProductSearch() {
                   </p>
                   {price !== null ? (
                     <p className="text-xs font-semibold text-blue-600">
-                      {formatRupiah(price)}{unitName ? `/${unitName}` : ''}
+                      {formatRupiah(price)}
+                      {unitName ? `/${unitName}` : ''}
                     </p>
                   ) : (
                     <p className="text-xs text-gray-400">—</p>

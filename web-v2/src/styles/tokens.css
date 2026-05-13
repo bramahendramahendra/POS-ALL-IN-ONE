@@ -1,15 +1,15 @@
 :root {
   /* Colors */
-  --color-primary:       #2c3e50;
+  --color-primary: #2c3e50;
   --color-primary-light: #34495e;
-  --color-accent:        #3498db;
-  --color-success:       #27ae60;
-  --color-warning:       #f39c12;
-  --color-danger:        #e74c3c;
-  --color-muted:         #bdc3c7;
-  --color-bg:            #f5f6fa;
-  --color-surface:       #ffffff;
-  --color-border:        #e0e0e0;
+  --color-accent: #3498db;
+  --color-success: #27ae60;
+  --color-warning: #f39c12;
+  --color-danger: #e74c3c;
+  --color-muted: #bdc3c7;
+  --color-bg: #f5f6fa;
+  --color-surface: #ffffff;
+  --color-border: #e0e0e0;
 
   /* Typography */
   --font-sans: 'Inter', system-ui, sans-serif;

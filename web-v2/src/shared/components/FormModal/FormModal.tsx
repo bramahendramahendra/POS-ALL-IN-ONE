@@ -56,8 +56,12 @@ export function FormModal({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         className={cn('flex flex-col gap-0 p-0', SIZE_MAP[size])}
-        onInteractOutside={(e) => { if (isLoading) e.preventDefault() }}
-        onEscapeKeyDown={(e) => { if (isLoading) e.preventDefault() }}
+        onInteractOutside={(e) => {
+          if (isLoading) e.preventDefault()
+        }}
+        onEscapeKeyDown={(e) => {
+          if (isLoading) e.preventDefault()
+        }}
       >
         {/* Header */}
         <DialogHeader className="border-b px-6 py-4">

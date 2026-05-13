@@ -5,7 +5,7 @@ export const initOfflineDetection = () => {
 
   const handleOffline = () => {
     toast.warning('Koneksi internet terputus. Beberapa fitur tidak tersedia.', {
-      id:       TOAST_ID,
+      id: TOAST_ID,
       duration: Infinity,
     })
   }
@@ -16,12 +16,12 @@ export const initOfflineDetection = () => {
   }
 
   window.addEventListener('offline', handleOffline)
-  window.addEventListener('online',  handleOnline)
+  window.addEventListener('online', handleOnline)
 
   if (!navigator.onLine) handleOffline()
 
   return () => {
     window.removeEventListener('offline', handleOffline)
-    window.removeEventListener('online',  handleOnline)
+    window.removeEventListener('online', handleOnline)
   }
 }

@@ -55,8 +55,13 @@ export function FinanceTable({ data, isLoading, pagination }: FinanceTableProps)
       header: 'Nominal',
       align: 'right',
       cell: (row) => (
-        <span className={row.type === 'income' ? 'font-semibold text-green-600' : 'font-semibold text-red-600'}>
-          {row.type === 'income' ? '+' : '-'}{formatRupiah(row.amount)}
+        <span
+          className={
+            row.type === 'income' ? 'font-semibold text-green-600' : 'font-semibold text-red-600'
+          }
+        >
+          {row.type === 'income' ? '+' : '-'}
+          {formatRupiah(row.amount)}
         </span>
       ),
     },

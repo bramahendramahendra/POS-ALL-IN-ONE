@@ -3,7 +3,12 @@ import { useQuery } from '@tanstack/react-query'
 import { api } from '@/services/api.client'
 import { queryKeys } from '@/shared/constants'
 
-import type { DashboardPeriod, DashboardSummary, SalesChartPoint, TopProduct } from './dashboard.types'
+import type {
+  DashboardPeriod,
+  DashboardSummary,
+  SalesChartPoint,
+  TopProduct,
+} from './dashboard.types'
 
 export function useDashboardSummaryQuery(period: DashboardPeriod) {
   return useQuery({

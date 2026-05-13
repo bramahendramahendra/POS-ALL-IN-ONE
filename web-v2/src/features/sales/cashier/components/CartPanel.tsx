@@ -22,15 +22,8 @@ import { TaxInput } from './TaxInput'
 export function CartPanel() {
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false)
 
-  const {
-    cart,
-    discount,
-    tax,
-    selectedCustomer,
-    setCustomer,
-    clearCart,
-    openPaymentModal,
-  } = useCashierStore()
+  const { cart, discount, tax, selectedCustomer, setCustomer, clearCart, openPaymentModal } =
+    useCashierStore()
 
   const { data: customerData } = useCustomerListQuery()
   const customers = customerData?.data?.data ?? []
@@ -89,10 +82,7 @@ export function CartPanel() {
         ) : (
           <ul className="divide-y">
             {cart.map((item) => (
-              <CartItemRow
-                key={`${item.product_id}-${item.unit_id}`}
-                item={item}
-              />
+              <CartItemRow key={`${item.product_id}-${item.unit_id}`} item={item} />
             ))}
           </ul>
         )}
@@ -114,9 +104,7 @@ export function CartPanel() {
         </div>
         {summary.discountAmount > 0 && (
           <div className="flex justify-between text-green-600">
-            <span>
-              Diskon{discount.type === 'percent' ? ` (-${discount.value}%)` : ''}
-            </span>
+            <span>Diskon{discount.type === 'percent' ? ` (-${discount.value}%)` : ''}</span>
             <span>-{formatRupiah(summary.discountAmount)}</span>
           </div>
         )}
@@ -144,11 +132,7 @@ export function CartPanel() {
           <Trash2 size={14} />
           Kosongkan
         </Button>
-        <Button
-          className="flex-1 gap-1"
-          onClick={openPaymentModal}
-          disabled={cart.length === 0}
-        >
+        <Button className="flex-1 gap-1" onClick={openPaymentModal} disabled={cart.length === 0}>
           💳 Bayar
         </Button>
       </div>
@@ -160,7 +144,10 @@ export function CartPanel() {
         description="Semua item di keranjang akan dihapus. Yakin?"
         confirmLabel="Ya, Kosongkan"
         variant="destructive"
-        onConfirm={() => { clearCart(); setClearConfirmOpen(false) }}
+        onConfirm={() => {
+          clearCart()
+          setClearConfirmOpen(false)
+        }}
       />
     </div>
   )

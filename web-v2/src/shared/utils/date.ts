@@ -1,4 +1,17 @@
-const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des']
+const MONTHS_SHORT = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'Mei',
+  'Jun',
+  'Jul',
+  'Ags',
+  'Sep',
+  'Okt',
+  'Nov',
+  'Des',
+]
 
 function toDate(date: string | Date): Date {
   return typeof date === 'string' ? new Date(date) : date
