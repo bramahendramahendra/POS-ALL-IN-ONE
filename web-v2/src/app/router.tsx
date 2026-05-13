@@ -6,6 +6,7 @@ import { TransactionsPage } from '@/features/sales/transactions'
 import { CustomersPage } from '@/features/customers'
 import { ShiftsPage } from '@/features/shifts'
 import { SettingsPage } from '@/features/settings'
+import { SyncCenterPage } from '@/features/sync'
 import { DashboardPage } from '@/features/reporting/dashboard'
 import { ReportsPage } from '@/features/reporting/reports'
 import { FinancePage } from '@/features/finance/overview'
@@ -19,9 +20,6 @@ const ALL_ROLES = [ROLES.OWNER, ROLES.ADMIN, ROLES.KASIR] as const
 const MANAGEMENT_ROLES = [ROLES.OWNER, ROLES.ADMIN] as const
 const OWNER_ONLY = [ROLES.OWNER] as const
 
-const Placeholder = ({ name }: { name: string }) => (
-  <div className="p-8 text-xl font-semibold text-gray-600">{name} (coming soon)</div>
-)
 
 export const router = createBrowserRouter([
   {
@@ -52,7 +50,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.FINANCE, element: <FinancePage /> },
       { path: ROUTES.REPORTS, element: <ReportsPage /> },
       { path: ROUTES.SHIFTS, element: <ShiftsPage /> },
-      { path: ROUTES.SYNC, element: <Placeholder name="Sync" /> },
+      { path: ROUTES.SYNC, element: <SyncCenterPage /> },
     ],
   },
   // Protected — owner only

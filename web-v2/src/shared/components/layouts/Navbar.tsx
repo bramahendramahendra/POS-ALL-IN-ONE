@@ -3,6 +3,7 @@ import { Bell, LogOut, Menu } from 'lucide-react'
 
 import { useLogoutMutation } from '@/features/auth/auth.api'
 import { useAuth } from '@/features/auth/hooks/useAuth'
+import { useSyncStatus } from '@/features/sync'
 import { config, ROLES } from '@/shared/constants'
 import { ConfirmDialog } from '@/shared/components/ConfirmDialog'
 import { Avatar, AvatarFallback } from '@/shared/components/ui/avatar'
@@ -27,6 +28,7 @@ function getInitials(fullName: string) {
 export function Navbar() {
   const { user } = useAuth()
   const { mutate: logout, isPending } = useLogoutMutation()
+  const { conflictCount } = useSyncStatus()
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
 
   return (
@@ -49,8 +51,13 @@ export function Navbar() {
 
         {/* Kanan */}
         <div className="flex items-center gap-3">
-          <button className="text-white/70 hover:text-white transition-colors p-1">
+          <button className="text-white/70 hover:text-white transition-colors p-1 relative">
             <Bell size={18} />
+            {conflictCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                {conflictCount > 9 ? '9+' : conflictCount}
+              </span>
+            )}
           </button>
 
           {user && (
