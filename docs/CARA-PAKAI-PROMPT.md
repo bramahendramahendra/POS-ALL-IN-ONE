@@ -150,24 +150,22 @@ Konteks Sync Engine yang wajib diikuti:
 
 Kita sedang mengerjakan project POS System frontend (web-v2).
 Baca dan kerjakan instruksi di:
-docs\frontend\fase-implementasi\FASE-24-RECEIVABLES.md
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 docs\frontend\fase-implementasi\FASE-25-FINANCE.md
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 docs\frontend\fase-implementasi\FASE-26-DASHBOARD.md
 docs\frontend\fase-implementasi\FASE-27-REPORTS.md
 docs\frontend\fase-implementasi\FASE-28-SHIFTS.md

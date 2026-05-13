@@ -4,6 +4,7 @@ import { LoginPage, ProtectedRoute, RootRedirect } from '@/features/auth'
 import { CashierPage } from '@/features/sales/cashier'
 import { TransactionsPage } from '@/features/sales/transactions'
 import { CustomersPage } from '@/features/customers'
+import { ReceivablesPage } from '@/features/finance/receivables'
 import { ProductsPage } from '@/features/inventory/products'
 import { SuppliersPage } from '@/features/inventory/suppliers'
 import { ROLES } from '@/shared/constants/roles'
@@ -42,7 +43,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.SUPPLIERS, element: <SuppliersPage /> },
       { path: ROUTES.TRANSACTIONS, element: <TransactionsPage /> },
       { path: ROUTES.CUSTOMERS, element: <CustomersPage /> },
-      { path: ROUTES.RECEIVABLES, element: <Placeholder name="Receivables" /> },
+      { path: ROUTES.RECEIVABLES, element: <ReceivablesPage /> },
       { path: ROUTES.FINANCE, element: <Placeholder name="Finance" /> },
       { path: ROUTES.REPORTS, element: <Placeholder name="Reports" /> },
       { path: ROUTES.SHIFTS, element: <Placeholder name="Shifts" /> },
