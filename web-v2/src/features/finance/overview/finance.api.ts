@@ -15,7 +15,7 @@ export function useFinanceSummaryQuery(filter?: FinanceFilter) {
 
 export function useCashflowQuery(filter?: FinanceFilter) {
   return useQuery({
-    queryKey: ['finance', 'cashflow', filter],
+    queryKey: queryKeys.finance.cashflow(filter as Record<string, unknown>),
     queryFn: () => api.get<PaginatedResponse<CashflowItem>>('/finance/cashflow', filter),
   })
 }

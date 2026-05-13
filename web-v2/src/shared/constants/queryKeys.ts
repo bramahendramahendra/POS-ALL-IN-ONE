@@ -44,10 +44,12 @@ export const queryKeys = {
   receivables: {
     all: () => ['receivables'] as const,
     list: (filter?: Filter) => ['receivables', 'list', filter] as const,
+    detail: (id: number) => ['receivables', 'detail', id] as const,
   },
 
   finance: {
     summary: (filter?: Filter) => ['finance', 'summary', filter] as const,
+    cashflow: (filter?: Filter) => ['finance', 'cashflow', filter] as const,
   },
 
   dashboard: {
@@ -64,6 +66,7 @@ export const queryKeys = {
     all: () => ['shifts'] as const,
     list: (filter?: Filter) => ['shifts', 'list', filter] as const,
     active: () => ['shifts', 'active'] as const,
+    detail: (id: number) => ['shifts', 'detail', id] as const,
   },
 
   settings: {

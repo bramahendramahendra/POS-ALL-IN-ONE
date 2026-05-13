@@ -16,7 +16,7 @@ export function useReceivableListQuery(filter?: ReceivableFilter) {
 
 export function useReceivableDetailQuery(id: number) {
   return useQuery({
-    queryKey: ['receivables', 'detail', id],
+    queryKey: queryKeys.receivables.detail(id),
     queryFn: () => api.get<Receivable>(`/receivables/${id}`),
     enabled: id > 0,
   })
@@ -29,7 +29,7 @@ export function useAddPaymentMutation(receivableId: number) {
       api.post<Receivable>(`/receivables/${receivableId}/payments`, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.receivables.all() })
-      qc.invalidateQueries({ queryKey: ['receivables', 'detail', receivableId] })
+      qc.invalidateQueries({ queryKey: queryKeys.receivables.detail(receivableId) })
       toast.success('Pembayaran berhasil dicatat')
     },
     onError: (e: Error) => toast.error(e.message),

@@ -23,7 +23,7 @@ export function useActiveShiftQuery() {
 
 export function useShiftDetailQuery(id: number) {
   return useQuery({
-    queryKey: ['shifts', 'detail', id],
+    queryKey: queryKeys.shifts.detail(id),
     queryFn: () => api.get<Shift>(`/shifts/${id}`),
     enabled: id > 0,
   })
