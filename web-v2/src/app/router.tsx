@@ -4,6 +4,7 @@ import { LoginPage, ProtectedRoute, RootRedirect } from '@/features/auth'
 import { CashierPage } from '@/features/sales/cashier'
 import { TransactionsPage } from '@/features/sales/transactions'
 import { CustomersPage } from '@/features/customers'
+import { DashboardPage } from '@/features/reporting/dashboard'
 import { FinancePage } from '@/features/finance/overview'
 import { ReceivablesPage } from '@/features/finance/receivables'
 import { ProductsPage } from '@/features/inventory/products'
@@ -39,7 +40,7 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute allowedRoles={[...MANAGEMENT_ROLES]} />,
     children: [
-      { path: ROUTES.DASHBOARD, element: <Placeholder name="Dashboard" /> },
+      { path: ROUTES.DASHBOARD, element: <DashboardPage /> },
       { path: ROUTES.PRODUCTS, element: <ProductsPage /> },
       { path: ROUTES.SUPPLIERS, element: <SuppliersPage /> },
       { path: ROUTES.TRANSACTIONS, element: <TransactionsPage /> },
