@@ -5,6 +5,7 @@ import { CashierPage } from '@/features/sales/cashier'
 import { TransactionsPage } from '@/features/sales/transactions'
 import { CustomersPage } from '@/features/customers'
 import { DashboardPage } from '@/features/reporting/dashboard'
+import { ReportsPage } from '@/features/reporting/reports'
 import { FinancePage } from '@/features/finance/overview'
 import { ReceivablesPage } from '@/features/finance/receivables'
 import { ProductsPage } from '@/features/inventory/products'
@@ -47,7 +48,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.CUSTOMERS, element: <CustomersPage /> },
       { path: ROUTES.RECEIVABLES, element: <ReceivablesPage /> },
       { path: ROUTES.FINANCE, element: <FinancePage /> },
-      { path: ROUTES.REPORTS, element: <Placeholder name="Reports" /> },
+      { path: ROUTES.REPORTS, element: <ReportsPage /> },
       { path: ROUTES.SHIFTS, element: <Placeholder name="Shifts" /> },
       { path: ROUTES.SYNC, element: <Placeholder name="Sync" /> },
     ],
