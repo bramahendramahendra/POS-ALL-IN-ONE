@@ -35,7 +35,7 @@
   body {
     font-family: var(--font-sans);
     background-color: var(--color-bg);
-    color: var(--color-primary);
+    color: hsl(var(--foreground));
     margin: 0;
   }
   ::-webkit-scrollbar {
