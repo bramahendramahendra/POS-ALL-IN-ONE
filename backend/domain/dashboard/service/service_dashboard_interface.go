@@ -8,4 +8,5 @@ type DashboardService interface {
 	GetTopProducts(filter dto_dashboard.DateRangeFilter) ([]dto_dashboard.TopProductItem, error)
 	GetTopCategories(filter dto_dashboard.DateRangeFilter) ([]dto_dashboard.TopCategoryItem, error)
 	GetPaymentMethods(filter dto_dashboard.DateRangeFilter) ([]dto_dashboard.PaymentMethodItem, error)
+	GetSummaryExtra(period string) (*dto_dashboard.SummaryExtraResponse, error)
 }

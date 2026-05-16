@@ -21,5 +21,6 @@ func DashboardRoutes(r *gin.RouterGroup) {
 		g.GET("/top-products", dashboardHand.GetTopProducts)
 		g.GET("/top-categories", dashboardHand.GetTopCategories)
 		g.GET("/payment-methods", dashboardHand.GetPaymentMethods)
+		g.GET("/summary-extra", dashboardHand.GetSummaryExtra)
 	}
 }

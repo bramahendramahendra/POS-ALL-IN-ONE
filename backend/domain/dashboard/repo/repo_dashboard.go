@@ -72,6 +72,27 @@ const (
 
 	lowStockCountQuery        = `SELECT COUNT(*) FROM products WHERE stock <= min_stock AND is_active = 1`
 	openReceivablesCountQuery = `SELECT COUNT(*) FROM receivables WHERE status != 'paid'`
+
+	highestTransactionQuery = `
+		SELECT COALESCE(MAX(total_amount),0) as total_amount, COALESCE(transaction_code,'') as transaction_code
+		FROM transactions
+		WHERE transaction_date BETWEEN ? AND ? AND status = 'completed'
+		ORDER BY total_amount DESC LIMIT 1`
+
+	peakHourQuery = `
+		SELECT COALESCE(sub.hour, 0) as hour, COALESCE(sub.count, 0) as count
+		FROM (
+			SELECT HOUR(transaction_date) as hour, COUNT(*) as count
+			FROM transactions
+			WHERE transaction_date BETWEEN ? AND ? AND status = 'completed'
+			GROUP BY HOUR(transaction_date)
+			ORDER BY count DESC LIMIT 1
+		) sub RIGHT JOIN (SELECT 1) dummy ON 1=1`
+
+	avgTransactionQuery = `
+		SELECT COALESCE(AVG(total_amount),0) as avg_amount, COUNT(*) as total_count
+		FROM transactions
+		WHERE transaction_date BETWEEN ? AND ? AND status = 'completed'`
 )
 
 type dashboardRepo struct {
@@ -210,4 +231,40 @@ func (r *dashboardRepo) GetPaymentMethods(filter dto_dashboard.DateRangeFilter) 
 		items = append(items, item)
 	}
 	return items, nil
+}
+
+func (r *dashboardRepo) GetHighestTransaction(filter dto_dashboard.DateRangeFilter) (*dto_dashboard.HighestTransactionItem, error) {
+	var result dto_dashboard.HighestTransactionItem
+	row := r.db.Raw(highestTransactionQuery, filter.StartDate, filter.EndDate).Row()
+	if err := row.Scan(&result.TotalAmount, &result.TransactionCode); err != nil {
+		return nil, fmt.Errorf("GetHighestTransaction: %w", err)
+	}
+	if result.TransactionCode == "" {
+		return nil, nil
+	}
+	return &result, nil
+}
+
+func (r *dashboardRepo) GetPeakHour(filter dto_dashboard.DateRangeFilter) (*dto_dashboard.PeakHourItem, error) {
+	var result dto_dashboard.PeakHourItem
+	row := r.db.Raw(peakHourQuery, filter.StartDate, filter.EndDate).Row()
+	if err := row.Scan(&result.Hour, &result.Count); err != nil {
+		return nil, fmt.Errorf("GetPeakHour: %w", err)
+	}
+	if result.Count == 0 {
+		return nil, nil
+	}
+	return &result, nil
+}
+
+func (r *dashboardRepo) GetAvgTransaction(filter dto_dashboard.DateRangeFilter) (*dto_dashboard.AvgTransactionItem, error) {
+	var result dto_dashboard.AvgTransactionItem
+	row := r.db.Raw(avgTransactionQuery, filter.StartDate, filter.EndDate).Row()
+	if err := row.Scan(&result.AvgAmount, &result.TotalCount); err != nil {
+		return nil, fmt.Errorf("GetAvgTransaction: %w", err)
+	}
+	if result.TotalCount == 0 {
+		return nil, nil
+	}
+	return &result, nil
 }

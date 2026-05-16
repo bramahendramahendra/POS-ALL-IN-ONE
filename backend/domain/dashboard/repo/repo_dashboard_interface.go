@@ -13,4 +13,7 @@ type DashboardRepo interface {
 	GetTopProducts(filter dto_dashboard.DateRangeFilter) ([]dto_dashboard.TopProductItem, error)
 	GetTopCategories(filter dto_dashboard.DateRangeFilter) ([]dto_dashboard.TopCategoryItem, error)
 	GetPaymentMethods(filter dto_dashboard.DateRangeFilter) ([]dto_dashboard.PaymentMethodItem, error)
+	GetHighestTransaction(filter dto_dashboard.DateRangeFilter) (*dto_dashboard.HighestTransactionItem, error)
+	GetPeakHour(filter dto_dashboard.DateRangeFilter) (*dto_dashboard.PeakHourItem, error)
+	GetAvgTransaction(filter dto_dashboard.DateRangeFilter) (*dto_dashboard.AvgTransactionItem, error)
 }

@@ -113,6 +113,22 @@ func (h *DashboardHandler) GetTopCategories(c *gin.Context) {
 	})
 }
 
+// GET /api/dashboard/summary-extra
+func (h *DashboardHandler) GetSummaryExtra(c *gin.Context) {
+	period := c.DefaultQuery("period", "today")
+	result, err := h.service.GetSummaryExtra(period)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
+		Code:    helper.StatusOk,
+		Status:  true,
+		Message: "Success",
+		Data:    result,
+	})
+}
+
 // GET /api/dashboard/payment-methods
 func (h *DashboardHandler) GetPaymentMethods(c *gin.Context) {
 	now := time.Now()
