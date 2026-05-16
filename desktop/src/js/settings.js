@@ -42,8 +42,8 @@ async function loadSettings() {
       return;
     }
 
-    currentSettings = res.settings;
-    applySettingsToForm(res.settings);
+    currentSettings = res.data ?? res.settings ?? {};
+    applySettingsToForm(currentSettings);
   } catch (e) {
     console.error('loadSettings error:', e);
     Toast.error('Terjadi kesalahan saat memuat pengaturan');

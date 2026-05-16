@@ -67,7 +67,7 @@ async function loadSummary() {
     if (!result.success) { showToast(result.message, 'error'); return; }
 
     const search = document.getElementById('searchSummary').value.trim().toLowerCase();
-    let data = result.data;
+    let data = result.data ?? [];
     if (search) {
       data = data.filter(r =>
         r.name.toLowerCase().includes(search) ||
@@ -125,7 +125,7 @@ async function loadCustomerDropdown() {
     const result = await apiClient.get('/customers/active');
     if (!result.success) return;
     const select = document.getElementById('filterDetailCustomer');
-    result.data.forEach(c => {
+    (result.data ?? []).forEach(c => {
       const opt = document.createElement('option');
       opt.value = c.id;
       opt.textContent = `${c.customer_code} - ${c.name}`;
@@ -147,7 +147,7 @@ async function loadDetail() {
   try {
     const result = await apiClient.get('/receivables', params);
     if (!result.success) { showToast(result.message, 'error'); return; }
-    renderDetail(result.data.items);
+    renderDetail(result.data.items ?? []);
   } catch (error) {
     console.error('loadDetail error:', error);
     showToast('Terjadi kesalahan', 'error');

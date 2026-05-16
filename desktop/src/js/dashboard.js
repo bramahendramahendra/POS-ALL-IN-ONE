@@ -78,13 +78,13 @@ async function loadDashboardStats() {
     const res = await apiClient.get('/dashboard/stats');
     if (!res.success) return;
 
-    const s = res.data;
+    const s = res.data ?? {};
 
-    setStatValue('statTodaySales',        formatCurrency(s.today_sales));
-    setStatValue('statTodayTransactions', s.today_transactions.toLocaleString('id-ID'));
-    setStatValue('statTotalProducts',     s.total_products.toLocaleString('id-ID'));
-    setStatValue('statMonthSales',        formatCurrency(s.month_sales));
-    setStatValue('statTotalUsers',        s.total_users.toLocaleString('id-ID'));
+    setStatValue('statTodaySales',        formatCurrency(s.today_sales ?? 0));
+    setStatValue('statTodayTransactions', (s.today_transactions ?? 0).toLocaleString('id-ID'));
+    setStatValue('statTotalProducts',     (s.total_products ?? 0).toLocaleString('id-ID'));
+    setStatValue('statMonthSales',        formatCurrency(s.month_sales ?? 0));
+    setStatValue('statTotalUsers',        (s.total_users ?? 0).toLocaleString('id-ID'));
 
     const lowTotal = (s.low_stock || 0) + (s.empty_stock || 0);
     setStatValue('statLowStock', lowTotal.toLocaleString('id-ID'));
@@ -189,7 +189,7 @@ async function loadChartSalesTrend() {
     const res = await apiClient.get('/dashboard/sales-trend', { period: currentPeriod });
     if (!res.success) return;
 
-    const { labels, currentTotals, previousTotals, currentCounts } = res.data;
+    const { labels = [], currentTotals = [], previousTotals = [], currentCounts = [] } = res.data ?? {};
 
     const displayLabels = labels.map(d => {
       const dt = new Date(d + 'T00:00:00');
@@ -473,7 +473,7 @@ async function loadChartPaymentMethods() {
 async function loadSummaryExtra() {
   try {
     const res = await apiClient.get('/dashboard/summary-extra', { period: currentPeriod });
-    if (!res.success) return;
+    if (!res || !res.success) return;
 
     const { highest, peakHour, avg } = res.data || {};
 

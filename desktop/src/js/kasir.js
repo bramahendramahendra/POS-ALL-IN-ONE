@@ -386,12 +386,12 @@ function clearCart() {
 
 async function loadCustomerList() {
   try {
-    const result = await window.api.customers.getActiveList();
+    const result = await apiClient.get('/customers/active');
     if (!result.success) return;
     const select = document.getElementById('customerSelect');
     // Hapus semua option kecuali pertama
     while (select.options.length > 1) select.remove(1);
-    result.customers.forEach(c => {
+    (result.data ?? []).forEach(c => {
       const opt = document.createElement('option');
       opt.value = c.id;
       opt.textContent = `${c.customer_code} - ${c.name}`;

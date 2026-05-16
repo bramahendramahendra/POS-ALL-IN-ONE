@@ -76,10 +76,10 @@ function setupEventListeners() {
 
 async function loadUsers() {
   try {
-    const result = await window.api.users.getAll();
-    
+    const result = await apiClient.get('/users');
+
     if (result.success) {
-      allUsers = result.data;
+      allUsers = result.data ?? [];
       populateCashierFilter();
     }
   } catch (error) {

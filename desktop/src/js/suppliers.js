@@ -71,7 +71,7 @@ async function loadSuppliers() {
     });
 
     if (result.success) {
-      allSuppliers = result.data.items;
+      allSuppliers = result.data.items ?? [];
       renderSuppliersTable(allSuppliers);
       updateStats(allSuppliers);
     } else {

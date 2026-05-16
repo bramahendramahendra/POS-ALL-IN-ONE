@@ -372,7 +372,7 @@ async function loadCashDrawerHistory() {
     });
 
     if (result.success) {
-      allCashDrawers = result.history;
+      allCashDrawers = result.history || [];
       renderCashDrawerTable(allCashDrawers);
     } else {
       showToast('Gagal memuat riwayat kas', 'error');
@@ -1808,7 +1808,7 @@ async function loadReturns() {
     const result = await apiClient.get('/supplier-returns', filters);
 
     if (result.success) {
-      allReturns = result.returns;
+      allReturns = result.returns || [];
       renderReturnsTable(allReturns);
       updateReturnsSummary(allReturns);
     } else {
@@ -1885,7 +1885,7 @@ async function loadReturnSupplierFilter() {
     if (result.success) {
       const select = document.getElementById('returnFilterSupplier');
       select.innerHTML = '<option value="">Semua Supplier</option>';
-      result.data.forEach(s => {
+      (result.data || []).forEach(s => {
         const opt = document.createElement('option');
         opt.value = s.id;
         opt.textContent = s.name;

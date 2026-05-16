@@ -101,7 +101,7 @@ async function loadUserDropdowns() {
     ['salesUserFilter', 'cashierUserFilter'].forEach(id => {
       const sel = document.getElementById(id);
       if (!sel) return;
-      res.users.forEach(u => {
+      (res.data ?? res.users ?? []).forEach(u => {
         const opt = document.createElement('option');
         opt.value = u.id;
         opt.textContent = u.full_name + ' (' + u.role + ')';
@@ -206,8 +206,9 @@ function renderSalesChart(chartData) {
   const ctx = document.getElementById('salesLineChart').getContext('2d');
   if (salesChartInstance) salesChartInstance.destroy();
 
-  const labels = chartData.map(d => formatDateShort(d.date));
-  const values = chartData.map(d => d.total);
+  const safeData = chartData ?? [];
+  const labels = safeData.map(d => formatDateShort(d.date));
+  const values = safeData.map(d => d.total);
 
   salesChartInstance = new Chart(ctx, {
     type: 'line',
