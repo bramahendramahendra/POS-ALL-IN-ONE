@@ -25,11 +25,12 @@ class ConnectionMonitor {
 
     async _pingBackend() {
         try {
-            const res = await fetch(`${this.backendUrl}/health`, {
+            const res = await fetch(`${this.backendUrl}/api/health`, {
                 method: 'GET',
                 signal: AbortSignal.timeout(3000)
             });
-            this._handleChange(res.ok);
+            // Backend reachable jika ada response (status apapun), bukan network error
+            this._handleChange(res.status < 500);
         } catch {
             this._handleChange(false);
         }

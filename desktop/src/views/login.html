@@ -98,16 +98,16 @@
         hideError();
 
         try {
-          const data = await apiClient.post('/auth/login', {
+          const result = await apiClient.post('/auth/login', {
             username,
             password,
             device_info: 'desktop'
           });
 
           console.log('Login successful');
-          apiClient.setToken(data.token);
-          localStorage.setItem('refresh_token', data.refresh_token);
-          localStorage.setItem('user', JSON.stringify(data.user));
+          apiClient.setToken(result.data.token);
+          localStorage.setItem('refresh_token', result.data.refresh_token);
+          localStorage.setItem('user', JSON.stringify(result.data.user));
           window.location.href = 'dashboard.html';
         } catch (error) {
           console.error('Login error:', error);

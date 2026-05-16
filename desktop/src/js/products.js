@@ -182,7 +182,7 @@ async function loadCategories() {
     const result = await apiClient.get('/categories');
 
     if (result.success) {
-      allCategories = result.categories;
+      allCategories = result.data;
       renderCategoriesTable(allCategories);
       populateCategoryDropdowns();
     } else {
@@ -266,7 +266,7 @@ async function editCategory(categoryId) {
     const result = await apiClient.get(`/categories/${categoryId}`);
     
     if (result.success) {
-      const category = result.category;
+      const category = result.data;
       editingCategoryId = categoryId;
       
       document.getElementById('categoryModalTitle').textContent = 'Edit Kategori';
@@ -402,7 +402,7 @@ async function loadProducts() {
     const result = await apiClient.get('/products');
 
     if (result.success) {
-      allProducts = result.products;
+      allProducts = result.data.items ?? result.data;
       renderProductsTable(allProducts);
     } else {
       showToast('Gagal memuat data produk', 'error');
@@ -551,7 +551,7 @@ async function editProduct(productId) {
     const result = await apiClient.get(`/products/${productId}`);
 
     if (result.success) {
-      const product = result.product;
+      const product = result.data;
       editingProductId = productId;
 
       document.getElementById('productModalTitle').textContent = 'Edit Produk';
@@ -672,7 +672,7 @@ async function saveProduct(formData) {
 
     if (result.success) {
       // Save product units if any
-      const savedProductId = editingProductId || result.productId;
+      const savedProductId = editingProductId || result.data?.id;
       if (savedProductId && productUnitRows.length > 0) {
         await apiClient.post(`/products/${savedProductId}/units`, { units: productUnitRows });
       }
@@ -758,7 +758,7 @@ async function loadUnits() {
   try {
     const result = await apiClient.get('/units');
     if (result.success) {
-      allUnits = result.units;
+      allUnits = result.data;
       renderUnitsTable(allUnits);
     } else {
       showToast('Gagal memuat data satuan', 'error');
@@ -812,7 +812,7 @@ async function editUnit(unitId) {
   try {
     const result = await apiClient.get(`/units/${unitId}`);
     if (result.success) {
-      const unit = result.unit;
+      const unit = result.data;
       editingUnitId = unitId;
       document.getElementById('unitModalTitle').textContent = 'Edit Satuan';
       document.getElementById('unitId').value = unit.id;
@@ -925,7 +925,7 @@ async function loadProductUnitsForEdit(productId, baseUnit, basePrice) {
   try {
     const result = await apiClient.get(`/products/${productId}/units`);
     if (result.success) {
-      productUnitRows = result.units.map(u => ({
+      productUnitRows = result.data.map(u => ({
         id: u.id,
         unit_id: u.unit_id,
         unit_name: u.unit_name,
@@ -1172,7 +1172,7 @@ let ppEditIndex = null;
 async function loadProductPricesForEdit(productId) {
   try {
     const result = await apiClient.get(`/products/${productId}/prices`);
-    productPriceRows = result.success ? result.prices.map(p => ({
+    productPriceRows = result.success ? result.data.map(p => ({
       tier_name: p.tier_name,
       min_qty: p.min_qty,
       price: p.price

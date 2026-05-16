@@ -20,7 +20,7 @@ const PAGE_SIZE = 10
 
 export function ReceivablesPage() {
   const [search, setSearch] = useState('')
-  const [status, setStatus] = useState<ReceivableStatus | ''>('')
+  const [status, setStatus] = useState<ReceivableStatus | 'all'>('all')
   const [page, setPage] = useState(1)
   const [payTarget, setPayTarget] = useState<Receivable | null>(null)
 
@@ -28,7 +28,7 @@ export function ReceivablesPage() {
 
   const filter: ReceivableFilter = {
     search: debouncedSearch || undefined,
-    status: status || undefined,
+    status: status === 'all' ? undefined : status,
     page,
     page_size: PAGE_SIZE,
   }
@@ -55,7 +55,7 @@ export function ReceivablesPage() {
         <Select
           value={status}
           onValueChange={(v) => {
-            setStatus(v as ReceivableStatus | '')
+            setStatus(v as ReceivableStatus | 'all')
             setPage(1)
           }}
         >
@@ -63,7 +63,7 @@ export function ReceivablesPage() {
             <SelectValue placeholder="Semua Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Semua</SelectItem>
+            <SelectItem value="all">Semua</SelectItem>
             <SelectItem value="unpaid">Belum Lunas</SelectItem>
             <SelectItem value="partial">Sebagian</SelectItem>
             <SelectItem value="paid">Lunas</SelectItem>

@@ -283,7 +283,7 @@ async function checkCurrentCashDrawer() {
     const result = await apiClient.get('/cash-drawer/current');
 
     if (result.success) {
-      currentCashDrawer = result.cashDrawer;
+      currentCashDrawer = result.data;
       renderCashStatus(currentCashDrawer);
     } else {
       showToast('Gagal memuat status kas', 'error');
@@ -604,7 +604,7 @@ async function openDetailCashDrawer(cashDrawerId) {
     const result = await apiClient.get(`/cash-drawer/${cashDrawerId}`);
 
     if (result.success) {
-      displayCashDrawerDetail(result.cashDrawer);
+      displayCashDrawerDetail(result.data);
       document.getElementById('detailCashModal').style.display = 'flex';
     } else {
       showToast('Gagal memuat detail kas', 'error');
@@ -767,12 +767,12 @@ function closeDetailCashModal() {
 
 async function loadShiftsFilterDropdown() {
   try {
-    const result = await window.api.shifts.getAll();
+    const result = await apiClient.get('/shifts');
     if (!result.success) return;
 
     const select = document.getElementById('cashFilterShift');
     if (!select) return;
-    result.shifts.forEach(s => {
+    result.data.forEach(s => {
       const opt = document.createElement('option');
       opt.value = s.id;
       opt.textContent = `${s.name} (${s.start_time}-${s.end_time})`;
@@ -799,14 +799,14 @@ async function loadShiftSummary() {
       endDate = range.endDate;
     }
 
-    const result = await window.api.shifts.getSummary({ startDate, endDate });
+    const result = await apiClient.get('/shifts/summary', { start_date: startDate, end_date: endDate });
 
     if (!result.success) {
       container.innerHTML = '<p class="text-center text-danger">Gagal memuat ringkasan shift</p>';
       return;
     }
 
-    const summary = result.summary;
+    const summary = result.data;
 
     if (summary.length === 0) {
       container.innerHTML = '<p class="text-center">Tidak ada data shift untuk periode ini</p>';
@@ -891,7 +891,7 @@ async function loadExpenses() {
     });
 
     if (result.success) {
-      allExpenses = result.expenses;
+      allExpenses = result.data.items;
       renderExpensesTable(allExpenses);
       updateExpensesTotal(allExpenses);
     } else {
@@ -985,7 +985,7 @@ async function editExpense(expenseId) {
     const result = await apiClient.get(`/expenses/${expenseId}`);
 
     if (result.success) {
-      const expense = result.expense;
+      const expense = result.data;
       editingExpenseId = expenseId;
 
       document.getElementById('expenseModalTitle').textContent = 'Edit Pengeluaran';
@@ -1147,10 +1147,11 @@ function showExpenseFormError(message) {
 
 async function loadProducts() {
   try {
-    const result = await window.api.products.getAll();
+    const result = await apiClient.get('/products', { limit: 1000 });
 
     if (result.success) {
-      allProducts = result.products.filter(p => p.is_active === 1);
+      const items = result.data.items ?? result.data;
+      allProducts = items.filter(p => p.is_active === 1 || p.is_active === true);
       populateProductDropdown();
     }
   } catch (error) {
@@ -1196,7 +1197,7 @@ async function loadPurchases() {
     });
 
     if (result.success) {
-      allPurchases = result.purchases;
+      allPurchases = result.data.items;
       renderPurchasesTable(allPurchases);
       updatePurchasesSummary(allPurchases);
     } else {
@@ -1214,9 +1215,9 @@ async function loadPurchases() {
 
 async function loadSuppliersDropdown() {
   try {
-    const result = await window.api.suppliers.getActiveList();
+    const result = await apiClient.get('/suppliers/active');
     if (result.success) {
-      suppliersCache = result.suppliers;
+      suppliersCache = result.data;
     }
   } catch (error) {
     console.error('loadSuppliersDropdown error:', error);
@@ -1559,7 +1560,7 @@ async function openPayPurchaseModal(purchaseId) {
     const result = await apiClient.get(`/purchases/${purchaseId}`);
 
     if (result.success) {
-      const purchase = result.purchase;
+      const purchase = result.data;
 
       if (purchase.payment_status === 'paid') {
         showToast('Pembelian sudah lunas', 'info');
@@ -1650,7 +1651,7 @@ async function openDetailPurchase(purchaseId) {
     const result = await apiClient.get(`/purchases/${purchaseId}`);
 
     if (result.success) {
-      displayPurchaseDetail(result.purchase);
+      displayPurchaseDetail(result.data);
       document.getElementById('detailPurchaseModal').style.display = 'flex';
     } else {
       showToast('Gagal memuat detail pembelian', 'error');
@@ -1863,7 +1864,7 @@ async function loadPurchasesForReturn() {
   try {
     const result = await apiClient.get('/purchases', {});
     if (result.success) {
-      purchasesForReturn = result.purchases;
+      purchasesForReturn = result.data.items;
       const select = document.getElementById('returnPurchaseId');
       select.innerHTML = '<option value="">-- Pilih PO --</option>';
       purchasesForReturn.forEach(p => {
@@ -1880,11 +1881,11 @@ async function loadPurchasesForReturn() {
 
 async function loadReturnSupplierFilter() {
   try {
-    const result = await window.api.suppliers.getActiveList();
+    const result = await apiClient.get('/suppliers/active');
     if (result.success) {
       const select = document.getElementById('returnFilterSupplier');
       select.innerHTML = '<option value="">Semua Supplier</option>';
-      result.suppliers.forEach(s => {
+      result.data.forEach(s => {
         const opt = document.createElement('option');
         opt.value = s.id;
         opt.textContent = s.name;
@@ -1928,7 +1929,7 @@ async function handleReturnPurchaseChange() {
   try {
     const result = await apiClient.get(`/purchases/${parseInt(purchaseId)}/items`);
     if (result.success) {
-      const purchase = result.purchase;
+      const purchase = result.data;
       returnPurchaseItems = result.items;
 
       // Show supplier info

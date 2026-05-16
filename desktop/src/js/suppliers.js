@@ -3,7 +3,6 @@
 // src/js/suppliers.js
 // ============================================
 
-const { apiClient } = window;
 
 let currentUser = null;
 let allSuppliers = [];
@@ -72,7 +71,7 @@ async function loadSuppliers() {
     });
 
     if (result.success) {
-      allSuppliers = result.suppliers;
+      allSuppliers = result.data.items;
       renderSuppliersTable(allSuppliers);
       updateStats(allSuppliers);
     } else {
@@ -202,7 +201,7 @@ async function editSupplier(id) {
       return;
     }
 
-    const s = result.supplier;
+    const s = result.data;
     editingSupplierId = id;
 
     document.getElementById('supplierModalTitle').textContent = 'Edit Supplier';

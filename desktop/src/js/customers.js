@@ -1,5 +1,4 @@
 // customers.js - Master Data Pelanggan
-const { apiClient } = window;
 let currentUser = null;
 let deleteTargetId = null;
 
@@ -47,7 +46,7 @@ async function loadCustomers() {
     if (is_active !== '') params.is_active = parseInt(is_active);
     const result = await apiClient.get('/customers', params);
     if (result.success) {
-      renderTable(result.customers);
+      renderTable(result.data.items);
     } else {
       showToast(result.message || 'Gagal memuat data', 'error');
     }
@@ -107,7 +106,7 @@ async function openEditModal(id) {
     const result = await apiClient.get(`/customers/${id}`);
     if (!result.success) { showToast(result.message, 'error'); return; }
 
-    const c = result.customer;
+    const c = result.data;
     document.getElementById('customerModalTitle').textContent = 'Edit Pelanggan';
     document.getElementById('customerId').value = c.id;
     document.getElementById('customerCode').value = c.customer_code;
@@ -130,7 +129,7 @@ function closeCustomerModal() {
 async function generateCustomerCode() {
   try {
     const result = await apiClient.get('/customers');
-    const count = result.success ? result.customers.length + 1 : 1;
+    const count = result.success ? result.data.items.length + 1 : 1;
     document.getElementById('customerCode').value = `PLG-${String(count).padStart(3, '0')}`;
   } catch (e) {
     document.getElementById('customerCode').value = `PLG-001`;

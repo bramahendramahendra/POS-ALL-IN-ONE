@@ -5,7 +5,6 @@
 
 'use strict';
 
-const { apiClient } = window;
 
 // ---- State ----
 let salesData       = { transactions: [], summary: {}, chartData: [] };

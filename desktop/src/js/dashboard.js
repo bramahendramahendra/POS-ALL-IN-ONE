@@ -5,8 +5,6 @@
 
 'use strict';
 
-const { apiClient } = window;
-
 // ---- Chart instances ----
 let chartSalesTrend    = null;
 let chartTopCategories = null;
@@ -80,7 +78,7 @@ async function loadDashboardStats() {
     const res = await apiClient.get('/dashboard/stats');
     if (!res.success) return;
 
-    const s = res.stats;
+    const s = res.data;
 
     setStatValue('statTodaySales',        formatCurrency(s.today_sales));
     setStatValue('statTodayTransactions', s.today_transactions.toLocaleString('id-ID'));
@@ -191,7 +189,7 @@ async function loadChartSalesTrend() {
     const res = await apiClient.get('/dashboard/sales-trend', { period: currentPeriod });
     if (!res.success) return;
 
-    const { labels, currentTotals, previousTotals, currentCounts } = res;
+    const { labels, currentTotals, previousTotals, currentCounts } = res.data;
 
     const displayLabels = labels.map(d => {
       const dt = new Date(d + 'T00:00:00');
@@ -290,7 +288,7 @@ async function loadChartTopCategories() {
     const res = await apiClient.get('/dashboard/top-categories', { period: currentPeriod });
     if (!res.success) return;
 
-    const rows = res.rows || [];
+    const rows = (res.data?.rows) || [];
     const labels = rows.map(r => r.category || 'Tanpa Kategori');
     const data   = rows.map(r => r.total);
     const colors = ['#3498db','#2ecc71','#e74c3c','#f39c12','#9b59b6'];
@@ -346,7 +344,7 @@ async function loadChartTopProducts() {
     const res = await apiClient.get('/dashboard/top-products', { period: currentPeriod, mode: productMode });
     if (!res.success) return;
 
-    const rows = res.rows || [];
+    const rows = (res.data?.rows) || [];
     const labels = rows.map(r => truncateLabel(r.product, 22));
     const data   = productMode === 'value' ? rows.map(r => r.total) : rows.map(r => r.qty);
 
@@ -418,7 +416,7 @@ async function loadChartPaymentMethods() {
     const res = await apiClient.get('/dashboard/payment-methods', { period: currentPeriod });
     if (!res.success) return;
 
-    const rows = res.rows || [];
+    const rows = (res.data?.rows) || [];
     const labels = rows.map(r => formatPaymentMethod(r.payment_method));
     const data   = rows.map(r => r.total);
     const colors = ['#27ae60','#3498db','#e67e22','#9b59b6','#e74c3c','#1abc9c'];
@@ -477,7 +475,7 @@ async function loadSummaryExtra() {
     const res = await apiClient.get('/dashboard/summary-extra', { period: currentPeriod });
     if (!res.success) return;
 
-    const { highest, peakHour, avg } = res;
+    const { highest, peakHour, avg } = res.data || {};
 
     // Transaksi tertinggi
     if (highest) {

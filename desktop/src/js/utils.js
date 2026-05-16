@@ -4,7 +4,7 @@
 
 // Get current user from localStorage
 function getCurrentUser() {
-  const userStr = localStorage.getItem('currentUser');
+  const userStr = localStorage.getItem('user');
   if (userStr) {
     try {
       return JSON.parse(userStr);

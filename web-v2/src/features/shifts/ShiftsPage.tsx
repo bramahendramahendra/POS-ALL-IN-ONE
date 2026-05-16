@@ -33,7 +33,7 @@ function formatDateTime(str: string): string {
 export function ShiftsPage() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
-  const [status, setStatus] = useState<ShiftStatus | ''>('')
+  const [status, setStatus] = useState<ShiftStatus | 'all'>('all')
   const [page, setPage] = useState(1)
   const [openShiftOpen, setOpenShiftOpen] = useState(false)
   const [closeTarget, setCloseTarget] = useState<Shift | null>(null)
@@ -43,7 +43,7 @@ export function ShiftsPage() {
   const filter: ShiftFilter = {
     date_from: dateFrom || undefined,
     date_to: dateTo || undefined,
-    status: status || undefined,
+    status: status === 'all' ? undefined : status,
     page,
     page_size: PAGE_SIZE,
   }
@@ -107,7 +107,7 @@ export function ShiftsPage() {
         <Select
           value={status}
           onValueChange={(v) => {
-            setStatus(v as ShiftStatus | '')
+            setStatus(v as ShiftStatus | 'all')
             setPage(1)
           }}
         >
@@ -115,7 +115,7 @@ export function ShiftsPage() {
             <SelectValue placeholder="Semua Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Semua</SelectItem>
+            <SelectItem value="all">Semua</SelectItem>
             <SelectItem value="open">Berjalan</SelectItem>
             <SelectItem value="closed">Selesai</SelectItem>
           </SelectContent>

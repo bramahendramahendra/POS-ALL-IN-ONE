@@ -5,7 +5,6 @@
 
 'use strict';
 
-const { apiClient } = window;
 
 let currentSettings = {};
 let logoBase64 = '';

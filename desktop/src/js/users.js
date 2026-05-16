@@ -91,7 +91,7 @@ async function loadUsers() {
     const result = await apiClient.get('/users');
 
     if (result.success) {
-      allUsers = result.users;
+      allUsers = result.data;
       renderUsersTable(allUsers);
     } else {
       showToast('Gagal memuat data user', 'error');
@@ -188,7 +188,7 @@ async function editUser(userId) {
     const result = await apiClient.get(`/users/${userId}`);
     
     if (result.success) {
-      const user = result.user;
+      const user = result.data;
       editingUserId = userId;
       
       document.getElementById('modalTitle').textContent = 'Edit User';

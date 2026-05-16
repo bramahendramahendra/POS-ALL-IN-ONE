@@ -64,7 +64,7 @@ class ApiClient {
             if (!result.status) {
                 throw new Error(result.message || 'Terjadi kesalahan');
             }
-            return result.data;
+            return { success: true, data: result.data, message: result.message };
 
         } catch (error) {
             if (error.name === 'TypeError') {

@@ -60,10 +60,10 @@ function setupEventListeners() {
 
       if (keyword) {
         const result = await apiClient.get(`/products/barcode/${encodeURIComponent(keyword)}`);
-        if (result.success && result.product) {
+        if (result.success && result.data) {
           document.getElementById('productSearch').value = '';
           hideSuggestions();
-          await addToCartWithUnitSelect(result.product);
+          await addToCartWithUnitSelect(result.data);
         }
       }
     }
@@ -137,8 +137,8 @@ async function searchProduct(keyword) {
   try {
     const result = await apiClient.get('/products/search', { q: keyword, limit: 10 });
 
-    if (result.success && result.products.length > 0) {
-      showProductSuggestions(result.products);
+    if (result.success && result.data.length > 0) {
+      showProductSuggestions(result.data);
     } else {
       hideSuggestions();
     }
@@ -177,7 +177,7 @@ async function selectProduct(productId) {
     if (result.success) {
       document.getElementById('productSearch').value = '';
       hideSuggestions();
-      await addToCartWithUnitSelect(result.product);
+      await addToCartWithUnitSelect(result.data);
     }
   } catch (error) {
     console.error('Select product error:', error);

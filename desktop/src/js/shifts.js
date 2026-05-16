@@ -1,5 +1,4 @@
 // Shifts Management Page
-const { apiClient } = window;
 let currentUser = null;
 let allShifts = [];
 let editingShiftId = null;
@@ -43,7 +42,7 @@ async function loadShifts() {
   try {
     const result = await apiClient.get('/shifts');
     if (result.success) {
-      allShifts = result.shifts;
+      allShifts = result.data;
       renderShiftsTable(allShifts);
     } else {
       showToast('Gagal memuat data shift', 'error');
@@ -104,7 +103,7 @@ async function openEditShiftModal(id) {
       showToast('Gagal memuat data shift', 'error');
       return;
     }
-    const shift = result.shift;
+    const shift = result.data;
     editingShiftId = id;
 
     document.getElementById('shiftModalTitle').textContent = 'Edit Shift';

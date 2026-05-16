@@ -79,7 +79,7 @@ async function loadUsers() {
     const result = await window.api.users.getAll();
     
     if (result.success) {
-      allUsers = result.users;
+      allUsers = result.data;
       populateCashierFilter();
     }
   } catch (error) {
@@ -125,7 +125,7 @@ async function loadTransactions() {
     });
 
     if (result.success) {
-      allTransactions = result.transactions;
+      allTransactions = result.data.items;
       renderTransactionsTable(allTransactions);
       updateSummary(allTransactions);
       updatePagination();
@@ -214,7 +214,7 @@ async function openTransactionDetail(transactionId) {
     const result = await apiClient.get(`/transactions/${transactionId}`);
     
     if (result.success) {
-      const transaction = result.transaction;
+      const transaction = result.data;
       displayTransactionDetail(transaction);
       
       document.getElementById('detailModal').style.display = 'flex';

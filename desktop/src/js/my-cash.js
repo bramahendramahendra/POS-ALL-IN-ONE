@@ -76,10 +76,10 @@ async function loadShiftsDropdown() {
   try {
     const result = await apiClient.get('/shifts/active');
     if (result.success) {
-      shiftsCache = result.shifts;
+      shiftsCache = result.data;
       const select = document.getElementById('openShiftSelect');
       select.innerHTML = '<option value="">-- Pilih Shift --</option>' +
-        result.shifts.map(s =>
+        result.data.map(s =>
           `<option value="${s.id}">${escapeHtml(s.name)} (${s.start_time} - ${s.end_time})</option>`
         ).join('');
     }
@@ -104,7 +104,7 @@ async function checkCurrentCashDrawer() {
     const result = await apiClient.get('/cash-drawer/current');
 
     if (result.success) {
-      currentCashDrawer = result.cashDrawer;
+      currentCashDrawer = result.data;
       renderCashStatus(currentCashDrawer);
     } else {
       showToast('Gagal memuat status kas', 'error');
@@ -509,7 +509,7 @@ async function openDetailCashDrawer(cashDrawerId) {
     const result = await apiClient.get(`/cash-drawer/${cashDrawerId}`);
 
     if (result.success) {
-      displayCashDrawerDetail(result.cashDrawer);
+      displayCashDrawerDetail(result.data);
       document.getElementById('detailCashModal').style.display = 'flex';
     } else {
       showToast('Gagal memuat detail kas', 'error');

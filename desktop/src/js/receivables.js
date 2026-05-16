@@ -1,5 +1,4 @@
 // receivables.js - Halaman Piutang Pelanggan
-const { apiClient } = window;
 let currentUser = null;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -68,7 +67,7 @@ async function loadSummary() {
     if (!result.success) { showToast(result.message, 'error'); return; }
 
     const search = document.getElementById('searchSummary').value.trim().toLowerCase();
-    let data = result.summary;
+    let data = result.data;
     if (search) {
       data = data.filter(r =>
         r.name.toLowerCase().includes(search) ||
@@ -126,7 +125,7 @@ async function loadCustomerDropdown() {
     const result = await apiClient.get('/customers/active');
     if (!result.success) return;
     const select = document.getElementById('filterDetailCustomer');
-    result.customers.forEach(c => {
+    result.data.forEach(c => {
       const opt = document.createElement('option');
       opt.value = c.id;
       opt.textContent = `${c.customer_code} - ${c.name}`;
@@ -148,7 +147,7 @@ async function loadDetail() {
   try {
     const result = await apiClient.get('/receivables', params);
     if (!result.success) { showToast(result.message, 'error'); return; }
-    renderDetail(result.receivables);
+    renderDetail(result.data.items);
   } catch (error) {
     console.error('loadDetail error:', error);
     showToast('Terjadi kesalahan', 'error');
@@ -196,10 +195,13 @@ function getStatusBadge(status) {
 
 async function openPayModal(receivableId, viewOnly = false) {
   try {
-    const result = await apiClient.get(`/receivables/${receivableId}`);
+    const [result, paymentsResult] = await Promise.all([
+      apiClient.get(`/receivables/${receivableId}`),
+      apiClient.get(`/receivables/${receivableId}/payments`)
+    ]);
     if (!result.success) { showToast(result.message, 'error'); return; }
 
-    const r = result.receivable;
+    const r = result.data;
     document.getElementById('payReceivableId').value = receivableId;
     document.getElementById('payCustomerName').textContent = r.customer_name;
     document.getElementById('payTransactionCode').textContent = r.transaction_code;
@@ -221,7 +223,7 @@ async function openPayModal(receivableId, viewOnly = false) {
       document.getElementById('payAmount').dataset.remaining = r.remaining_amount;
     }
 
-    renderPaymentHistory(result.payments);
+    renderPaymentHistory(paymentsResult.success ? paymentsResult.data : []);
     document.getElementById('paymentModal').style.display = 'flex';
   } catch (error) {
     console.error('openPayModal error:', error);
