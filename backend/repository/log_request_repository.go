@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	insertLogRequest = `INSERT INTO log_request (request_id,request_header,request_body,response_header,response_body,status_code, response_message, insert_time) VALUES(?,?,?,?,?,?,?,?)`
+	insertLogRequest = `INSERT INTO log_requests (id, method, endpoint, status_code, request_body, response_body, user_id, duration_ms, ip_address, error_message, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 )
 
 var (
@@ -29,5 +29,17 @@ func NewLogRequestRepository(db *gorm.DB) *logRequestRepository {
 }
 
 func (lr *logRequestRepository) InsertLogRequest(data *model.LogRequestModel) error {
-	return lr.Db.Exec(insertLogRequest, data.RequestId, data.RequestHeader, data.RequestBody, data.ResponseHeader, data.ResponseBody, data.StatusCode, data.ResponseMessage, data.InsertTime).Error
+	return lr.Db.Exec(insertLogRequest,
+		data.Id,
+		data.Method,
+		data.Endpoint,
+		data.StatusCode,
+		data.RequestBody,
+		data.ResponseBody,
+		data.UserId,
+		data.DurationMs,
+		data.IpAddress,
+		data.ErrorMessage,
+		data.CreatedAt,
+	).Error
 }
