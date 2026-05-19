@@ -10,7 +10,7 @@ let pendingProduct = null;
 let productPricesCache = {};
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   console.log('Kasir page loaded');
 
   // Initialize page layout
@@ -19,6 +19,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   currentUser = getCurrentUser();
+
+  // Cek kas harian sebelum lanjut
+  const kasOk = await checkCashDrawerOnLoad();
+  if (!kasOk) return;
 
   // Load draft if exists
   loadDraft();
@@ -31,6 +35,37 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('productSearch').focus();
   }, 100);
 });
+
+// ============================================
+// CEK KAS HARIAN SAAT BUKA KASIR
+// ============================================
+
+async function checkCashDrawerOnLoad() {
+  try {
+    const result = await apiClient.get('/cash-drawer/current');
+    const isOpen = result.success && result.data && result.data.status === 'open';
+
+    if (isOpen) return true;
+
+    const role = currentUser?.role;
+
+    if (role === 'kasir') {
+      // Kasir wajib buka kas dulu — redirect ke my-cash
+      window.location.href = 'my-cash.html?redirect=kasir';
+      return false;
+    }
+
+    // Owner/admin: tampilkan warning banner saja, tetap bisa akses
+    const warning = document.getElementById('cashDrawerWarning');
+    if (warning) warning.style.display = 'flex';
+
+    return true;
+  } catch (error) {
+    console.error('checkCashDrawerOnLoad error:', error);
+    // Jika gagal cek (misal offline), biarkan kasir tetap bisa masuk
+    return true;
+  }
+}
 
 // ============================================
 // EVENT LISTENERS

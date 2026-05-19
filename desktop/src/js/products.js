@@ -26,6 +26,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Get current user
   currentUser = getCurrentUser();
 
+  // Apply kasir restrictions (read-only mode)
+  if (currentUser && currentUser.role === 'kasir') {
+    applyKasirReadOnlyMode();
+  }
+
   // Load data
   await loadCategories();
   await loadProducts();
@@ -34,6 +39,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Setup event listeners
   setupEventListeners();
 });
+
+// ============================================
+// KASIR READ-ONLY MODE
+// ============================================
+
+function applyKasirReadOnlyMode() {
+  // Sembunyikan tab Kategori dan Satuan
+  document.querySelectorAll('.tab-button[data-tab="categories"], .tab-button[data-tab="units"]').forEach(btn => {
+    btn.style.display = 'none';
+  });
+
+  // Sembunyikan tombol aksi di tab Produk
+  const btnAdd = document.getElementById('btnAddProduct');
+  if (btnAdd) btnAdd.style.display = 'none';
+
+  const btnBulkPrint = document.getElementById('btnBulkPrintLabel');
+  if (btnBulkPrint) btnBulkPrint.style.display = 'none';
+
+  // Sembunyikan kolom checkbox (select all) dari header tabel
+  const checkAllHeader = document.querySelector('#productsTable thead th:first-child');
+  if (checkAllHeader) checkAllHeader.style.display = 'none';
+}
 
 // ============================================
 // TAB MANAGEMENT
@@ -425,17 +452,52 @@ function renderProductsTable(products) {
     return;
   }
 
+  const isKasir = currentUser && currentUser.role === 'kasir';
+
   tbody.innerHTML = products.map(product => {
     const margin = calculateMargin(product.purchase_price, product.selling_price);
     const stockStatus = getStockStatus(product.stock, product.min_stock);
     const checked = selectedProductIds.has(product.id) ? 'checked' : '';
 
+    const checkboxCell = isKasir
+      ? `<td style="display:none;"></td>`
+      : `<td style="text-align:center;">
+           <input type="checkbox" class="product-row-check" data-id="${product.id}" ${checked}
+             onchange="onProductCheckChange(this)">
+         </td>`;
+
+    const actionButtons = isKasir
+      ? `<td class="action-buttons">
+           <button class="btn-icon" onclick="openSingleLabelPrint(${product.id})" title="Cetak Label">
+             🏷️
+           </button>
+         </td>`
+      : `<td class="action-buttons">
+           <button class="btn-icon" onclick="editProduct(${product.id})" title="Edit">
+             ✏️
+           </button>
+           <button class="btn-icon" onclick="openSingleLabelPrint(${product.id})" title="Cetak Label">
+             🏷️
+           </button>
+           <button
+             class="btn-icon"
+             onclick="toggleProductStatus(${product.id}, ${product.is_active})"
+             title="${product.is_active ? 'Nonaktifkan' : 'Aktifkan'}"
+           >
+             ${product.is_active ? '🔓' : '🔒'}
+           </button>
+           <button
+             class="btn-icon"
+             onclick="confirmDeleteProduct(${product.id}, '${escapeHtml(product.name)}')"
+             title="Hapus"
+           >
+             🗑️
+           </button>
+         </td>`;
+
     return `
       <tr>
-        <td style="text-align:center;">
-          <input type="checkbox" class="product-row-check" data-id="${product.id}" ${checked}
-            onchange="onProductCheckChange(this)">
-        </td>
+        ${checkboxCell}
         <td><code>${escapeHtml(product.barcode)}</code></td>
         <td>${escapeHtml(product.name)}</td>
         <td>${escapeHtml(product.category_name || '-')}</td>
@@ -457,28 +519,7 @@ function renderProductsTable(products) {
             ${product.is_active ? 'Aktif' : 'Nonaktif'}
           </span>
         </td>
-        <td class="action-buttons">
-          <button class="btn-icon" onclick="editProduct(${product.id})" title="Edit">
-            ✏️
-          </button>
-          <button class="btn-icon" onclick="openSingleLabelPrint(${product.id})" title="Cetak Label">
-            🏷️
-          </button>
-          <button
-            class="btn-icon"
-            onclick="toggleProductStatus(${product.id}, ${product.is_active})"
-            title="${product.is_active ? 'Nonaktifkan' : 'Aktifkan'}"
-          >
-            ${product.is_active ? '🔓' : '🔒'}
-          </button>
-          <button
-            class="btn-icon"
-            onclick="confirmDeleteProduct(${product.id}, '${escapeHtml(product.name)}')"
-            title="Hapus"
-          >
-            🗑️
-          </button>
-        </td>
+        ${actionButtons}
       </tr>
     `;
   }).join('');
@@ -618,7 +659,7 @@ async function handleProductFormSubmit(e) {
   const formData = {
     barcode: document.getElementById('barcode').value.trim(),
     name: document.getElementById('productName').value.trim(),
-    category_id: document.getElementById('productCategory').value || null,
+    category_id: parseInt(document.getElementById('productCategory').value) || null,
     purchase_price: parseFloat(document.getElementById('purchasePrice').value) || 0,
     selling_price: parseFloat(document.getElementById('sellingPrice').value) || 0,
     stock: parseInt(document.getElementById('stock').value) || 0,

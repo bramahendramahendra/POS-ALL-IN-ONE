@@ -3,10 +3,10 @@ let currentUser = null;
 let deleteTargetId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (!initializePageLayout('piutang')) return;
+  if (!initializePageLayout('customers')) return;
   currentUser = getCurrentUser();
 
-  if (!['owner', 'admin'].includes(currentUser.role)) {
+  if (!['owner', 'admin', 'kasir'].includes(currentUser.role)) {
     window.location.href = 'dashboard.html';
     return;
   }
@@ -46,7 +46,7 @@ async function loadCustomers() {
     if (is_active !== '') params.is_active = parseInt(is_active);
     const result = await apiClient.get('/customers', params);
     if (result.success) {
-      renderTable(result.data.items);
+      renderTable(result.data?.items || []);
     } else {
       showToast(result.message || 'Gagal memuat data', 'error');
     }

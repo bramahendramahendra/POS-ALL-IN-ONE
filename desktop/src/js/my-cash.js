@@ -1,4 +1,4 @@
-// My Cash Page - Kasir Only
+// Kas Harian Page - Semua role
 let currentUser = null;
 let allCashDrawers = [];
 let currentCashDrawer = null;
@@ -6,22 +6,17 @@ let shiftsCache = [];
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('My Cash page loaded');
+  console.log('Kas Harian page loaded');
 
-  // Initialize page layout
   if (!initializePageLayout('my-cash')) {
     return;
   }
 
   currentUser = getCurrentUser();
 
-  // Check role - only kasir
-  if (currentUser.role !== 'kasir') {
-    showToast('Halaman ini hanya untuk kasir', 'error');
-    setTimeout(() => {
-      window.location.href = 'dashboard.html';
-    }, 1500);
-    return;
+  // Tampilkan tab hanya untuk owner/admin
+  if (currentUser.role === 'owner' || currentUser.role === 'admin') {
+    document.getElementById('kasHarianTabsContainer').style.display = '';
   }
 
   // Setup event listeners
@@ -38,6 +33,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ============================================
 
 function setupEventListeners() {
+  // Tab switching (owner/admin only)
+  document.querySelectorAll('.tab-button[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab')));
+  });
+
+  // Rekap kas filter
+  document.getElementById('btnApplyRekapFilter').addEventListener('click', loadRekapKas);
+
   // Cash drawer filters
   document.getElementById('btnApplyCashFilter').addEventListener('click', loadMyCashHistory);
 
@@ -225,7 +228,7 @@ async function loadMyCashHistory() {
     });
 
     if (result.success) {
-      allCashDrawers = result.history;
+      allCashDrawers = result.data?.items || result.history || [];
       renderCashDrawerTable(allCashDrawers);
     } else {
       showToast('Gagal memuat riwayat kas', 'error');
@@ -662,4 +665,136 @@ function displayCashDrawerDetail(cashDrawer) {
 
 function closeDetailCashModal() {
   document.getElementById('detailCashModal').style.display = 'none';
+}
+
+// ============================================
+// TAB SWITCHING
+// ============================================
+
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-button').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-tab') === tabName);
+  });
+  document.querySelectorAll('.tab-content').forEach(content => {
+    content.classList.remove('active');
+  });
+  document.getElementById(`${tabName}-tab`).classList.add('active');
+
+  if (tabName === 'kas-harian') {
+    checkCurrentCashDrawer();
+    loadMyCashHistory();
+  } else if (tabName === 'rekap-kas') {
+    loadRekapKas();
+  }
+}
+
+// ============================================
+// REKAP KAS (owner/admin only)
+// ============================================
+
+async function loadRekapKas() {
+  const tbody = document.getElementById('rekapTableBody');
+  const tfoot = document.getElementById('rekapTableFoot');
+  const summaryCards = document.getElementById('rekapSummaryCards');
+
+  tbody.innerHTML = '<tr><td colspan="11" class="text-center">Loading...</td></tr>';
+  tfoot.style.display = 'none';
+  summaryCards.style.display = 'none';
+
+  let startDate = document.getElementById('rekapStartDate').value;
+  let endDate = document.getElementById('rekapEndDate').value;
+
+  // Default: hari ini
+  if (!startDate || !endDate) {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('rekapStartDate').value = today;
+    document.getElementById('rekapEndDate').value = today;
+    startDate = today;
+    endDate = today;
+  }
+
+  try {
+    const result = await apiClient.get('/cash-drawer', {
+      start_date: startDate,
+      end_date: endDate
+    });
+
+    if (!result.success) {
+      tbody.innerHTML = '<tr><td colspan="11" class="text-center text-danger">Gagal memuat data rekap kas</td></tr>';
+      return;
+    }
+
+    const data = result.data?.items || result.history || [];
+
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="11" class="text-center">Tidak ada data kas pada periode ini</td></tr>';
+      return;
+    }
+
+    // Hitung total
+    const totalSaldoAwal   = data.reduce((s, r) => s + (r.opening_balance || 0), 0);
+    const totalSales       = data.reduce((s, r) => s + (r.total_cash_sales || 0), 0);
+    const totalExpenses    = data.reduce((s, r) => s + (r.total_expenses || 0), 0);
+    const totalExpected    = data.reduce((s, r) => s + (r.expected_balance || 0), 0);
+    const closedRows       = data.filter(r => r.closing_balance !== null);
+    const totalClosing     = closedRows.reduce((s, r) => s + (r.closing_balance || 0), 0);
+    const totalSelisih     = closedRows.reduce((s, r) => s + (r.difference || 0), 0);
+
+    // Render baris tabel
+    tbody.innerHTML = data.map(cash => {
+      const diff = cash.difference;
+      return `
+        <tr>
+          <td>
+            <div>${formatDateOnly(cash.open_time)}</div>
+            <small>${formatTimeOnly(cash.open_time)}</small>
+          </td>
+          <td><strong>${escapeHtml(cash.cashier_name || '-')}</strong></td>
+          <td>
+            ${cash.shift_name
+              ? `<span class="badge badge-info">${escapeHtml(cash.shift_name)}</span>`
+              : '<span class="text-muted">-</span>'}
+          </td>
+          <td>${formatCurrency(cash.opening_balance)}</td>
+          <td class="text-success">${formatCurrency(cash.total_cash_sales)}</td>
+          <td class="text-danger">${formatCurrency(cash.total_expenses)}</td>
+          <td>${formatCurrency(cash.expected_balance || 0)}</td>
+          <td>${cash.closing_balance !== null ? formatCurrency(cash.closing_balance) : '-'}</td>
+          <td>
+            ${diff !== null
+              ? `<span class="${diff === 0 ? 'text-success' : 'text-danger'}">${formatCurrency(diff)}</span>`
+              : '-'}
+          </td>
+          <td>
+            <span class="badge ${cash.status === 'open' ? 'badge-success' : 'badge-secondary'}">
+              ${cash.status === 'open' ? 'Open' : 'Closed'}
+            </span>
+          </td>
+          <td class="action-buttons">
+            <button class="btn-icon" onclick="openDetailCashDrawer(${cash.id})" title="Detail">👁️</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    // Render footer total
+    document.getElementById('rekapFootSaldoAwal').textContent  = formatCurrency(totalSaldoAwal);
+    document.getElementById('rekapFootSales').textContent      = formatCurrency(totalSales);
+    document.getElementById('rekapFootExpenses').textContent   = formatCurrency(totalExpenses);
+    document.getElementById('rekapFootExpected').textContent   = formatCurrency(totalExpected);
+    document.getElementById('rekapFootClosing').textContent    = formatCurrency(totalClosing);
+    document.getElementById('rekapFootSelisih').textContent    = formatCurrency(totalSelisih);
+    tfoot.style.display = '';
+
+    // Render summary cards
+    document.getElementById('rekapTotalSales').textContent    = formatCurrency(totalSales);
+    document.getElementById('rekapTotalExpenses').textContent = formatCurrency(totalExpenses);
+    document.getElementById('rekapTotalClosing').textContent  = formatCurrency(totalClosing);
+    document.getElementById('rekapTotalSesi').textContent     = data.length;
+    summaryCards.style.display = '';
+
+  } catch (error) {
+    console.error('loadRekapKas error:', error);
+    tbody.innerHTML = '<tr><td colspan="11" class="text-center text-danger">Terjadi kesalahan saat memuat data</td></tr>';
+  }
 }

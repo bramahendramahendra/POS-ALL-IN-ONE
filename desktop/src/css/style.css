@@ -2620,6 +2620,11 @@ code {
   color: #721c24;
 }
 
+.cash-drawer-warning {
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
 /* ---- Row color for stock status ---- */
 .row-warning { background-color: #fffde7 !important; }
 .row-danger  { background-color: #ffebee !important; }
