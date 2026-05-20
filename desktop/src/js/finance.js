@@ -56,6 +56,12 @@ function setupEventListeners() {
   // Shift summary
   document.getElementById('btnApplyShiftSummaryFilter').addEventListener('click', loadShiftSummary);
 
+  // Rupiah inputs
+  setupRupiahInput('openingBalance');
+  setupRupiahInput('closingBalance');
+  setupRupiahInput('expenseAmount');
+  document.getElementById('closingBalance').addEventListener('input', calculateDifference);
+
   // Expenses
   document.getElementById('btnAddExpense').addEventListener('click', openAddExpenseModal);
   document.getElementById('btnApplyExpenseFilter').addEventListener('click', loadExpenses);
@@ -390,7 +396,7 @@ function closeOpenCashModal() {
 async function handleOpenCash(e) {
   e.preventDefault();
 
-  const openingBalance = parseFloat(document.getElementById('openingBalance').value) || 0;
+  const openingBalance = parseRupiahInput('openingBalance');
   const notes = document.getElementById('openCashNotes').value.trim();
 
   if (openingBalance <= 0) {
@@ -478,7 +484,7 @@ function closeCloseCashModal() {
 function calculateDifference() {
   if (!currentCashDrawer) return;
 
-  const closingBalance = parseFloat(document.getElementById('closingBalance').value) || 0;
+  const closingBalance = parseRupiahInput('closingBalance');
   const expected = currentCashDrawer.opening_balance + currentCashDrawer.total_cash_sales - currentCashDrawer.total_expenses;
   const difference = closingBalance - expected;
 
@@ -498,7 +504,7 @@ async function handleCloseCash(e) {
   e.preventDefault();
 
   const cashDrawerId = parseInt(document.getElementById('closeCashDrawerId').value);
-  const closingBalance = parseFloat(document.getElementById('closingBalance').value) || 0;
+  const closingBalance = parseRupiahInput('closingBalance');
   const notes = document.getElementById('closeCashNotes').value.trim();
 
   if (closingBalance < 0) {
@@ -934,7 +940,7 @@ async function editExpense(expenseId) {
       document.getElementById('expenseDate').value = expense.expense_date.split('T')[0];
       document.getElementById('expenseCategory').value = expense.category;
       document.getElementById('expenseDescription').value = expense.description;
-      document.getElementById('expenseAmount').value = expense.amount;
+      setRupiahInput('expenseAmount', expense.amount);
       document.getElementById('expensePaymentMethod').value = expense.payment_method || 'cash';
       document.getElementById('expenseNotes').value = expense.notes || '';
 
@@ -966,7 +972,7 @@ async function handleExpenseFormSubmit(e) {
     expense_date: document.getElementById('expenseDate').value,
     category: document.getElementById('expenseCategory').value,
     description: document.getElementById('expenseDescription').value.trim(),
-    amount: parseFloat(document.getElementById('expenseAmount').value) || 0,
+    amount: parseRupiahInput('expenseAmount'),
     payment_method: document.getElementById('expensePaymentMethod').value,
     notes: document.getElementById('expenseNotes').value.trim()
   };

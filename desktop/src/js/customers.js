@@ -26,6 +26,8 @@ function setupEventListeners() {
   document.getElementById('btnCancelCustomer').addEventListener('click', closeCustomerModal);
   document.getElementById('customerForm').addEventListener('submit', saveCustomer);
 
+  setupRupiahInput('customerCreditLimit');
+
   document.getElementById('closeDeleteCustomerModal').addEventListener('click', closeDeleteModal);
   document.getElementById('btnCancelDelete').addEventListener('click', closeDeleteModal);
   document.getElementById('btnConfirmDelete').addEventListener('click', confirmDelete);
@@ -113,7 +115,7 @@ async function openEditModal(id) {
     document.getElementById('customerName').value = c.name;
     document.getElementById('customerPhone').value = c.phone || '';
     document.getElementById('customerAddress').value = c.address || '';
-    document.getElementById('customerCreditLimit').value = c.credit_limit || 0;
+    setRupiahInput('customerCreditLimit', c.credit_limit || 0);
     document.getElementById('customerNotes').value = c.notes || '';
     document.getElementById('customerModal').style.display = 'flex';
   } catch (error) {
@@ -145,7 +147,7 @@ async function saveCustomer(e) {
     name: document.getElementById('customerName').value.trim(),
     phone: document.getElementById('customerPhone').value.trim(),
     address: document.getElementById('customerAddress').value.trim(),
-    credit_limit: parseFloat(document.getElementById('customerCreditLimit').value) || 0,
+    credit_limit: parseRupiahInput('customerCreditLimit'),
     notes: document.getElementById('customerNotes').value.trim()
   };
 

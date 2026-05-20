@@ -300,6 +300,42 @@ function parseCurrency(currencyString) {
   return parseFloat(currencyString.replace(/[^0-9,-]/g, '').replace(',', '.')) || 0;
 }
 
+// ── Rupiah input helpers ──────────────────────────────────────────────────────
+
+function parseRupiahInput(id) {
+  const raw = document.getElementById(id).value.replace(/\./g, '').replace(',', '.');
+  return parseFloat(raw) || 0;
+}
+
+function setRupiahInput(id, amount) {
+  const num = parseFloat(amount) || 0;
+  document.getElementById(id).value = num > 0
+    ? new Intl.NumberFormat('id-ID').format(num)
+    : '';
+}
+
+function formatRupiahOnInput(e) {
+  const input = e.target;
+  const raw = input.value.replace(/[^0-9]/g, '');
+  if (raw === '') { input.value = ''; return; }
+  input.value = new Intl.NumberFormat('id-ID').format(parseInt(raw, 10));
+}
+
+function setupRupiahInput(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('input', formatRupiahOnInput);
+  el.addEventListener('keydown', (e) => {
+    const allowed = ['Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab','Home','End'];
+    if (allowed.includes(e.key)) return;
+    if (e.key >= '0' && e.key <= '9') return;
+    e.preventDefault();
+  });
+  el.addEventListener('focus', () => {
+    setTimeout(() => el.setSelectionRange(el.value.length, el.value.length), 0);
+  });
+}
+
 // Format number with thousand separator
 function formatNumber(number) {
   return new Intl.NumberFormat('id-ID').format(number);

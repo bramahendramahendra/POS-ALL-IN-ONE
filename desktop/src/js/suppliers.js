@@ -65,7 +65,10 @@ function setupEventListeners() {
   document.getElementById('addPurchaseItemForm').addEventListener('submit', handleAddPurchaseItem);
   document.getElementById('itemProduct').addEventListener('change', handleProductSelect);
   document.getElementById('itemQuantity').addEventListener('input', calculateItemSubtotal);
+  setupRupiahInput('itemPurchasePrice');
   document.getElementById('itemPurchasePrice').addEventListener('input', calculateItemSubtotal);
+  setupRupiahInput('paidAmount');
+  setupRupiahInput('payAmount');
   document.getElementById('paymentStatus').addEventListener('change', handlePaymentStatusChange);
   document.getElementById('paidAmount').addEventListener('input', calculateRemainingAmount);
   document.getElementById('closePayPurchaseModal').addEventListener('click', closePayPurchaseModal);
@@ -699,7 +702,7 @@ function openAddPurchaseModal() {
   document.getElementById('purchaseCode').value = generatePurchaseCode();
   populateSupplierDropdown(null);
   document.getElementById('paymentStatus').value = 'unpaid';
-  document.getElementById('paidAmount').value = 0;
+  document.getElementById('paidAmount').value = '';
   document.getElementById('paidAmount').disabled = true;
   renderPurchaseItemsTable();
   updatePurchaseTotal();
@@ -751,12 +754,13 @@ function handlePaymentStatusChange() {
   const status = document.getElementById('paymentStatus').value;
   const paidAmountInput = document.getElementById('paidAmount');
   if (status === 'unpaid') {
-    paidAmountInput.value = 0;
+    paidAmountInput.value = '';
     paidAmountInput.disabled = true;
   } else {
     paidAmountInput.disabled = false;
     if (status === 'paid') {
-      paidAmountInput.value = purchaseItems.reduce((sum, item) => sum + item.subtotal, 0);
+      const total = purchaseItems.reduce((sum, item) => sum + item.subtotal, 0);
+      setRupiahInput('paidAmount', total);
     }
   }
   calculateRemainingAmount();
@@ -764,7 +768,7 @@ function handlePaymentStatusChange() {
 
 function calculateRemainingAmount() {
   const total = purchaseItems.reduce((sum, item) => sum + item.subtotal, 0);
-  const paid = parseFloat(document.getElementById('paidAmount').value) || 0;
+  const paid = parseRupiahInput('paidAmount');
   document.getElementById('remainingAmount').value = formatCurrency(total - paid);
 }
 
@@ -785,18 +789,19 @@ function handleProductSelect() {
   const selectedOption = select.options[select.selectedIndex];
   if (selectedOption.value) {
     document.getElementById('itemUnit').value = selectedOption.dataset.unit || 'pcs';
-    document.getElementById('itemPurchasePrice').value = selectedOption.dataset.purchasePrice || 0;
+    setRupiahInput('itemPurchasePrice', selectedOption.dataset.purchasePrice || 0);
     calculateItemSubtotal();
   } else {
     document.getElementById('itemUnit').value = '';
     document.getElementById('itemPurchasePrice').value = '';
     document.getElementById('itemSubtotal').value = 'Rp 0';
+
   }
 }
 
 function calculateItemSubtotal() {
   const quantity = parseFloat(document.getElementById('itemQuantity').value) || 0;
-  const price = parseFloat(document.getElementById('itemPurchasePrice').value) || 0;
+  const price = parseRupiahInput('itemPurchasePrice');
   document.getElementById('itemSubtotal').value = formatCurrency(quantity * price);
 }
 
@@ -804,7 +809,7 @@ async function handleAddPurchaseItem(e) {
   e.preventDefault();
   const productId = parseInt(document.getElementById('itemProduct').value);
   const quantity = parseFloat(document.getElementById('itemQuantity').value);
-  const purchasePrice = parseFloat(document.getElementById('itemPurchasePrice').value);
+  const purchasePrice = parseRupiahInput('itemPurchasePrice');
 
   if (!productId || quantity <= 0 || purchasePrice < 0) {
     showToast('Isi semua field dengan benar', 'error');
@@ -842,7 +847,7 @@ async function handlePurchaseFormSubmit(e) {
   }
 
   const total = purchaseItems.reduce((sum, item) => sum + item.subtotal, 0);
-  const paidAmount = parseFloat(document.getElementById('paidAmount').value) || 0;
+  const paidAmount = parseRupiahInput('paidAmount');
 
   if (paidAmount > total) {
     showPurchaseFormError('Jumlah dibayar tidak boleh melebihi total');
@@ -915,7 +920,7 @@ async function openPayPurchaseModal(purchaseId) {
       document.getElementById('payAlreadyPaid').textContent = formatCurrency(purchase.paid_amount);
       document.getElementById('payRemaining').textContent = formatCurrency(purchase.remaining_amount);
       document.getElementById('payAmount').value = '';
-      document.getElementById('payAmount').max = purchase.remaining_amount;
+      document.getElementById('payAmount').dataset.remaining = purchase.remaining_amount;
       document.getElementById('payPurchaseError').style.display = 'none';
       document.getElementById('payAfterInfo').style.display = 'none';
       document.getElementById('payPurchaseModal').style.display = 'flex';
@@ -934,8 +939,8 @@ function closePayPurchaseModal() {
 }
 
 function calculatePayAfter() {
-  const remaining = parseFloat(document.getElementById('payAmount').max) || 0;
-  const amount = parseFloat(document.getElementById('payAmount').value) || 0;
+  const remaining = parseFloat(document.getElementById('payAmount').dataset.remaining) || 0;
+  const amount = parseRupiahInput('payAmount');
   const afterRemaining = Math.max(remaining - amount, 0);
   const infoEl = document.getElementById('payAfterInfo');
 
@@ -963,7 +968,7 @@ function calculatePayAfter() {
 async function handlePayPurchase(e) {
   e.preventDefault();
   const purchaseId = parseInt(document.getElementById('payPurchaseId').value);
-  const amount = parseFloat(document.getElementById('payAmount').value) || 0;
+  const amount = parseRupiahInput('payAmount');
   const remaining = parseCurrency(document.getElementById('payRemaining').textContent);
 
   if (amount <= 0) { showPayPurchaseError('Jumlah bayar harus lebih dari 0'); return; }
@@ -1188,9 +1193,9 @@ function updateReturnsSummary(returns) {
 
 async function loadPurchasesForReturn() {
   try {
-    const result = await apiClient.get('/purchases', {});
+    const result = await apiClient.get('/purchases', { limit: 1000 });
     if (result.success) {
-      purchasesForReturn = result.data.items;
+      purchasesForReturn = result.data.items ?? [];
       const select = document.getElementById('returnPurchaseId');
       select.innerHTML = '<option value="">-- Pilih PO --</option>';
       purchasesForReturn.forEach(p => {
@@ -1251,21 +1256,26 @@ async function handleReturnPurchaseChange() {
   }
 
   try {
-    const result = await apiClient.get(`/purchases/${parseInt(purchaseId)}/items`);
-    if (result.success) {
-      const purchase = result.data;
-      returnPurchaseItems = result.items;
+    const [purchaseResult, itemsResult] = await Promise.all([
+      apiClient.get(`/purchases/${parseInt(purchaseId)}`),
+      apiClient.get(`/purchases/${parseInt(purchaseId)}/items`)
+    ]);
+
+    if (purchaseResult.success && itemsResult.success) {
+      const purchase = purchaseResult.data;
+      returnPurchaseItems = itemsResult.data;
+
       document.getElementById('returnSupplierName').textContent =
-        purchase.supplier_name_from_db || purchase.supplier_name || 'Tanpa Supplier';
+        purchase.supplier_name || 'Tanpa Supplier';
       document.getElementById('returnPurchaseStatus').textContent =
         formatPaymentStatus(purchase.payment_status);
       document.getElementById('returnRemainingDebt').textContent =
         formatCurrency(purchase.remaining_amount || 0);
       document.getElementById('returnSupplierInfo').classList.remove('hidden');
-      renderReturnItemsSelect(result.items);
+      renderReturnItemsSelect(returnPurchaseItems);
       document.getElementById('returnItemsSection').classList.remove('hidden');
     } else {
-      showToast(result.message || 'Gagal memuat item pembelian', 'error');
+      showToast('Gagal memuat data pembelian', 'error');
     }
   } catch (error) {
     console.error('handleReturnPurchaseChange error:', error);

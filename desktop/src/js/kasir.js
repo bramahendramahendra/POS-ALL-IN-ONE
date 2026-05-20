@@ -113,9 +113,12 @@ function setupEventListeners() {
     setDiscountType('amount');
   });
 
-  // Discount value input
-  document.getElementById('discountValue').addEventListener('input', (e) => {
-    const value = parseFloat(e.target.value) || 0;
+  // Discount value input — rupiah format hanya aktif saat mode 'amount'
+  setupRupiahInput('discountValue');
+  document.getElementById('discountValue').addEventListener('input', () => {
+    const value = currentDiscount.type === 'amount'
+      ? parseRupiahInput('discountValue')
+      : parseFloat(document.getElementById('discountValue').value) || 0;
     applyDiscount(currentDiscount.type, value);
   });
 
@@ -142,6 +145,7 @@ function setupEventListeners() {
   document.getElementById('btnProcessPayment').addEventListener('click', processTransaction);
 
   // Payment amount input - auto calculate change
+  setupRupiahInput('paymentAmount');
   document.getElementById('paymentAmount').addEventListener('input', calculateChange);
 
   // Unit select modal
@@ -661,9 +665,9 @@ function setDiscountType(type) {
   document.getElementById('discountTypePercent').classList.toggle('active', type === 'percent');
   document.getElementById('discountTypeAmount').classList.toggle('active', type === 'amount');
   
-  // Re-calculate with current value
-  const value = parseFloat(document.getElementById('discountValue').value) || 0;
-  applyDiscount(type, value);
+  // Reset nilai saat mode berubah
+  document.getElementById('discountValue').value = '';
+  applyDiscount(type, 0);
 }
 
 function applyDiscount(type, value) {
@@ -757,7 +761,7 @@ function closePaymentModal() {
 
 function calculateChange() {
   const total = calculateTotal();
-  const paymentAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+  const paymentAmount = parseRupiahInput('paymentAmount');
   const change = paymentAmount - total;
 
   document.getElementById('changeAmount').textContent = formatCurrency(change);
@@ -790,7 +794,7 @@ async function processTransaction() {
     }
   }
 
-  const paymentAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+  const paymentAmount = parseRupiahInput('paymentAmount');
 
   if (!isCredit && paymentAmount < total) {
     showToast('Jumlah uang yang dibayarkan kurang', 'error');
@@ -1137,7 +1141,11 @@ function loadDraft() {
     }
     
     if (currentDiscount.value > 0) {
-      document.getElementById('discountValue').value = currentDiscount.value;
+      if (currentDiscount.type === 'amount') {
+        setRupiahInput('discountValue', currentDiscount.value);
+      } else {
+        document.getElementById('discountValue').value = currentDiscount.value;
+      }
       setDiscountType(currentDiscount.type);
     }
     

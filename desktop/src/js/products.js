@@ -63,6 +63,14 @@ function applyKasirReadOnlyMode() {
 }
 
 // ============================================
+// RUPIAH INPUT SETUP
+// ============================================
+
+function setupRupiahInputs() {
+  ['purchasePrice', 'sellingPrice', 'puSellingPrice', 'ppPrice'].forEach(id => setupRupiahInput(id));
+}
+
+// ============================================
 // TAB MANAGEMENT
 // ============================================
 
@@ -97,6 +105,9 @@ function setupEventListeners() {
   // Price change listeners for margin calculation
   document.getElementById('purchasePrice').addEventListener('input', calculateAndDisplayMargin);
   document.getElementById('sellingPrice').addEventListener('input', calculateAndDisplayMargin);
+
+  // Setup rupiah format on price inputs
+  setupRupiahInputs();
 
   // Unit master buttons
   document.getElementById('btnAddUnit').addEventListener('click', openAddUnitModal);
@@ -600,8 +611,8 @@ async function editProduct(productId) {
       document.getElementById('barcode').value = product.barcode;
       document.getElementById('productName').value = product.name;
       document.getElementById('productCategory').value = product.category_id || '';
-      document.getElementById('purchasePrice').value = product.purchase_price;
-      document.getElementById('sellingPrice').value = product.selling_price;
+      setRupiahInput('purchasePrice', product.purchase_price);
+      setRupiahInput('sellingPrice', product.selling_price);
       document.getElementById('stock').value = product.stock;
       document.getElementById('minStock').value = product.min_stock;
       document.getElementById('unit').value = product.unit;
@@ -646,9 +657,9 @@ function handleGenerateBarcode() {
 }
 
 function calculateAndDisplayMargin() {
-  const purchasePrice = parseFloat(document.getElementById('purchasePrice').value) || 0;
-  const sellingPrice = parseFloat(document.getElementById('sellingPrice').value) || 0;
-  
+  const purchasePrice = parseRupiahInput('purchasePrice');
+  const sellingPrice = parseRupiahInput('sellingPrice');
+
   const margin = calculateMargin(purchasePrice, sellingPrice);
   document.getElementById('marginDisplay').value = `${margin}%`;
 }
@@ -660,8 +671,8 @@ async function handleProductFormSubmit(e) {
     barcode: document.getElementById('barcode').value.trim(),
     name: document.getElementById('productName').value.trim(),
     category_id: parseInt(document.getElementById('productCategory').value) || null,
-    purchase_price: parseFloat(document.getElementById('purchasePrice').value) || 0,
-    selling_price: parseFloat(document.getElementById('sellingPrice').value) || 0,
+    purchase_price: parseRupiahInput('purchasePrice'),
+    selling_price: parseRupiahInput('sellingPrice'),
     stock: parseInt(document.getElementById('stock').value) || 0,
     min_stock: parseInt(document.getElementById('minStock').value) || 5,
     unit: document.getElementById('unit').value
@@ -1075,7 +1086,7 @@ function editProductUnitRow(idx) {
   populatePuUnitSelect();
   document.getElementById('puUnitId').value = row.unit_id;
   document.getElementById('puConversionQty').value = row.conversion_qty;
-  document.getElementById('puSellingPrice').value = row.selling_price;
+  setRupiahInput('puSellingPrice', row.selling_price);
   updatePuPriceHint();
 
   document.getElementById('productUnitModal').style.display = 'flex';
@@ -1104,7 +1115,7 @@ function populatePuUnitSelect() {
 
 function updatePuPriceHint() {
   const convQty = parseFloat(document.getElementById('puConversionQty').value) || 0;
-  const price = parseFloat(document.getElementById('puSellingPrice').value) || 0;
+  const price = parseRupiahInput('puSellingPrice');
   const baseUnit = document.getElementById('unit') ? document.getElementById('unit').value : '';
   const hint = document.getElementById('puConversionHint');
   hint.textContent = convQty > 0
@@ -1124,7 +1135,7 @@ async function handleProductUnitFormSubmit(e) {
 
   const unitId = parseInt(document.getElementById('puUnitId').value);
   const conversionQty = parseFloat(document.getElementById('puConversionQty').value) || 0;
-  const sellingPrice = parseFloat(document.getElementById('puSellingPrice').value) || 0;
+  const sellingPrice = parseRupiahInput('puSellingPrice');
 
   if (!unitId) {
     showPuFormError('Pilih satuan terlebih dahulu');
@@ -1285,7 +1296,7 @@ function editProductPriceRow(idx) {
   document.getElementById('ppEditIndex').value = idx;
   document.getElementById('ppTierName').value = row.tier_name;
   document.getElementById('ppMinQty').value = row.min_qty;
-  document.getElementById('ppPrice').value = row.price;
+  setRupiahInput('ppPrice', row.price);
   document.getElementById('productPriceFormError').style.display = 'none';
   document.getElementById('btnSubmitProductPriceText').textContent = 'Update';
   document.getElementById('productPriceModal').style.display = 'flex';
@@ -1314,7 +1325,7 @@ async function handleProductPriceFormSubmit(e) {
 
   const tierName = document.getElementById('ppTierName').value.trim();
   const minQty = parseFloat(document.getElementById('ppMinQty').value) || 0;
-  const price = parseFloat(document.getElementById('ppPrice').value) || 0;
+  const price = parseRupiahInput('ppPrice');
 
   if (!tierName) {
     showPpFormError('Nama tier harus diisi');

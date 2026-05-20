@@ -90,12 +90,11 @@
                   <button class="btn-toggle" id="discountTypePercent" data-type="percent">%</button>
                   <button class="btn-toggle" id="discountTypeAmount" data-type="amount">Rp</button>
                 </div>
-                <input 
-                  type="number" 
-                  id="discountValue" 
+                <input
+                  type="text"
+                  id="discountValue"
                   placeholder="0"
-                  min="0"
-                  step="1"
+                  inputmode="numeric"
                 >
               </div>
               <strong id="discountAmount">Rp 0</strong>
@@ -205,14 +204,16 @@
 
         <div class="form-group">
           <label for="paymentAmount">Jumlah Uang Dibayar <span class="required">*</span></label>
-          <input 
-            type="number" 
-            id="paymentAmount" 
-            placeholder="0"
-            min="0"
-            step="1000"
-            autofocus
-          >
+          <div class="rp-input-wrapper">
+            <span class="rp-prefix">Rp</span>
+            <input
+              type="text"
+              id="paymentAmount"
+              placeholder="0"
+              inputmode="numeric"
+              autofocus
+            >
+          </div>
         </div>
 
         <div class="payment-change">

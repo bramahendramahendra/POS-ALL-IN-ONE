@@ -50,6 +50,7 @@ function setupEventListeners() {
   document.getElementById('btnCancelPay').addEventListener('click', closePayModal);
   document.getElementById('btnProcessPay').addEventListener('click', processPay);
 
+  setupRupiahInput('payAmount');
   document.getElementById('payAmount').addEventListener('input', updateSisaPreview);
 
   document.addEventListener('click', (e) => {
@@ -269,7 +270,7 @@ function renderPaymentHistory(payments) {
 
 function updateSisaPreview() {
   const remaining = parseFloat(document.getElementById('payAmount').dataset.remaining) || 0;
-  const amount = parseFloat(document.getElementById('payAmount').value) || 0;
+  const amount = parseRupiahInput('payAmount');
   const sisa = remaining - amount;
   const el = document.getElementById('paySisaPreview');
 
@@ -292,7 +293,7 @@ function closePayModal() {
 
 async function processPay() {
   const receivableId = parseInt(document.getElementById('payReceivableId').value);
-  const amount = parseFloat(document.getElementById('payAmount').value);
+  const amount = parseRupiahInput('payAmount');
   const remaining = parseFloat(document.getElementById('payAmount').dataset.remaining) || 0;
 
   if (!amount || amount <= 0) {

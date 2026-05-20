@@ -311,6 +311,28 @@ body {
   cursor: not-allowed;
 }
 
+/* Rupiah input wrapper */
+.rp-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.rp-input-wrapper .rp-prefix {
+  position: absolute;
+  left: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #7f8c8d;
+  pointer-events: none;
+  user-select: none;
+}
+
+.rp-input-wrapper input {
+  padding-left: 34px !important;
+  width: 100%;
+}
+
 textarea {
   width: 100%;
   padding: 10px 12px;

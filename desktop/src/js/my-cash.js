@@ -53,6 +53,8 @@ function setupEventListeners() {
   document.getElementById('closeCloseCashModal').addEventListener('click', closeCloseCashModal);
   document.getElementById('btnCancelCloseCash').addEventListener('click', closeCloseCashModal);
   document.getElementById('closeCashForm').addEventListener('submit', handleCloseCash);
+  setupRupiahInput('openingBalance');
+  setupRupiahInput('closingBalance');
   document.getElementById('closingBalance').addEventListener('input', calculateDifference);
 
   // Detail cash modal
@@ -318,7 +320,7 @@ async function handleOpenCash(e) {
   e.preventDefault();
 
   const shiftId = parseInt(document.getElementById('openShiftSelect').value) || null;
-  const openingBalance = parseFloat(document.getElementById('openingBalance').value) || 0;
+  const openingBalance = parseRupiahInput('openingBalance');
   const notes = document.getElementById('openCashNotes').value.trim();
 
   if (!shiftId) {
@@ -418,7 +420,7 @@ function closeCloseCashModal() {
 function calculateDifference() {
   if (!currentCashDrawer) return;
 
-  const closingBalance = parseFloat(document.getElementById('closingBalance').value) || 0;
+  const closingBalance = parseRupiahInput('closingBalance');
   const expected = currentCashDrawer.opening_balance + currentCashDrawer.total_cash_sales - currentCashDrawer.total_expenses;
   const difference = closingBalance - expected;
 
@@ -448,7 +450,7 @@ async function handleCloseCash(e) {
   e.preventDefault();
 
   const cashDrawerId = parseInt(document.getElementById('closeCashDrawerId').value);
-  const closingBalance = parseFloat(document.getElementById('closingBalance').value) || 0;
+  const closingBalance = parseRupiahInput('closingBalance');
   const notes = document.getElementById('closeCashNotes').value.trim();
 
   if (closingBalance < 0) {
