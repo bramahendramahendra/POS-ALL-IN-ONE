@@ -10,7 +10,7 @@ type PurchaseItemRequest struct {
 
 type PurchaseRequest struct {
 	SupplierID   *int                  `json:"supplier_id"`
-	SupplierName string                `json:"supplier_name" validate:"required"`
+	SupplierName string                `json:"supplier_name"`
 	PurchaseDate string                `json:"purchase_date" validate:"required"`
 	Notes        string                `json:"notes"`
 	Items        []PurchaseItemRequest `json:"items" validate:"required,min=1,dive"`

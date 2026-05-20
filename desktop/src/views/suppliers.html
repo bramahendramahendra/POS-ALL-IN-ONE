@@ -521,6 +521,17 @@
             <input type="number" id="payAmount" placeholder="0" min="0" step="1000" required>
           </div>
 
+          <div id="payAfterInfo" class="purchase-info" style="display:none; margin-top: 8px;">
+            <div class="info-row">
+              <span>Sisa Setelah Bayar:</span>
+              <strong id="payAfterRemaining" class="text-danger">Rp 0</strong>
+            </div>
+            <div class="info-row">
+              <span>Status Setelah Bayar:</span>
+              <strong id="payAfterStatus">-</strong>
+            </div>
+          </div>
+
           <div id="payPurchaseError" class="error-message hidden"></div>
 
           <div class="modal-footer">

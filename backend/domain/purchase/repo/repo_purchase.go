@@ -103,14 +103,25 @@ func (r *purchaseRepo) GetAll(filter *dto_purchase.PurchaseFilter) ([]*dto_purch
 }
 
 func (r *purchaseRepo) GetByID(id int) (*dto_purchase.PurchaseResponse, error) {
-	var item dto_purchase.PurchaseResponse
-	result := r.db.Raw(getPurchaseByIDQuery, id).Scan(&item)
-	if result.Error != nil {
-		return nil, result.Error
+	rows, err := r.db.Raw(getPurchaseByIDQuery, id).Rows()
+	if err != nil {
+		return nil, err
 	}
-	if result.RowsAffected == 0 {
+	defer rows.Close()
+
+	if !rows.Next() {
 		return nil, nil
 	}
+
+	var item dto_purchase.PurchaseResponse
+	if err := rows.Scan(
+		&item.ID, &item.PurchaseCode, &item.SupplierID, &item.SupplierName,
+		&item.PurchaseDate, &item.TotalAmount, &item.PaymentStatus,
+		&item.PaidAmount, &item.RemainingAmount, &item.UserName, &item.Notes,
+	); err != nil {
+		return nil, err
+	}
+	rows.Close()
 
 	modelItems, err := r.GetItems(id)
 	if err != nil {

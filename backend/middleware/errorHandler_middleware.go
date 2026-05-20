@@ -55,6 +55,11 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 				code = helper.StatusForbidden
 				httpCode = http.StatusForbidden
 				responseMessage = actualMessage
+			case *errors.InternalServerError:
+				code = helper.StatusInternalServerError
+				httpCode = http.StatusInternalServerError
+				responseMessage = errMessage500
+				logger.Log.Error(e.Message, "Internal Error", "Service/Database Error", "", "", "", "", nil)
 			case *errors.ValidationError:
 				code = helper.StatusUnprocessableEntity
 				httpCode = http.StatusUnprocessableEntity

@@ -71,6 +71,7 @@ function setupEventListeners() {
   document.getElementById('closePayPurchaseModal').addEventListener('click', closePayPurchaseModal);
   document.getElementById('btnCancelPay').addEventListener('click', closePayPurchaseModal);
   document.getElementById('payPurchaseForm').addEventListener('submit', handlePayPurchase);
+  document.getElementById('payAmount').addEventListener('input', calculatePayAfter);
   document.getElementById('closeDetailPurchaseModal').addEventListener('click', closeDetailPurchaseModal);
   document.getElementById('btnCloseDetailPurchase').addEventListener('click', closeDetailPurchaseModal);
 
@@ -120,10 +121,11 @@ async function loadSuppliers() {
       status: document.getElementById('filterStatus').value
     };
 
-    const result = await apiClient.get('/suppliers', {
-      search: filters.search,
-      is_active: filters.status !== '' ? filters.status : undefined
-    });
+    const params = {};
+    if (filters.search) params.search = filters.search;
+    if (filters.status !== '') params.is_active = filters.status;
+
+    const result = await apiClient.get('/suppliers', params);
 
     if (result.success) {
       allSuppliers = result.data.items ?? [];
@@ -189,7 +191,7 @@ function renderSuppliersTable(suppliers) {
 }
 
 function updateStats(suppliers) {
-  const active = suppliers.filter(s => s.is_active === 1).length;
+  const active = suppliers.filter(s => s.is_active == 1).length;
   document.getElementById('statTotal').textContent = suppliers.length;
   document.getElementById('statActive').textContent = active;
   document.getElementById('statInactive').textContent = suppliers.length - active;
@@ -625,11 +627,10 @@ async function loadPurchases() {
       filters.endDate = monthRange.endDate;
     }
 
-    const result = await apiClient.get('/purchases', {
-      start_date: filters.startDate,
-      end_date: filters.endDate,
-      payment_status: filters.paymentStatus || undefined
-    });
+    const params = { start_date: filters.startDate, end_date: filters.endDate };
+    if (filters.paymentStatus) params.payment_status = filters.paymentStatus;
+
+    const result = await apiClient.get('/purchases', params);
 
     if (result.success) {
       allPurchases = result.data.items;
@@ -916,6 +917,7 @@ async function openPayPurchaseModal(purchaseId) {
       document.getElementById('payAmount').value = '';
       document.getElementById('payAmount').max = purchase.remaining_amount;
       document.getElementById('payPurchaseError').style.display = 'none';
+      document.getElementById('payAfterInfo').style.display = 'none';
       document.getElementById('payPurchaseModal').style.display = 'flex';
       setTimeout(() => { document.getElementById('payAmount').focus(); }, 100);
     } else {
@@ -929,6 +931,33 @@ async function openPayPurchaseModal(purchaseId) {
 
 function closePayPurchaseModal() {
   document.getElementById('payPurchaseModal').style.display = 'none';
+}
+
+function calculatePayAfter() {
+  const remaining = parseFloat(document.getElementById('payAmount').max) || 0;
+  const amount = parseFloat(document.getElementById('payAmount').value) || 0;
+  const afterRemaining = Math.max(remaining - amount, 0);
+  const infoEl = document.getElementById('payAfterInfo');
+
+  if (amount <= 0) {
+    infoEl.style.display = 'none';
+    return;
+  }
+
+  infoEl.style.display = 'block';
+  document.getElementById('payAfterRemaining').textContent = formatCurrency(afterRemaining);
+
+  let statusText, statusClass;
+  if (amount >= remaining) {
+    statusText = 'Lunas';
+    statusClass = 'text-success';
+  } else {
+    statusText = 'Belum Lunas';
+    statusClass = 'text-danger';
+  }
+  const statusEl = document.getElementById('payAfterStatus');
+  statusEl.textContent = statusText;
+  statusEl.className = statusClass;
 }
 
 async function handlePayPurchase(e) {
