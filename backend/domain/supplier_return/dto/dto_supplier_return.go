@@ -12,7 +12,7 @@ type SupplierReturnItemRequest struct {
 type CreateSupplierReturnRequest struct {
 	PurchaseID   int                         `json:"purchase_id" validate:"required,gt=0"`
 	SupplierID   *int                        `json:"supplier_id"`
-	SupplierName string                      `json:"supplier_name" validate:"required"`
+	SupplierName string                      `json:"supplier_name"`
 	ReturnDate   string                      `json:"return_date" validate:"required"`
 	Reason       string                      `json:"reason" validate:"required"`
 	Notes        string                      `json:"notes"`

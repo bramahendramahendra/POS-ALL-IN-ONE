@@ -14,7 +14,7 @@ const (
 	countSuppliersBase    = `SELECT COUNT(*) FROM suppliers WHERE 1=1`
 	getActiveSupplierList = `SELECT id, name, supplier_code FROM suppliers WHERE is_active = 1 ORDER BY name`
 	getSupplierByID       = `SELECT id, supplier_code, name, address, phone, email, contact_person, notes, is_active FROM suppliers WHERE id = ?`
-	getSupplierPurchases  = `SELECT id, purchase_code, purchase_date, total_amount, payment_status FROM purchases WHERE supplier_id = ? ORDER BY purchase_date DESC LIMIT 10`
+	getSupplierPurchases  = `SELECT id, purchase_code, purchase_date, total_amount, payment_status, remaining_amount FROM purchases WHERE supplier_id = ? ORDER BY purchase_date DESC LIMIT 10`
 	checkSupplierHasPO    = `SELECT COUNT(*) FROM purchases WHERE supplier_id = ?`
 	generateSupplierCode  = `SELECT COUNT(*) FROM suppliers`
 	createSupplier        = `INSERT INTO suppliers (supplier_code, name, address, phone, email, contact_person, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`
@@ -120,7 +120,7 @@ func (r *supplierRepo) GetPurchaseHistory(supplierID int) ([]dto_supplier.Suppli
 	var items []dto_supplier.SupplierPurchaseItem
 	for rows.Next() {
 		var item dto_supplier.SupplierPurchaseItem
-		if err := rows.Scan(&item.ID, &item.PurchaseCode, &item.PurchaseDate, &item.TotalAmount, &item.PaymentStatus); err != nil {
+		if err := rows.Scan(&item.ID, &item.PurchaseCode, &item.PurchaseDate, &item.TotalAmount, &item.PaymentStatus, &item.RemainingAmount); err != nil {
 			return nil, err
 		}
 		items = append(items, item)

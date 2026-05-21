@@ -101,14 +101,25 @@ func (r *supplierReturnRepo) GetAll(filter *dto_supplier_return.SupplierReturnFi
 }
 
 func (r *supplierReturnRepo) GetByID(id int) (*dto_supplier_return.SupplierReturnResponse, error) {
-	var item dto_supplier_return.SupplierReturnResponse
-	result := r.db.Raw(getReturnByIDQuery, id).Scan(&item)
-	if result.Error != nil {
-		return nil, result.Error
+	rows, err := r.db.Raw(getReturnByIDQuery, id).Rows()
+	if err != nil {
+		return nil, err
 	}
-	if result.RowsAffected == 0 {
+	defer rows.Close()
+
+	if !rows.Next() {
 		return nil, nil
 	}
+
+	var item dto_supplier_return.SupplierReturnResponse
+	if err := rows.Scan(
+		&item.ID, &item.ReturnCode, &item.PurchaseID, &item.SupplierID, &item.SupplierName,
+		&item.ReturnDate, &item.TotalReturnAmount, &item.Reason, &item.Status,
+		&item.UserName, &item.Notes,
+	); err != nil {
+		return nil, err
+	}
+	rows.Close()
 
 	modelItems, err := r.GetItems(id)
 	if err != nil {

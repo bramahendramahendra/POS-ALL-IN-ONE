@@ -26,11 +26,12 @@ type SupplierActiveItem struct {
 }
 
 type SupplierPurchaseItem struct {
-	ID            int     `json:"id"`
-	PurchaseCode  string  `json:"purchase_code"`
-	PurchaseDate  string  `json:"purchase_date"`
-	TotalAmount   float64 `json:"total_amount"`
-	PaymentStatus string  `json:"payment_status"`
+	ID              int     `json:"id"`
+	PurchaseCode    string  `json:"purchase_code"`
+	PurchaseDate    string  `json:"purchase_date"`
+	TotalAmount     float64 `json:"total_amount"`
+	PaymentStatus   string  `json:"payment_status"`
+	RemainingAmount float64 `json:"remaining_amount"`
 }
 
 type SupplierDetailResponse struct {

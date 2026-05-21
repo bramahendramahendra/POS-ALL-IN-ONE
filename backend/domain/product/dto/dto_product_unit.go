@@ -13,6 +13,7 @@ type ProductUnitResponse struct {
 	ProductID     int     `json:"product_id"`
 	UnitID        int     `json:"unit_id"`
 	UnitName      string  `json:"unit_name"`
+	Abbreviation  string  `json:"abbreviation"`
 	ConversionQty float64 `json:"conversion_qty"`
 	SellingPrice  float64 `json:"selling_price"`
 	IsDefault     bool    `json:"is_default"`

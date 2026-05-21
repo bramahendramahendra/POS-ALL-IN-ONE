@@ -87,7 +87,8 @@ function setupEventListeners() {
   document.getElementById('returnPurchaseId').addEventListener('change', handleReturnPurchaseChange);
   document.getElementById('closeDetailReturnModal').addEventListener('click', closeDetailReturnModal);
   document.getElementById('btnCloseDetailReturn').addEventListener('click', closeDetailReturnModal);
-  document.getElementById('btnMarkReturnDone').addEventListener('click', markReturnDone);
+  document.getElementById('btnApproveReturn').addEventListener('click', () => updateReturnStatus('approved'));
+  document.getElementById('btnRejectReturn').addEventListener('click', () => updateReturnStatus('rejected'));
 
   window.addEventListener('click', (e) => {
     const modals = ['supplierModal', 'supplierDetailModal', 'purchaseModal', 'addPurchaseItemModal', 'payPurchaseModal', 'detailPurchaseModal', 'returnModal', 'detailReturnModal'];
@@ -441,7 +442,10 @@ async function openDetailModal(id) {
       return;
     }
 
-    const { supplier, purchases, total_debt, stats } = result;
+    const supplier = result.data;
+    const purchases = supplier.purchase_history ?? [];
+    const totalDebt = purchases.reduce((sum, p) => sum + (p.remaining_amount || 0), 0);
+    const totalAmount = purchases.reduce((sum, p) => sum + (p.total_amount || 0), 0);
 
     document.getElementById('detailModalTitle').textContent = `Detail: ${supplier.name}`;
 
@@ -494,15 +498,15 @@ async function openDetailModal(id) {
       <div class="debt-summary-grid">
         <div class="debt-stat-card">
           <div class="debt-stat-label">TOTAL PEMBELIAN</div>
-          <div class="debt-stat-value">${stats ? stats.total_purchases : 0}x</div>
-          <div class="debt-stat-sub">${formatCurrency(stats ? stats.total_amount : 0)}</div>
+          <div class="debt-stat-value">${purchases.length}x</div>
+          <div class="debt-stat-sub">${formatCurrency(totalAmount)}</div>
         </div>
-        <div class="debt-stat-card ${total_debt > 0 ? 'debt-stat-card--has-debt' : 'debt-stat-card--no-debt'}">
+        <div class="debt-stat-card ${totalDebt > 0 ? 'debt-stat-card--has-debt' : 'debt-stat-card--no-debt'}">
           <div class="debt-stat-label">TOTAL HUTANG BELUM LUNAS</div>
-          <div class="debt-stat-value ${total_debt > 0 ? 'text-danger' : 'text-success'}">
-            ${formatCurrency(total_debt)}
+          <div class="debt-stat-value ${totalDebt > 0 ? 'text-danger' : 'text-success'}">
+            ${formatCurrency(totalDebt)}
           </div>
-          <div class="debt-stat-note">${total_debt > 0 ? 'Masih ada hutang' : 'Semua lunas'}</div>
+          <div class="debt-stat-note">${totalDebt > 0 ? 'Masih ada hutang' : 'Semua lunas'}</div>
         </div>
       </div>
     `;
@@ -523,7 +527,7 @@ function renderDetailPurchases(purchases) {
   if (!purchases || purchases.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" class="text-center">Belum ada riwayat pembelian dari supplier ini</td>
+        <td colspan="4" class="text-center">Belum ada riwayat pembelian dari supplier ini</td>
       </tr>
     `;
     return;
@@ -534,12 +538,6 @@ function renderDetailPurchases(purchases) {
       <td><code>${escapeHtml(p.purchase_code)}</code></td>
       <td>${formatDateOnly(p.purchase_date)}</td>
       <td><strong>${formatCurrency(p.total_amount)}</strong></td>
-      <td><span class="text-success">${formatCurrency(p.paid_amount)}</span></td>
-      <td>
-        ${p.remaining_amount > 0
-          ? `<strong class="text-danger">${formatCurrency(p.remaining_amount)}</strong>`
-          : '<span class="text-success">-</span>'}
-      </td>
       <td>
         <span class="badge ${getPaymentStatusClass(p.payment_status)}">
           ${getPaymentStatusLabel(p.payment_status)}
@@ -1129,20 +1127,23 @@ let allReturns = [];
 let purchasesForReturn = [];
 let returnPurchaseItems = [];
 let currentReturnId = null;
+let returnSelectedPurchase = null;
 
 async function loadReturns() {
   try {
-    const filters = {
-      supplierId: document.getElementById('returnFilterSupplier').value || undefined,
-      status: document.getElementById('returnFilterStatus').value || undefined,
-      startDate: document.getElementById('returnFilterStartDate').value || undefined,
-      endDate: document.getElementById('returnFilterEndDate').value || undefined
-    };
-    Object.keys(filters).forEach(k => filters[k] === undefined && delete filters[k]);
+    const params = {};
+    const supplierId = document.getElementById('returnFilterSupplier').value;
+    const status = document.getElementById('returnFilterStatus').value;
+    const startDate = document.getElementById('returnFilterStartDate').value;
+    const endDate = document.getElementById('returnFilterEndDate').value;
+    if (supplierId) params.supplier_id = supplierId;
+    if (status) params.status = status;
+    if (startDate) params.start_date = startDate;
+    if (endDate) params.end_date = endDate;
 
-    const result = await apiClient.get('/supplier-returns', filters);
+    const result = await apiClient.get('/supplier-returns', params);
     if (result.success) {
-      allReturns = result.returns || [];
+      allReturns = result.data?.items ?? [];
       renderReturnsTable(allReturns);
       updateReturnsSummary(allReturns);
     } else {
@@ -1172,7 +1173,7 @@ function renderReturnsTable(returns) {
       <td>
         <div class="action-buttons">
           <button class="btn btn-sm btn-info" onclick="openDetailReturnModal(${r.id})">Detail</button>
-          ${r.status === 'diproses' ? `<button class="btn btn-sm btn-danger" onclick="confirmDeleteReturn(${r.id}, '${escapeHtml(r.return_code)}')">Hapus</button>` : ''}
+          ${r.status === 'pending' ? `<button class="btn btn-sm btn-danger" onclick="confirmDeleteReturn(${r.id}, '${escapeHtml(r.return_code)}')">Hapus</button>` : ''}
         </div>
       </td>
     </tr>
@@ -1180,9 +1181,13 @@ function renderReturnsTable(returns) {
 }
 
 function renderReturnStatusBadge(status) {
-  return status === 'selesai'
-    ? '<span class="badge badge-success">Selesai</span>'
-    : '<span class="badge badge-warning">Diproses</span>';
+  const map = {
+    pending:  ['badge-warning', 'Menunggu'],
+    approved: ['badge-success', 'Disetujui'],
+    rejected: ['badge-danger',  'Ditolak'],
+  };
+  const [cls, label] = map[status] ?? ['badge-secondary', status];
+  return `<span class="badge ${cls}">${label}</span>`;
 }
 
 function updateReturnsSummary(returns) {
@@ -1238,6 +1243,7 @@ function openAddReturnModal() {
   document.getElementById('returnFormError').classList.add('hidden');
   document.getElementById('returnDate').value = new Date().toISOString().split('T')[0];
   returnPurchaseItems = [];
+  returnSelectedPurchase = null;
   loadPurchasesForReturn();
   document.getElementById('returnModal').style.display = 'flex';
 }
@@ -1264,6 +1270,7 @@ async function handleReturnPurchaseChange() {
     if (purchaseResult.success && itemsResult.success) {
       const purchase = purchaseResult.data;
       returnPurchaseItems = itemsResult.data;
+      returnSelectedPurchase = purchase;
 
       document.getElementById('returnSupplierName').textContent =
         purchase.supplier_name || 'Tanpa Supplier';
@@ -1387,12 +1394,18 @@ async function handleReturnFormSubmit(e) {
 
   try {
     const result = await apiClient.post('/supplier-returns', {
-      purchase_id: purchaseId, return_date: returnDate, reason, notes, items: checkedItems
+      purchase_id: purchaseId,
+      supplier_id: returnSelectedPurchase?.supplier_id ?? null,
+      supplier_name: returnSelectedPurchase?.supplier_name ?? '',
+      return_date: returnDate,
+      reason,
+      notes,
+      items: checkedItems
     });
     if (result.success) {
       closeReturnModal();
       await loadReturns();
-      showToast(`Retur ${result.returnCode} berhasil disimpan`, 'success');
+      showToast(`Retur ${result.data?.return_code ?? ''} berhasil disimpan`, 'success');
     } else {
       errorEl.textContent = result.message || 'Gagal menyimpan retur';
       errorEl.classList.remove('hidden');
@@ -1410,7 +1423,7 @@ async function openDetailReturnModal(id) {
     const result = await apiClient.get(`/supplier-returns/${id}`);
     if (!result.success) { showToast(result.message || 'Gagal memuat detail retur', 'error'); return; }
 
-    const r = result.return;
+    const r = result.data;
     document.getElementById('detailReturnCode').textContent = r.return_code;
     document.getElementById('detailReturnPurchaseCode').textContent = r.purchase_code || '-';
     document.getElementById('detailReturnDate').textContent = formatDate(r.return_date);
@@ -1434,8 +1447,9 @@ async function openDetailReturnModal(id) {
           </tr>
         `).join('');
 
-    document.getElementById('btnMarkReturnDone').style.display =
-      r.status === 'diproses' ? 'inline-block' : 'none';
+    const isPending = r.status === 'pending';
+    document.getElementById('btnApproveReturn').style.display = isPending ? 'inline-block' : 'none';
+    document.getElementById('btnRejectReturn').style.display = isPending ? 'inline-block' : 'none';
     document.getElementById('detailReturnModal').style.display = 'flex';
   } catch (error) {
     console.error('openDetailReturnModal error:', error);
@@ -1448,21 +1462,28 @@ function closeDetailReturnModal() {
   currentReturnId = null;
 }
 
-async function markReturnDone() {
+async function updateReturnStatus(status) {
   if (!currentReturnId) return;
-  try {
-    const result = await apiClient.patch(`/supplier-returns/${currentReturnId}/status`, { status: 'selesai' });
-    if (result.success) {
-      closeDetailReturnModal();
-      await loadReturns();
-      showToast('Status retur diubah menjadi Selesai', 'success');
-    } else {
-      showToast(result.message || 'Gagal mengubah status', 'error');
+  const label = status === 'approved' ? 'Setujui' : 'Tolak';
+  const desc = status === 'approved'
+    ? 'Yakin ingin menyetujui retur ini? Stok produk akan dikurangi secara otomatis.'
+    : 'Yakin ingin menolak retur ini?';
+
+  showConfirm(`Konfirmasi ${label} Retur`, desc, async () => {
+    try {
+      const result = await apiClient.patch(`/supplier-returns/${currentReturnId}/status`, { status });
+      if (result.success) {
+        closeDetailReturnModal();
+        await loadReturns();
+        showToast(`Retur berhasil di${status === 'approved' ? 'setujui' : 'tolak'}`, 'success');
+      } else {
+        showToast(result.message || 'Gagal mengubah status', 'error');
+      }
+    } catch (error) {
+      console.error('updateReturnStatus error:', error);
+      showToast('Terjadi kesalahan', 'error');
     }
-  } catch (error) {
-    console.error('markReturnDone error:', error);
-    showToast('Terjadi kesalahan', 'error');
-  }
+  });
 }
 
 function confirmDeleteReturn(id, code) {

@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	getProductUnitsQuery       = `SELECT pu.id, pu.product_id, pu.unit_id, pu.unit_name, pu.conversion_qty, pu.selling_price, pu.is_default FROM product_units pu WHERE pu.product_id = ?`
+	getProductUnitsQuery       = `SELECT pu.id, pu.product_id, pu.unit_id, pu.unit_name, COALESCE(u.abbreviation, '') AS abbreviation, pu.conversion_qty, pu.selling_price, pu.is_default FROM product_units pu LEFT JOIN units u ON u.id = pu.unit_id WHERE pu.product_id = ?`
 	deleteProductUnitsQuery    = `DELETE FROM product_units WHERE product_id = ?`
 	insertProductUnitQuery     = `INSERT INTO product_units (product_id, unit_id, unit_name, conversion_qty, selling_price, is_default) VALUES (?, ?, ?, ?, ?, ?)`
 	deleteProductUnitByIDQuery = `DELETE FROM product_units WHERE id = ? AND product_id = ?`
@@ -37,7 +37,7 @@ func (r *productUnitRepo) GetByProduct(productID int) ([]*dto_product.ProductUni
 	var units []*dto_product.ProductUnitResponse
 	for rows.Next() {
 		var u dto_product.ProductUnitResponse
-		if err := rows.Scan(&u.ID, &u.ProductID, &u.UnitID, &u.UnitName, &u.ConversionQty, &u.SellingPrice, &u.IsDefault); err != nil {
+		if err := rows.Scan(&u.ID, &u.ProductID, &u.UnitID, &u.UnitName, &u.Abbreviation, &u.ConversionQty, &u.SellingPrice, &u.IsDefault); err != nil {
 			return nil, err
 		}
 		units = append(units, &u)

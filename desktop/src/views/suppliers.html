@@ -313,13 +313,11 @@
                   <th>Kode PO</th>
                   <th>Tanggal</th>
                   <th>Total</th>
-                  <th>Dibayar</th>
-                  <th>Sisa Hutang</th>
                   <th>Status</th>
                 </tr>
               </thead>
               <tbody id="detailPurchaseBody">
-                <tr><td colspan="6" class="text-center">Loading...</td></tr>
+                <tr><td colspan="4" class="text-center">Loading...</td></tr>
               </tbody>
             </table>
           </div>
@@ -722,7 +720,8 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" id="btnCloseDetailReturn">Tutup</button>
-        <button type="button" class="btn btn-success" id="btnMarkReturnDone">✔ Tandai Selesai</button>
+        <button type="button" class="btn btn-danger" id="btnRejectReturn" style="display:none">✖ Tolak</button>
+        <button type="button" class="btn btn-success" id="btnApproveReturn" style="display:none">✔ Setujui</button>
       </div>
     </div>
   </div>

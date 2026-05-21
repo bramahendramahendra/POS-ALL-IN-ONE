@@ -93,13 +93,26 @@ function setupEventListeners() {
       e.preventDefault();
       const keyword = e.target.value.trim();
 
-      if (keyword) {
+      if (!keyword) return;
+
+      // Jika ada suggestion yang tampil, pilih yang pertama
+      const suggestionsContainer = document.getElementById('productSuggestions');
+      const firstSuggestion = suggestionsContainer.querySelector('.suggestion-item');
+      if (suggestionsContainer.style.display !== 'none' && firstSuggestion) {
+        firstSuggestion.click();
+        return;
+      }
+
+      // Fallback: cari via barcode
+      try {
         const result = await apiClient.get(`/products/barcode/${encodeURIComponent(keyword)}`);
         if (result.success && result.data) {
           document.getElementById('productSearch').value = '';
           hideSuggestions();
           await addToCartWithUnitSelect(result.data);
         }
+      } catch (error) {
+        console.error('Barcode search error:', error);
       }
     }
   });
@@ -211,9 +224,9 @@ function hideSuggestions() {
 
 async function selectProduct(productId) {
   try {
-    const result = await window.api.products.getById(productId);
+    const result = await apiClient.get(`/products/${productId}`);
 
-    if (result.success) {
+    if (result.success && result.data) {
       document.getElementById('productSearch').value = '';
       hideSuggestions();
       await addToCartWithUnitSelect(result.data);
@@ -223,22 +236,15 @@ async function selectProduct(productId) {
   }
 }
 
-// Cek satuan jual tersedia; jika ada default (retail) langsung pakai, jika > 1 tanpa default tampilkan modal
+// Cek satuan jual tersedia; jika > 1 tampilkan modal pilih satuan, jika hanya 1 langsung pakai
 async function addToCartWithUnitSelect(product) {
   try {
-    const result = await window.api.productUnits.getByProduct(product.id);
-    const units = result.success ? result.units : [];
+    const result = await apiClient.get(`/products/${product.id}/units`);
+    const units = result.success && Array.isArray(result.data) ? result.data : [];
 
     if (units.length > 1) {
-      // Gunakan unit default (retail) langsung tanpa modal
-      const defaultUnit = units.find(u => u.is_default) || units[0];
-      const u = defaultUnit;
-      addToCart(product, 1, {
-        unit_id: u.unit_id,
-        unit_name: u.unit_name,
-        conversion_qty: u.conversion_qty,
-        selling_price: u.selling_price
-      });
+      // Tampilkan modal agar kasir bisa memilih satuan (pcs, dus, lusin, dll)
+      openUnitSelectModal(product, units);
     } else if (units.length === 1) {
       const u = units[0];
       addToCart(product, 1, {
@@ -328,8 +334,8 @@ async function addToCart(product, quantity, unitInfo) {
 async function loadProductPriceTiers(productId) {
   if (productPricesCache[productId] !== undefined) return productPricesCache[productId];
   try {
-    const result = await window.api.productPrices.getByProduct(productId);
-    productPricesCache[productId] = result.success ? result.prices : [];
+    const result = await apiClient.get(`/products/${productId}/prices`);
+    productPricesCache[productId] = result.success && Array.isArray(result.data) ? result.data : [];
   } catch (e) {
     productPricesCache[productId] = [];
   }
@@ -1002,13 +1008,14 @@ async function changeCartItemUnit(index) {
   const item = cart[index];
 
   try {
-    const productResult = await window.api.products.getById(item.product_id);
+    const productResult = await apiClient.get(`/products/${item.product_id}`);
     if (!productResult.success) return;
 
-    const unitsResult = await window.api.productUnits.getByProduct(item.product_id);
-    if (!unitsResult.success || unitsResult.units.length <= 1) return;
+    const unitsResult = await apiClient.get(`/products/${item.product_id}/units`);
+    const units = unitsResult.success && Array.isArray(unitsResult.data) ? unitsResult.data : [];
+    if (units.length <= 1) return;
 
-    const product = { ...productResult.product };
+    const product = { ...productResult.data };
     // Restore stock karena item sudah di cart, tambahkan kembali untuk validasi
     const currentStockUsed = item.quantity * (item.conversion_qty || 1);
     product.stock = product.stock + currentStockUsed;
@@ -1016,14 +1023,14 @@ async function changeCartItemUnit(index) {
     // Simpan index untuk diupdate setelah pilih
     pendingProduct = {
       product,
-      units: unitsResult.units,
+      units,
       replaceCartIndex: index
     };
 
     document.getElementById('unitSelectProductName').textContent = product.name;
 
     const list = document.getElementById('unitSelectList');
-    list.innerHTML = unitsResult.units.map(u => {
+    list.innerHTML = units.map(u => {
       const maxQty = Math.floor(product.stock / u.conversion_qty);
       const isCurrent = item.unit_id === u.unit_id;
       const disabled = maxQty <= 0 ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '';

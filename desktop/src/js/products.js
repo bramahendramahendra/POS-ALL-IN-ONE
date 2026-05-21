@@ -591,6 +591,7 @@ function openAddProductModal() {
   document.getElementById('productUnitsSection').classList.add('hidden');
   document.getElementById('productPricesSection').classList.add('hidden');
   productPriceRows = [];
+  populateBaseUnitSelect();
   document.getElementById('productModal').style.display = 'flex';
 
   setTimeout(() => {
@@ -615,7 +616,7 @@ async function editProduct(productId) {
       setRupiahInput('sellingPrice', product.selling_price);
       document.getElementById('stock').value = product.stock;
       document.getElementById('minStock').value = product.min_stock;
-      document.getElementById('unit').value = product.unit;
+      populateBaseUnitSelect(product.unit);
 
       calculateAndDisplayMargin();
 
@@ -723,19 +724,29 @@ async function saveProduct(formData) {
     }
 
     if (result.success) {
-      // Save product units if any
+      const isNew = !editingProductId;
       const savedProductId = editingProductId || result.data?.id;
+
+      // Save product units if any (mode edit atau buffer terisi)
       if (savedProductId && productUnitRows.length > 0) {
         await apiClient.post(`/products/${savedProductId}/units`, { units: productUnitRows });
       }
 
-      closeProductModal();
       await loadProducts();
       showToast(
-        editingProductId ? 'Produk berhasil diupdate' : 'Produk berhasil ditambahkan',
+        isNew ? 'Produk berhasil ditambahkan. Sekarang atur satuan jual & harga grosir.' : 'Produk berhasil diupdate',
         'success'
       );
 
+      if (isNew && savedProductId) {
+        // Langsung switch ke edit mode agar user bisa tambah satuan & tier harga
+        btnSubmit.disabled = false;
+        btnSubmitText.textContent = originalText;
+        await editProduct(savedProductId);
+        return;
+      }
+
+      closeProductModal();
       btnSubmit.disabled = false;
       btnSubmitText.textContent = originalText;
     } else {
@@ -812,6 +823,7 @@ async function loadUnits() {
     if (result.success) {
       allUnits = result.data;
       renderUnitsTable(allUnits);
+      populateBaseUnitSelect();
     } else {
       showToast('Gagal memuat data satuan', 'error');
     }
@@ -819,6 +831,17 @@ async function loadUnits() {
     console.error('Load units error:', error);
     showToast('Terjadi kesalahan saat memuat satuan', 'error');
   }
+}
+
+function populateBaseUnitSelect(currentValue) {
+  const select = document.getElementById('unit');
+  if (!select) return;
+  const activeUnits = allUnits.filter(u => u.is_active);
+  select.innerHTML = '<option value="">-- Pilih Satuan --</option>' +
+    activeUnits.map(u =>
+      `<option value="${escapeHtml(u.name)}">${escapeHtml(u.name)} (${escapeHtml(u.abbreviation)})</option>`
+    ).join('');
+  if (currentValue) select.value = currentValue;
 }
 
 function renderUnitsTable(units) {
@@ -1188,8 +1211,8 @@ async function handleProductUnitFormSubmit(e) {
     }
     // Reload from DB to get IDs
     const fresh = await apiClient.get(`/products/${editingProductId}/units`);
-    if (fresh.success) {
-      productUnitRows = fresh.units.map(u => ({
+    if (fresh.success && Array.isArray(fresh.data)) {
+      productUnitRows = fresh.data.map(u => ({
         id: u.id,
         unit_id: u.unit_id,
         unit_name: u.unit_name,
@@ -1340,6 +1363,12 @@ async function handleProductPriceFormSubmit(e) {
     return;
   }
 
+  const retailPrice = parseRupiahInput('sellingPrice');
+  if (retailPrice > 0 && price >= retailPrice) {
+    showPpFormError(`Harga tier grosir (${formatCurrency(price)}) harus lebih rendah dari harga jual retail (${formatCurrency(retailPrice)})`);
+    return;
+  }
+
   const rowData = { tier_name: tierName, min_qty: minQty, price };
 
   if (ppEditIndex !== null) {
@@ -1359,8 +1388,8 @@ async function handleProductPriceFormSubmit(e) {
     }
     // Refresh from DB
     const fresh = await apiClient.get(`/products/${editingProductId}/prices`);
-    if (fresh.success) {
-      productPriceRows = fresh.prices.map(p => ({ tier_name: p.tier_name, min_qty: p.min_qty, price: p.price }));
+    if (fresh.success && Array.isArray(fresh.data)) {
+      productPriceRows = fresh.data.map(p => ({ tier_name: p.tier_name, min_qty: p.min_qty, price: p.price }));
     }
   }
 
@@ -1416,9 +1445,9 @@ async function openLabelPrintModal() {
 
   // Load default settings
   try {
-    const res = await window.api.settings.getAll();
-    if (res.success) {
-      const s = res.settings;
+    const res = await apiClient.get('/settings');
+    if (res.success && res.data) {
+      const s = res.data;
       if (s.label_size_default) {
         document.getElementById('labelSize').value = s.label_size_default;
       }
