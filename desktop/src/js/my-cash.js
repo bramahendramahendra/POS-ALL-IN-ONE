@@ -6,8 +6,6 @@ let shiftsCache = [];
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('Kas Harian page loaded');
-
   if (!initializePageLayout('my-cash')) {
     return;
   }
@@ -113,7 +111,12 @@ async function checkCurrentCashDrawer() {
       renderCashStatus(currentCashDrawer);
     } else {
       showToast('Gagal memuat status kas', 'error');
-      renderCashStatus(null);
+      const container = document.getElementById('cashStatusContent');
+      container.innerHTML = `
+        <div class="empty-state">
+          <p class="text-danger">Gagal memuat status kas. Coba refresh halaman.</p>
+        </div>
+      `;
     }
   } catch (error) {
     console.error('Check current cash drawer error:', error);
@@ -140,12 +143,10 @@ function renderCashStatus(cashDrawer) {
     `;
   } else {
     // Kas sudah dibuka
-    const expected = cashDrawer.opening_balance + cashDrawer.total_cash_sales - cashDrawer.total_expenses;
-    
     container.innerHTML = `
       <div class="cash-status-open">
         <div class="status-badge badge-success">● KAS TERBUKA</div>
-        
+
         <div class="cash-info-grid">
           ${cashDrawer.shift_name ? `
           <div class="cash-info-item">
@@ -170,7 +171,7 @@ function renderCashStatus(cashDrawer) {
           </div>
           <div class="cash-info-item">
             <span class="label">Expected Balance:</span>
-            <strong class="text-primary">${formatCurrency(expected)}</strong>
+            <strong class="text-primary">${formatCurrency(cashDrawer.expected_balance)}</strong>
           </div>
           <div class="cash-info-item">
             <span class="label">Durasi:</span>
@@ -320,11 +321,6 @@ async function handleOpenCash(e) {
   const shiftId = parseInt(document.getElementById('openShiftSelect').value) || null;
   const openingBalance = parseRupiahInput('openingBalance');
   const notes = document.getElementById('openCashNotes').value.trim();
-
-  if (!shiftId) {
-    showOpenCashError('Pilih shift terlebih dahulu');
-    return;
-  }
 
   if (openingBalance < 0) {
     showOpenCashError('Saldo awal tidak boleh negatif');
@@ -545,7 +541,7 @@ function displayCashDrawerDetail(cashDrawer) {
 
   const totalCashSales = cashDrawer.total_cash_sales;
   const totalExpenses = cashDrawer.total_expenses;
-  const expectedBalance = cashDrawer.opening_balance + totalCashSales - totalExpenses;
+  const expectedBalance = cashDrawer.expected_balance;
 
   container.innerHTML = `
     <div class="detail-section">
@@ -569,9 +565,15 @@ function displayCashDrawerDetail(cashDrawer) {
             ${cashDrawer.status === 'open' ? 'Open' : 'Closed'}
           </span>
         </div>
+        ${cashDrawer.open_notes ? `
+        <div class="detail-item detail-item-full">
+          <span class="detail-label">Catatan Buka:</span>
+          <span>${escapeHtml(cashDrawer.open_notes)}</span>
+        </div>
+        ` : ''}
         ${cashDrawer.notes ? `
         <div class="detail-item detail-item-full">
-          <span class="detail-label">Catatan:</span>
+          <span class="detail-label">Catatan Tutup:</span>
           <span>${escapeHtml(cashDrawer.notes)}</span>
         </div>
         ` : ''}
@@ -660,13 +662,13 @@ function displayCashDrawerDetail(cashDrawer) {
         </div>
         <div class="payment-row">
           <span>Selisih:</span>
-          <strong class="${(cashDrawer.closing_balance - expectedBalance) === 0 ? 'text-success' : 'text-danger'}">
-            ${formatCurrency(cashDrawer.closing_balance - expectedBalance)}
+          <strong class="${cashDrawer.difference === 0 ? 'text-success' : 'text-danger'}">
+            ${formatCurrency(cashDrawer.difference)}
           </strong>
         </div>
-        ${(cashDrawer.closing_balance - expectedBalance) === 0 ? 
-          '<div class="success-box">✅ Kas pas, tidak ada selisih!</div>' : 
-          (cashDrawer.closing_balance - expectedBalance) > 0 ?
+        ${cashDrawer.difference === 0 ?
+          '<div class="success-box">✅ Kas pas, tidak ada selisih!</div>' :
+          cashDrawer.difference > 0 ?
             '<div class="warning-box">⚠️ Uang lebih dari expected</div>' :
             '<div class="error-box">❌ Uang kurang dari expected</div>'
         }

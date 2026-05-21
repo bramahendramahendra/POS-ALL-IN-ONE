@@ -999,13 +999,6 @@ async function handleExpenseFormSubmit(e) {
 }
 
 async function saveExpense(formData) {
-
-  console.log('=== SAVING EXPENSE ===');
-  console.log('Expense Data:', formData);
-  console.log('Payment Method:', formData.payment_method);
-  console.log('Expense Date:', formData.expense_date);
-  console.log('Today:', new Date().toISOString().split('T')[0]);
-
   // Update/delete tidak diizinkan saat offline
   if (typeof connectionMonitor !== 'undefined' && !connectionMonitor.isOnline && editingExpenseId) {
     showExpenseFormError('Tidak dapat mengubah pengeluaran saat offline');

@@ -13,7 +13,7 @@ const (
 	getCurrentCashDrawerQuery  = `SELECT cd.id, cd.user_id, u.full_name as user_name, cd.shift_id, s.name as shift_name, s.start_time as shift_start, s.end_time as shift_end, cd.open_time, cd.opening_balance, cd.total_sales, cd.total_cash_sales, cd.total_expenses, cd.expected_balance, cd.status FROM cash_drawer cd LEFT JOIN users u ON cd.user_id = u.id LEFT JOIN shifts s ON cd.shift_id = s.id WHERE cd.user_id = ? AND cd.status = 'open' LIMIT 1`
 	getOpenCashDrawerQuery     = `SELECT id, user_id, shift_id, open_time, opening_balance, total_sales, total_cash_sales, total_expenses, expected_balance, status FROM cash_drawer WHERE user_id = ? AND status = 'open' LIMIT 1`
 	getCashDrawerByIDQuery     = `SELECT id, user_id, shift_id, open_time, close_time, opening_balance, closing_balance, total_sales, total_cash_sales, total_expenses, expected_balance, difference, status, notes FROM cash_drawer WHERE id = ? LIMIT 1`
-	openCashDrawerQuery        = `INSERT INTO cash_drawer (user_id, shift_id, open_time, opening_balance, notes, status) VALUES (?, ?, NOW(), ?, ?, 'open')`
+	openCashDrawerQuery        = `INSERT INTO cash_drawer (user_id, shift_id, open_time, opening_balance, open_notes, status) VALUES (?, ?, NOW(), ?, ?, 'open')`
 	closeCashDrawerQuery       = `UPDATE cash_drawer SET close_time = NOW(), closing_balance = ?, expected_balance = ?, difference = ?, status = 'closed', notes = ?, updated_at = NOW() WHERE id = ?`
 	updateSalesQuery           = `UPDATE cash_drawer SET total_sales = ?, total_cash_sales = ?, expected_balance = opening_balance + total_cash_sales - total_expenses, updated_at = NOW() WHERE id = ?`
 	updateExpensesQuery        = `UPDATE cash_drawer SET total_expenses = ?, expected_balance = opening_balance + total_cash_sales - ?, updated_at = NOW() WHERE id = ?`
@@ -26,7 +26,7 @@ const (
 		       cd.open_time, cd.close_time, cd.opening_balance, cd.closing_balance,
 		       cd.expected_balance, cd.total_cash_sales, cd.total_expenses,
 		       CASE WHEN cd.status = 'closed' THEN cd.difference ELSE NULL END as difference,
-		       cd.status, cd.notes
+		       cd.status, cd.notes, cd.open_notes
 		FROM cash_drawer cd
 		LEFT JOIN users u ON cd.user_id = u.id
 		LEFT JOIN shifts s ON cd.shift_id = s.id
@@ -48,12 +48,14 @@ const (
 		  AND t.transaction_date <= COALESCE(?, NOW())
 		ORDER BY t.transaction_date ASC`
 
-	// Filter pengeluaran berdasarkan user dan tanggal buka kas
+	// Filter pengeluaran berdasarkan user dan rentang tanggal sesi kas.
+	// DATE() digunakan karena expense_date bertipe DATE, bukan DATETIME.
 	getCashDrawerExpensesQuery = `
 		SELECT e.category, e.description, e.amount
 		FROM expenses e
 		WHERE e.user_id = ?
-		  AND DATE(e.expense_date) = DATE(?)
+		  AND e.expense_date >= DATE(?)
+		  AND e.expense_date <= DATE(COALESCE(?, NOW()))
 		ORDER BY e.created_at ASC`
 )
 
@@ -185,7 +187,7 @@ func (r *cashDrawerRepo) GetDetailByID(id int) (*dto_cash_drawer.CashDrawerDetai
 		res.Transactions = []dto_cash_drawer.CashDrawerTransaction{}
 	}
 
-	if err := r.db.Raw(getCashDrawerExpensesQuery, res.UserID, res.OpenTime).Scan(&res.Expenses).Error; err != nil {
+	if err := r.db.Raw(getCashDrawerExpensesQuery, res.UserID, res.OpenTime, res.CloseTime).Scan(&res.Expenses).Error; err != nil {
 		return nil, err
 	}
 	if res.Expenses == nil {

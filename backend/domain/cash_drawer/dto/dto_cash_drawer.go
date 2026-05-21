@@ -102,6 +102,7 @@ type CashDrawerDetailResponse struct {
 	Difference      *float64                `json:"difference"`
 	Status          string                  `json:"status"`
 	Notes           *string                 `json:"notes"`
+	OpenNotes       *string                 `json:"open_notes"`
 	Transactions    []CashDrawerTransaction `json:"transactions"`
 	Expenses        []CashDrawerExpenseItem `json:"expenses"`
 }
