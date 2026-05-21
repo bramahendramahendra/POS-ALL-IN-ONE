@@ -399,8 +399,8 @@ async function handleOpenCash(e) {
   const openingBalance = parseRupiahInput('openingBalance');
   const notes = document.getElementById('openCashNotes').value.trim();
 
-  if (openingBalance <= 0) {
-    showOpenCashError('Saldo awal harus lebih dari 0');
+  if (openingBalance < 0) {
+    showOpenCashError('Saldo awal tidak boleh negatif');
     return;
   }
 

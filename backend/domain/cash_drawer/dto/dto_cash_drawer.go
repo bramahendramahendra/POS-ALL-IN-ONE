@@ -6,7 +6,8 @@ import "time"
 
 type OpenRequest struct {
 	ShiftID        *int    `json:"shift_id"`
-	OpeningBalance float64 `json:"opening_balance" binding:"required"`
+	OpeningBalance float64 `json:"opening_balance" binding:"min=0"`
+	Notes          string  `json:"notes"`
 }
 
 type CloseRequest struct {
@@ -15,12 +16,12 @@ type CloseRequest struct {
 }
 
 type UpdateSalesRequest struct {
-	TotalSales     float64 `json:"total_sales" binding:"required"`
-	TotalCashSales float64 `json:"total_cash_sales" binding:"required"`
+	TotalSales     float64 `json:"total_sales" binding:"min=0"`
+	TotalCashSales float64 `json:"total_cash_sales" binding:"min=0"`
 }
 
 type UpdateExpensesRequest struct {
-	TotalExpenses float64 `json:"total_expenses" binding:"required"`
+	TotalExpenses float64 `json:"total_expenses" binding:"min=0"`
 }
 
 // Filter
@@ -86,6 +87,7 @@ type CashDrawerExpenseItem struct {
 
 type CashDrawerDetailResponse struct {
 	ID              int                     `json:"id"`
+	UserID          int                     `json:"-"`
 	CashierName     string                  `json:"cashier_name"`
 	ShiftName       *string                 `json:"shift_name"`
 	ShiftStart      *string                 `json:"shift_start"`

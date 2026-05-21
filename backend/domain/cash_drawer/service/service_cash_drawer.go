@@ -42,6 +42,10 @@ func (s *cashDrawerService) GetHistory(filter *dto_cash_drawer.CashDrawerFilter)
 }
 
 func (s *cashDrawerService) Open(userID int, req *dto_cash_drawer.OpenRequest) (*dto_cash_drawer.OpenResponse, error) {
+	if req.OpeningBalance < 0 {
+		return nil, &errors.BadRequestError{Message: "Saldo awal tidak boleh negatif"}
+	}
+
 	existing, err := s.repo.GetOpenCashDrawer(userID)
 	if err != nil {
 		return nil, &errors.InternalServerError{Message: err.Error()}
@@ -50,7 +54,7 @@ func (s *cashDrawerService) Open(userID int, req *dto_cash_drawer.OpenRequest) (
 		return nil, &errors.BadRequestError{Message: "Sudah ada kas yang terbuka"}
 	}
 
-	id, err := s.repo.Open(userID, req.ShiftID, req.OpeningBalance)
+	id, err := s.repo.Open(userID, req.ShiftID, req.OpeningBalance, req.Notes)
 	if err != nil {
 		return nil, &errors.InternalServerError{Message: err.Error()}
 	}

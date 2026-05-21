@@ -117,7 +117,7 @@ async function checkCurrentCashDrawer() {
     }
   } catch (error) {
     console.error('Check current cash drawer error:', error);
-    renderCashStatus(null);
+    showToast('Gagal memuat status kas, coba refresh halaman', 'error');
   }
 }
 
@@ -178,8 +178,6 @@ function renderCashStatus(cashDrawer) {
           </div>
         </div>
         
-        ${cashDrawer.notes ? `<p class="cash-notes">📝 ${escapeHtml(cashDrawer.notes)}</p>` : ''}
-        
         <button class="btn btn-danger btn-large" onclick="openCloseCashModal(${cashDrawer.id})">
           🔒 Tutup Kas
         </button>
@@ -230,7 +228,7 @@ async function loadMyCashHistory() {
     });
 
     if (result.success) {
-      allCashDrawers = result.data?.items || result.history || [];
+      allCashDrawers = result.data?.items || [];
       renderCashDrawerTable(allCashDrawers);
     } else {
       showToast('Gagal memuat riwayat kas', 'error');
@@ -390,23 +388,37 @@ function showOpenCashError(message) {
 // CLOSE CASH DRAWER MODAL
 // ============================================
 
-function openCloseCashModal(cashDrawerId) {
+async function openCloseCashModal(cashDrawerId) {
   if (!currentCashDrawer) return;
 
+  // Reset form dan tampilkan modal dengan state loading
   document.getElementById('closeCashDrawerId').value = cashDrawerId;
+  document.getElementById('closingBalance').value = '';
+  document.getElementById('closeCashNotes').value = '';
+  document.getElementById('differenceDisplay').style.display = 'none';
+  document.getElementById('closeCashError').style.display = 'none';
+  document.getElementById('closeOpeningBalance').textContent = 'Memuat...';
+  document.getElementById('closeCashSales').textContent = 'Memuat...';
+  document.getElementById('closeExpenses').textContent = 'Memuat...';
+  document.getElementById('closeExpectedBalance').textContent = 'Memuat...';
+  document.getElementById('closeCashModal').style.display = 'flex';
+
+  // Ambil data terkini, baru tampilkan angka
+  try {
+    const result = await apiClient.get('/cash-drawer/current');
+    if (result.success && result.data) {
+      currentCashDrawer = result.data;
+    }
+  } catch (e) {
+    console.error('Refresh cash drawer error:', e);
+  }
+
   document.getElementById('closeOpeningBalance').textContent = formatCurrency(currentCashDrawer.opening_balance);
   document.getElementById('closeCashSales').textContent = formatCurrency(currentCashDrawer.total_cash_sales);
   document.getElementById('closeExpenses').textContent = formatCurrency(currentCashDrawer.total_expenses);
 
   const expected = currentCashDrawer.opening_balance + currentCashDrawer.total_cash_sales - currentCashDrawer.total_expenses;
   document.getElementById('closeExpectedBalance').textContent = formatCurrency(expected);
-
-  document.getElementById('closingBalance').value = '';
-  document.getElementById('closeCashNotes').value = '';
-  document.getElementById('differenceDisplay').style.display = 'none';
-  document.getElementById('closeCashError').style.display = 'none';
-
-  document.getElementById('closeCashModal').style.display = 'flex';
 
   setTimeout(() => {
     document.getElementById('closingBalance').focus();
@@ -531,9 +543,8 @@ function displayCashDrawerDetail(cashDrawer) {
   const transactions = cashDrawer.transactions || [];
   const expenses = cashDrawer.expenses || [];
 
-  // Use calculated values if available (more accurate)
-  const totalCashSales = cashDrawer.calculated_cash_sales || cashDrawer.total_cash_sales;
-  const totalExpenses = cashDrawer.calculated_expenses || cashDrawer.total_expenses;
+  const totalCashSales = cashDrawer.total_cash_sales;
+  const totalExpenses = cashDrawer.total_expenses;
   const expectedBalance = cashDrawer.opening_balance + totalCashSales - totalExpenses;
 
   container.innerHTML = `
@@ -726,7 +737,7 @@ async function loadRekapKas() {
       return;
     }
 
-    const data = result.data?.items || result.history || [];
+    const data = result.data?.items || [];
 
     if (data.length === 0) {
       tbody.innerHTML = '<tr><td colspan="11" class="text-center">Tidak ada data kas pada periode ini</td></tr>';
