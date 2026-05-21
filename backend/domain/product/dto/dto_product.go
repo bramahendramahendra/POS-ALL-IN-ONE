@@ -12,17 +12,19 @@ type ProductRequest struct {
 }
 
 type ProductResponse struct {
-	ID            int     `json:"id"`
-	Barcode       string  `json:"barcode"`
-	Name          string  `json:"name"`
-	CategoryID    *int    `json:"category_id"`
-	CategoryName  string  `json:"category_name"`
-	PurchasePrice float64 `json:"purchase_price"`
-	SellingPrice  float64 `json:"selling_price"`
-	Stock         float64 `json:"stock"`
-	MinStock      float64 `json:"min_stock"`
-	Unit          string  `json:"unit"`
-	IsActive      bool    `json:"is_active"`
+	ID              int     `json:"id"`
+	Barcode         string  `json:"barcode"`
+	Name            string  `json:"name"`
+	CategoryID      *int    `json:"category_id"`
+	CategoryName    string  `json:"category_name"`
+	PurchasePrice   float64 `json:"purchase_price"`
+	SellingPrice    float64 `json:"selling_price"`
+	Stock           float64 `json:"stock"`
+	MinStock        float64 `json:"min_stock"`
+	Unit            string  `json:"unit"`
+	IsActive        bool    `json:"is_active"`
+	ExtraUnitsCount int     `json:"extra_units_count"`
+	PriceTiersCount int     `json:"price_tiers_count"`
 }
 
 type ProductSearchResult struct {

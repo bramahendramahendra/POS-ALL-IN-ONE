@@ -15,5 +15,5 @@ type ProductPriceResponse struct {
 }
 
 type SaveProductPricesRequest struct {
-	Prices []ProductPriceRequest `json:"prices" validate:"required,min=1,dive"`
+	Prices []ProductPriceRequest `json:"prices" validate:"dive"`
 }

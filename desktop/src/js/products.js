@@ -127,6 +127,9 @@ function setupEventListeners() {
   document.getElementById('btnCancelProductPrice').addEventListener('click', closeProductPriceModal);
   document.getElementById('productPriceForm').addEventListener('submit', handleProductPriceFormSubmit);
 
+  // Sync satuan dasar di tabel Satuan Jual saat unit produk berubah
+  document.getElementById('unit').addEventListener('change', onBaseUnitChange);
+
   // Auto-calculate hint on product unit price input
   document.getElementById('puConversionQty').addEventListener('input', updatePuPriceHint);
   document.getElementById('puSellingPrice').addEventListener('input', updatePuPriceHint);
@@ -524,7 +527,15 @@ function renderProductsTable(products) {
             ${product.stock}
           </span>
         </td>
-        <td>${product.unit}</td>
+        <td>
+          <div>${escapeHtml(product.unit)}</div>
+          ${product.extra_units_count > 0
+            ? `<span class="badge badge-warning" style="font-size:10px; margin-top:2px;" title="${product.extra_units_count} satuan jual tambahan">📦 +${product.extra_units_count} satuan</span>`
+            : ''}
+          ${product.price_tiers_count > 0
+            ? `<span class="badge badge-success" style="font-size:10px; margin-top:2px;" title="${product.price_tiers_count} tier harga grosir">🏷️ ${product.price_tiers_count} tier grosir</span>`
+            : ''}
+        </td>
         <td>
           <span class="badge ${product.is_active ? 'badge-success' : 'badge-danger'}">
             ${product.is_active ? 'Aktif' : 'Nonaktif'}
@@ -663,6 +674,33 @@ function calculateAndDisplayMargin() {
 
   const margin = calculateMargin(purchasePrice, sellingPrice);
   document.getElementById('marginDisplay').value = `${margin}%`;
+
+  // Re-render tier harga agar warning invalid langsung terupdate
+  const pricesSection = document.getElementById('productPricesSection');
+  if (pricesSection && !pricesSection.classList.contains('hidden') && productPriceRows.length > 0) {
+    renderProductPricesRows();
+  }
+}
+
+function onBaseUnitChange() {
+  const newUnitName = document.getElementById('unit').value;
+  if (!newUnitName) return;
+
+  // Cari unit object dari units master
+  const unitObj = allUnits.find(u => u.name === newUnitName);
+
+  // Update row default di productUnitRows jika sudah ada
+  const defaultIdx = productUnitRows.findIndex(r => r.is_default);
+  if (defaultIdx !== -1) {
+    productUnitRows[defaultIdx] = {
+      ...productUnitRows[defaultIdx],
+      unit_id: unitObj ? unitObj.id : productUnitRows[defaultIdx].unit_id,
+      unit_name: newUnitName,
+      abbreviation: unitObj ? unitObj.abbreviation : '',
+      selling_price: parseRupiahInput('sellingPrice') || productUnitRows[defaultIdx].selling_price,
+    };
+    renderProductUnitsRows(newUnitName);
+  }
 }
 
 async function handleProductFormSubmit(e) {
@@ -682,6 +720,11 @@ async function handleProductFormSubmit(e) {
   // Validate
   if (!formData.barcode || !formData.name) {
     showProductFormError('Barcode dan nama produk harus diisi');
+    return;
+  }
+
+  if (!formData.unit) {
+    showProductFormError('Satuan produk harus dipilih');
     return;
   }
 
@@ -729,6 +772,14 @@ async function saveProduct(formData) {
 
       // Save product units if any (mode edit atau buffer terisi)
       if (savedProductId && productUnitRows.length > 0) {
+        // Pastikan default row selalu sinkron dengan selling_price terbaru
+        const defIdx = productUnitRows.findIndex(r => r.is_default);
+        if (defIdx !== -1) {
+          productUnitRows[defIdx] = {
+            ...productUnitRows[defIdx],
+            selling_price: formData.selling_price,
+          };
+        }
         await apiClient.post(`/products/${savedProductId}/units`, { units: productUnitRows });
       }
 
@@ -837,10 +888,20 @@ function populateBaseUnitSelect(currentValue) {
   const select = document.getElementById('unit');
   if (!select) return;
   const activeUnits = allUnits.filter(u => u.is_active);
+
+  // Jika currentValue adalah unit yang sudah nonaktif, tetap tampilkan agar tidak hilang
+  const inactiveCurrentUnit = currentValue && !activeUnits.find(u => u.name === currentValue)
+    ? allUnits.find(u => u.name === currentValue)
+    : null;
+
   select.innerHTML = '<option value="">-- Pilih Satuan --</option>' +
     activeUnits.map(u =>
       `<option value="${escapeHtml(u.name)}">${escapeHtml(u.name)} (${escapeHtml(u.abbreviation)})</option>`
-    ).join('');
+    ).join('') +
+    (inactiveCurrentUnit
+      ? `<option value="${escapeHtml(inactiveCurrentUnit.name)}" style="color:#e74c3c;">${escapeHtml(inactiveCurrentUnit.name)} (nonaktif)</option>`
+      : '');
+
   if (currentValue) select.value = currentValue;
 }
 
@@ -1024,7 +1085,7 @@ async function loadProductUnitsForEdit(productId, baseUnit, basePrice) {
         abbreviation: baseUnitObj.abbreviation,
         conversion_qty: 1,
         selling_price: basePrice,
-        is_default: 1
+        is_default: true
       });
     }
 
@@ -1116,10 +1177,19 @@ function editProductUnitRow(idx) {
 }
 
 function deleteProductUnitRow(idx) {
-  showConfirm('Konfirmasi Hapus', 'Yakin ingin menghapus satuan jual ini?', () => {
-    productUnitRows.splice(idx, 1);
+  showConfirm('Konfirmasi Hapus', 'Yakin ingin menghapus satuan jual ini?', async () => {
+    const removed = productUnitRows.splice(idx, 1);
+    if (editingProductId) {
+      const saveResult = await apiClient.post(`/products/${editingProductId}/units`, { units: productUnitRows });
+      if (!saveResult.success) {
+        productUnitRows.splice(idx, 0, removed[0]); // rollback
+        showToast('Gagal menghapus satuan jual', 'error');
+        return;
+      }
+    }
     const baseUnit = document.getElementById('unit').value;
     renderProductUnitsRows(baseUnit);
+    showToast('Satuan jual dihapus', 'success');
   });
 }
 
@@ -1193,8 +1263,11 @@ async function handleProductUnitFormSubmit(e) {
     abbreviation: unitObj.abbreviation,
     conversion_qty: conversionQty,
     selling_price: sellingPrice,
-    is_default: 0
+    is_default: false
   };
+
+  // Simpan state lama untuk rollback jika API gagal
+  const prevRows = [...productUnitRows];
 
   if (puEditIndex !== null) {
     productUnitRows[puEditIndex] = rowData;
@@ -1206,6 +1279,7 @@ async function handleProductUnitFormSubmit(e) {
   if (editingProductId) {
     const saveResult = await apiClient.post(`/products/${editingProductId}/units`, { units: productUnitRows });
     if (!saveResult.success) {
+      productUnitRows = prevRows; // rollback
       showToast('Gagal menyimpan satuan jual', 'error');
       return;
     }
@@ -1268,7 +1342,16 @@ function renderProductPricesRows() {
     return;
   }
 
-  container.innerHTML = `
+  const retailPrice = parseRupiahInput('sellingPrice');
+  const invalidRows = productPriceRows.filter(r => retailPrice > 0 && r.price >= retailPrice);
+
+  const warningBanner = invalidRows.length > 0
+    ? `<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:8px 12px;margin-bottom:8px;font-size:12px;color:#856404;">
+        ⚠️ <strong>${invalidRows.length} tier</strong> memiliki harga ≥ harga jual retail (${formatCurrency(retailPrice)}). Harap perbaiki sebelum menyimpan.
+       </div>`
+    : '';
+
+  container.innerHTML = warningBanner + `
     <table class="data-table" style="font-size:13px;">
       <thead>
         <tr>
@@ -1279,17 +1362,24 @@ function renderProductPricesRows() {
         </tr>
       </thead>
       <tbody>
-        ${productPriceRows.map((row, idx) => `
-          <tr>
-            <td>${escapeHtml(row.tier_name)}</td>
-            <td>≥ ${row.min_qty}</td>
-            <td>${formatCurrency(row.price)}</td>
-            <td class="action-buttons">
-              <button type="button" class="btn-icon" onclick="editProductPriceRow(${idx})" title="Edit">✏️</button>
-              <button type="button" class="btn-icon" onclick="deleteProductPriceRow(${idx})" title="Hapus">🗑️</button>
-            </td>
-          </tr>
-        `).join('')}
+        ${productPriceRows.map((row, idx) => {
+          const isInvalid = retailPrice > 0 && row.price >= retailPrice;
+          const rowStyle = isInvalid ? 'background:#fff3cd;' : '';
+          const priceCell = isInvalid
+            ? `<td style="color:#856404;">${formatCurrency(row.price)} <span title="Harga tier ≥ harga retail">⚠️</span></td>`
+            : `<td>${formatCurrency(row.price)}</td>`;
+          return `
+            <tr style="${rowStyle}">
+              <td>${escapeHtml(row.tier_name)}</td>
+              <td>≥ ${row.min_qty}</td>
+              ${priceCell}
+              <td class="action-buttons">
+                <button type="button" class="btn-icon" onclick="editProductPriceRow(${idx})" title="Edit">✏️</button>
+                <button type="button" class="btn-icon" onclick="deleteProductPriceRow(${idx})" title="Hapus">🗑️</button>
+              </td>
+            </tr>
+          `;
+        }).join('')}
       </tbody>
     </table>
   `;
@@ -1328,9 +1418,14 @@ function editProductPriceRow(idx) {
 
 function deleteProductPriceRow(idx) {
   showConfirm('Konfirmasi Hapus', 'Yakin ingin menghapus tier harga ini?', async () => {
-    productPriceRows.splice(idx, 1);
+    const removed = productPriceRows.splice(idx, 1);
     if (editingProductId) {
-      await apiClient.post(`/products/${editingProductId}/prices`, { prices: productPriceRows });
+      const saveResult = await apiClient.post(`/products/${editingProductId}/prices`, { prices: productPriceRows });
+      if (!saveResult.success) {
+        productPriceRows.splice(idx, 0, removed[0]); // rollback
+        showToast('Gagal menghapus tier harga', 'error');
+        return;
+      }
     }
     renderProductPricesRows();
     showToast('Tier harga dihapus', 'success');
@@ -1369,7 +1464,17 @@ async function handleProductPriceFormSubmit(e) {
     return;
   }
 
+  // Cegah duplikat min_qty (kecuali row yang sedang diedit)
+  const duplicateQty = productPriceRows.some((r, i) => r.min_qty === minQty && i !== ppEditIndex);
+  if (duplicateQty) {
+    showPpFormError(`Qty minimum ${minQty} sudah dipakai oleh tier lain. Gunakan nilai yang berbeda.`);
+    return;
+  }
+
   const rowData = { tier_name: tierName, min_qty: minQty, price };
+
+  // Simpan state lama untuk rollback jika API gagal
+  const prevPriceRows = [...productPriceRows];
 
   if (ppEditIndex !== null) {
     productPriceRows[ppEditIndex] = rowData;
@@ -1383,6 +1488,7 @@ async function handleProductPriceFormSubmit(e) {
   if (editingProductId) {
     const saveResult = await apiClient.post(`/products/${editingProductId}/prices`, { prices: productPriceRows });
     if (!saveResult.success) {
+      productPriceRows = prevPriceRows; // rollback
       showToast('Gagal menyimpan tier harga', 'error');
       return;
     }

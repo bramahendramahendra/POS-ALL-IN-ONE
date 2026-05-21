@@ -13,7 +13,9 @@ import (
 const (
 	getAllProductsBase = `
 		SELECT p.id, p.barcode, p.name, p.category_id, COALESCE(c.name, '') as category_name,
-		       p.purchase_price, p.selling_price, p.stock, p.min_stock, p.unit, p.is_active
+		       p.purchase_price, p.selling_price, p.stock, p.min_stock, p.unit, p.is_active,
+		       (SELECT COUNT(*) FROM product_units pu WHERE pu.product_id = p.id AND pu.is_default = 0) AS extra_units_count,
+		       (SELECT COUNT(*) FROM product_prices pp WHERE pp.product_id = p.id) AS price_tiers_count
 		FROM products p
 		LEFT JOIN categories c ON p.category_id = c.id
 		WHERE 1=1`
@@ -118,7 +120,8 @@ func (r *productRepo) GetAll(filter *dto_product.ProductFilter) ([]*dto_product.
 	for rows.Next() {
 		var p dto_product.ProductResponse
 		if err := rows.Scan(&p.ID, &p.Barcode, &p.Name, &p.CategoryID, &p.CategoryName,
-			&p.PurchasePrice, &p.SellingPrice, &p.Stock, &p.MinStock, &p.Unit, &p.IsActive); err != nil {
+			&p.PurchasePrice, &p.SellingPrice, &p.Stock, &p.MinStock, &p.Unit, &p.IsActive,
+			&p.ExtraUnitsCount, &p.PriceTiersCount); err != nil {
 			return nil, 0, err
 		}
 		products = append(products, &p)
