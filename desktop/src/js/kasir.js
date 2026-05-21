@@ -6,15 +6,6 @@ let currentTax = { percent: 0, amount: 0 };
 let searchTimeout = null;
 // pending product for unit selection
 let pendingProduct = null;
-// cache harga tier: { [product_id]: [{tier_name, min_qty, price}, ...] }
-let productPricesCache = {};
-
-// Bersihkan cache tier saat halaman kembali aktif (user baru balik dari halaman produk)
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) {
-    productPricesCache = {};
-  }
-});
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
@@ -280,28 +271,13 @@ async function addToCart(product, quantity, unitInfo) {
   const unitName = unitInfo ? unitInfo.unit_name : (product.unit || 'pcs');
   const unitId = unitInfo ? unitInfo.unit_id : null;
   const conversionQty = unitInfo ? unitInfo.conversion_qty : 1;
-  const basePrice = unitInfo ? unitInfo.selling_price : product.selling_price;
-
-  // Tier harga hanya berlaku saat menjual satuan DASAR.
-  // Satuan tambahan (Dus, Lusin, dll) punya harga tetap sendiri — tier tidak menimpa.
-  const isBaseUnit = !unitInfo || !!unitInfo.is_default;
+  const price = unitInfo ? unitInfo.selling_price : product.selling_price;
 
   // Stock cek dalam satuan dasar
   const stockNeeded = quantity * conversionQty;
   if (product.stock < stockNeeded) {
     showToast(`Stok ${product.name} tidak mencukupi (tersedia: ${product.stock} ${product.unit || 'pcs'})`, 'error');
     return;
-  }
-
-  // Tentukan harga aktif
-  let price, activeTier;
-  if (isBaseUnit) {
-    const tiers = await loadProductPriceTiers(product.id);
-    activeTier = getActivePriceTier(tiers, quantity, basePrice);
-    price = activeTier.price;
-  } else {
-    activeTier = { tier_name: null, price: basePrice, is_default: true };
-    price = basePrice;
   }
 
   // Cari item di cart berdasarkan product_id DAN unit_id
@@ -318,13 +294,6 @@ async function addToCart(product, quantity, unitInfo) {
       return;
     }
 
-    if (isBaseUnit) {
-      const tiers = await loadProductPriceTiers(product.id);
-      const newTier = getActivePriceTier(tiers, newQty, basePrice);
-      cart[existingIndex].price = newTier.price;
-      cart[existingIndex].active_tier = newTier.tier_name;
-      cart[existingIndex].is_default_price = newTier.is_default;
-    }
     cart[existingIndex].quantity = newQty;
     const existingDiscAmt = cart[existingIndex].discount_item_amount || 0;
     cart[existingIndex].subtotal = newQty * cart[existingIndex].price - existingDiscAmt;
@@ -334,10 +303,6 @@ async function addToCart(product, quantity, unitInfo) {
       product_name: product.name,
       barcode: product.barcode || '',
       price: price,
-      base_price: basePrice,
-      active_tier: activeTier.tier_name,
-      is_default_price: activeTier.is_default,
-      is_base_unit: isBaseUnit,
       quantity: quantity,
       unit: unitName,
       unit_id: unitId,
@@ -353,31 +318,6 @@ async function addToCart(product, quantity, unitInfo) {
   setTimeout(() => document.getElementById('productSearch').focus(), 100);
 }
 
-// Muat tier harga dari API dan simpan ke cache
-async function loadProductPriceTiers(productId) {
-  if (productPricesCache[productId] !== undefined) return productPricesCache[productId];
-  try {
-    const result = await apiClient.get(`/products/${productId}/prices`);
-    productPricesCache[productId] = result.success && Array.isArray(result.data) ? result.data : [];
-  } catch (e) {
-    productPricesCache[productId] = [];
-  }
-  return productPricesCache[productId];
-}
-
-// Kembalikan { tier_name, price } tier yang aktif untuk qty tertentu, atau null jika pakai harga default
-function getActivePriceTier(tiers, qty, defaultPrice) {
-  if (!tiers || tiers.length === 0) return { tier_name: 'Harga Retail', price: defaultPrice, is_default: true };
-
-  // Urutkan descending min_qty agar tier terbesar lebih dulu
-  const sorted = [...tiers].sort((a, b) => b.min_qty - a.min_qty);
-  for (const t of sorted) {
-    if (qty >= t.min_qty) {
-      return { tier_name: t.tier_name, price: t.price, is_default: false };
-    }
-  }
-  return { tier_name: 'Harga Retail', price: defaultPrice, is_default: true };
-}
 
 async function updateCartItemQty(index, newQty) {
   if (newQty <= 0) {
@@ -394,23 +334,9 @@ async function updateCartItemQty(index, newQty) {
     return;
   }
 
-  // Tier harga hanya direcalculate untuk satuan dasar
-  let activePrice = item.base_price || item.price;
-  let activeTierName = item.active_tier;
-  let isDefaultPrice = item.is_default_price;
-
-  if (item.is_base_unit !== false) {
-    const tiers = await loadProductPriceTiers(item.product_id);
-    const activeTier = getActivePriceTier(tiers, newQty, item.base_price || item.price);
-    activePrice = activeTier.price;
-    activeTierName = activeTier.tier_name;
-    isDefaultPrice = activeTier.is_default;
-  }
+  const activePrice = item.price;
 
   cart[index].quantity = newQty;
-  cart[index].price = activePrice;
-  cart[index].active_tier = activeTierName;
-  cart[index].is_default_price = isDefaultPrice;
 
   // Recalculate item discount amount if exists
   const discType = cart[index].discount_item_type;
@@ -438,7 +364,6 @@ function removeCartItem(index) {
 
 function clearCart() {
   cart = [];
-  productPricesCache = {};
   currentDiscount = { type: 'none', value: 0, amount: 0 };
   currentTax = { percent: 0, amount: 0 };
   closeItemDiscountPopup();
@@ -528,9 +453,7 @@ function renderCart() {
   }
 
   tbody.innerHTML = cart.map((item, index) => {
-    const tierBadge = item.active_tier && !item.is_default_price
-      ? `<br><span class="badge badge-warning" style="font-size:10px; margin-top:2px;">${escapeHtml(item.active_tier)}</span>`
-      : '';
+    const tierBadge = '';
 
     const hasItemDiscount = item.discount_item_amount && item.discount_item_amount > 0;
     const discountBadge = hasItemDiscount
@@ -1118,31 +1041,10 @@ function applyUnitChange(unitId) {
   cart[replaceCartIndex].unit = u.unit_name;
   cart[replaceCartIndex].unit_id = u.unit_id;
   cart[replaceCartIndex].conversion_qty = convQty;
-  cart[replaceCartIndex].is_base_unit = !!u.is_default;
-  cart[replaceCartIndex].base_price = u.selling_price;
   cart[replaceCartIndex].price = u.selling_price;
-  cart[replaceCartIndex].active_tier = null;
-  cart[replaceCartIndex].is_default_price = true;
   cart[replaceCartIndex].subtotal = cart[replaceCartIndex].quantity * u.selling_price;
 
   closeUnitSelectModal();
-
-  // Jika ganti ke satuan dasar, langsung cek tier pricing untuk qty saat ini
-  if (!!u.is_default) {
-    const currentQty = cart[replaceCartIndex].quantity;
-    loadProductPriceTiers(product.id).then(tiers => {
-      const activeTier = getActivePriceTier(tiers, currentQty, u.selling_price);
-      cart[replaceCartIndex].price = activeTier.price;
-      cart[replaceCartIndex].active_tier = activeTier.tier_name;
-      cart[replaceCartIndex].is_default_price = activeTier.is_default;
-      cart[replaceCartIndex].subtotal = currentQty * activeTier.price;
-      renderCart();
-      calculateTotal();
-      saveDraft();
-    });
-    return;
-  }
-
   renderCart();
   calculateTotal();
   saveDraft();

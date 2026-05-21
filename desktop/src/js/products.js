@@ -67,7 +67,7 @@ function applyKasirReadOnlyMode() {
 // ============================================
 
 function setupRupiahInputs() {
-  ['purchasePrice', 'sellingPrice', 'puSellingPrice', 'ppPrice'].forEach(id => setupRupiahInput(id));
+  ['purchasePrice', 'sellingPrice', 'puPurchasePrice', 'puSellingPrice'].forEach(id => setupRupiahInput(id));
 }
 
 // ============================================
@@ -102,9 +102,9 @@ function setupEventListeners() {
   document.getElementById('filterCategory').addEventListener('change', filterProducts);
   document.getElementById('filterProductStatus').addEventListener('change', filterProducts);
 
-  // Price change listeners for margin calculation
-  document.getElementById('purchasePrice').addEventListener('input', calculateAndDisplayMargin);
-  document.getElementById('sellingPrice').addEventListener('input', calculateAndDisplayMargin);
+  // Price change listeners for margin calculation and grosiran ref update
+  document.getElementById('purchasePrice').addEventListener('input', onBasePriceChange);
+  document.getElementById('sellingPrice').addEventListener('input', onBasePriceChange);
 
   // Setup rupiah format on price inputs
   setupRupiahInputs();
@@ -121,18 +121,13 @@ function setupEventListeners() {
   document.getElementById('btnCancelProductUnit').addEventListener('click', closeProductUnitModal);
   document.getElementById('productUnitForm').addEventListener('submit', handleProductUnitFormSubmit);
 
-  // Product price tier buttons
-  document.getElementById('btnAddProductPrice').addEventListener('click', openAddProductPriceModal);
-  document.getElementById('closeProductPriceModal').addEventListener('click', closeProductPriceModal);
-  document.getElementById('btnCancelProductPrice').addEventListener('click', closeProductPriceModal);
-  document.getElementById('productPriceForm').addEventListener('submit', handleProductPriceFormSubmit);
-
-  // Sync satuan dasar di tabel Satuan Jual saat unit produk berubah
+  // Sync satuan dasar di tabel Grosiran saat unit produk berubah
   document.getElementById('unit').addEventListener('change', onBaseUnitChange);
 
-  // Auto-calculate hint on product unit price input
-  document.getElementById('puConversionQty').addEventListener('input', updatePuPriceHint);
-  document.getElementById('puSellingPrice').addEventListener('input', updatePuPriceHint);
+  // Auto-calculate ref harga saat konversi/harga berubah di modal grosiran
+  document.getElementById('puConversionQty').addEventListener('input', updatePuRefAndHints);
+  document.getElementById('puSellingPrice').addEventListener('input', updatePuRefAndHints);
+  document.getElementById('puPurchasePrice').addEventListener('input', updatePuRefAndHints);
 
   // Import product button (owner/admin only)
   if (currentUser && (currentUser.role === 'owner' || currentUser.role === 'admin')) {
@@ -180,14 +175,12 @@ function setupEventListeners() {
     const categoryModal = document.getElementById('categoryModal');
     const unitModal = document.getElementById('unitModal');
     const productUnitModal = document.getElementById('productUnitModal');
-    const productPriceModal = document.getElementById('productPriceModal');
     const labelPrintModal = document.getElementById('labelPrintModal');
 
     if (e.target === productModal) closeProductModal();
     if (e.target === categoryModal) closeCategoryModal();
     if (e.target === unitModal) closeUnitModal();
     if (e.target === productUnitModal) closeProductUnitModal();
-    if (e.target === productPriceModal) closeProductPriceModal();
     if (e.target === labelPrintModal) closeLabelPrintModal();
     const importModal = document.getElementById('importProductModal');
     if (e.target === importModal) closeImportProductModal();
@@ -530,10 +523,7 @@ function renderProductsTable(products) {
         <td>
           <div>${escapeHtml(product.unit)}</div>
           ${product.extra_units_count > 0
-            ? `<span class="badge badge-warning" style="font-size:10px; margin-top:2px;" title="${product.extra_units_count} satuan jual tambahan">📦 +${product.extra_units_count} satuan</span>`
-            : ''}
-          ${product.price_tiers_count > 0
-            ? `<span class="badge badge-success" style="font-size:10px; margin-top:2px;" title="${product.price_tiers_count} tier harga grosir">🏷️ ${product.price_tiers_count} tier grosir</span>`
+            ? `<span class="badge badge-warning" style="font-size:10px; margin-top:2px;" title="${product.extra_units_count} paket grosiran">📦 +${product.extra_units_count} paket</span>`
             : ''}
         </td>
         <td>
@@ -599,10 +589,11 @@ function openAddProductModal() {
   document.getElementById('marginDisplay').value = '0%';
   document.getElementById('productFormError').style.display = 'none';
   document.getElementById('btnSubmitProductText').textContent = 'Simpan';
-  document.getElementById('productUnitsSection').classList.add('hidden');
-  document.getElementById('productPricesSection').classList.add('hidden');
-  productPriceRows = [];
+
+  document.getElementById('updateSyncNote').style.display = 'none';
   populateBaseUnitSelect();
+  document.getElementById('productUnitsSection').classList.remove('hidden');
+  renderProductUnitsRows('');
   document.getElementById('productModal').style.display = 'flex';
 
   setTimeout(() => {
@@ -631,14 +622,13 @@ async function editProduct(productId) {
 
       calculateAndDisplayMargin();
 
-      // Load product units
+      // Load product units (grosiran)
       await loadProductUnitsForEdit(productId, product.unit, product.selling_price);
-
-      // Load product price tiers
-      await loadProductPricesForEdit(productId);
 
       document.getElementById('productFormError').style.display = 'none';
       document.getElementById('btnSubmitProductText').textContent = 'Update';
+    
+      document.getElementById('updateSyncNote').style.display = 'block';
       document.getElementById('productModal').style.display = 'flex';
 
       setTimeout(() => {
@@ -657,15 +647,27 @@ function closeProductModal() {
   document.getElementById('productModal').style.display = 'none';
   document.getElementById('productForm').reset();
   document.getElementById('productUnitsSection').classList.add('hidden');
-  document.getElementById('productPricesSection').classList.add('hidden');
+  document.getElementById('updateSyncNote').style.display = 'none';
   editingProductId = null;
   productUnitRows = [];
-  productPriceRows = [];
 }
 
 function handleGenerateBarcode() {
   const barcode = generateBarcode();
   document.getElementById('barcode').value = barcode;
+}
+
+function onBasePriceChange() {
+  calculateAndDisplayMargin();
+  // Sinkronkan default row dengan harga terbaru
+  const defIdx = productUnitRows.findIndex(r => r.is_default);
+  if (defIdx !== -1) {
+    productUnitRows[defIdx] = {
+      ...productUnitRows[defIdx],
+      purchase_price: parseRupiahInput('purchasePrice') || productUnitRows[defIdx].purchase_price,
+      selling_price: parseRupiahInput('sellingPrice') || productUnitRows[defIdx].selling_price,
+    };
+  }
 }
 
 function calculateAndDisplayMargin() {
@@ -675,10 +677,10 @@ function calculateAndDisplayMargin() {
   const margin = calculateMargin(purchasePrice, sellingPrice);
   document.getElementById('marginDisplay').value = `${margin}%`;
 
-  // Re-render tier harga agar warning invalid langsung terupdate
-  const pricesSection = document.getElementById('productPricesSection');
-  if (pricesSection && !pricesSection.classList.contains('hidden') && productPriceRows.length > 0) {
-    renderProductPricesRows();
+  // Re-render grosiran agar margin per paket terupdate
+  const unitsSection = document.getElementById('productUnitsSection');
+  if (unitsSection && !unitsSection.classList.contains('hidden') && productUnitRows.length > 0) {
+    renderProductUnitsRows(document.getElementById('unit').value);
   }
 }
 
@@ -686,21 +688,32 @@ function onBaseUnitChange() {
   const newUnitName = document.getElementById('unit').value;
   if (!newUnitName) return;
 
-  // Cari unit object dari units master
   const unitObj = allUnits.find(u => u.name === newUnitName);
-
-  // Update row default di productUnitRows jika sudah ada
   const defaultIdx = productUnitRows.findIndex(r => r.is_default);
+
   if (defaultIdx !== -1) {
     productUnitRows[defaultIdx] = {
       ...productUnitRows[defaultIdx],
       unit_id: unitObj ? unitObj.id : productUnitRows[defaultIdx].unit_id,
       unit_name: newUnitName,
       abbreviation: unitObj ? unitObj.abbreviation : '',
+      purchase_price: parseRupiahInput('purchasePrice') || productUnitRows[defaultIdx].purchase_price,
       selling_price: parseRupiahInput('sellingPrice') || productUnitRows[defaultIdx].selling_price,
     };
-    renderProductUnitsRows(newUnitName);
+  } else if (unitObj) {
+    productUnitRows.unshift({
+      id: null,
+      unit_id: unitObj.id,
+      unit_name: unitObj.name,
+      abbreviation: unitObj.abbreviation || '',
+      conversion_qty: 1,
+      purchase_price: parseRupiahInput('purchasePrice') || 0,
+      selling_price: parseRupiahInput('sellingPrice') || 0,
+      is_default: true,
+    });
   }
+
+  renderProductUnitsRows(newUnitName);
 }
 
 async function handleProductFormSubmit(e) {
@@ -770,13 +783,14 @@ async function saveProduct(formData) {
       const isNew = !editingProductId;
       const savedProductId = editingProductId || result.data?.id;
 
-      // Save product units if any (mode edit atau buffer terisi)
+      // Simpan grosiran jika ada di buffer
       if (savedProductId && productUnitRows.length > 0) {
-        // Pastikan default row selalu sinkron dengan selling_price terbaru
+        // Pastikan default row selalu sinkron dengan harga produk terbaru
         const defIdx = productUnitRows.findIndex(r => r.is_default);
         if (defIdx !== -1) {
           productUnitRows[defIdx] = {
             ...productUnitRows[defIdx],
+            purchase_price: formData.purchase_price,
             selling_price: formData.selling_price,
           };
         }
@@ -784,18 +798,7 @@ async function saveProduct(formData) {
       }
 
       await loadProducts();
-      showToast(
-        isNew ? 'Produk berhasil ditambahkan. Sekarang atur satuan jual & harga grosir.' : 'Produk berhasil diupdate',
-        'success'
-      );
-
-      if (isNew && savedProductId) {
-        // Langsung switch ke edit mode agar user bisa tambah satuan & tier harga
-        btnSubmit.disabled = false;
-        btnSubmitText.textContent = originalText;
-        await editProduct(savedProductId);
-        return;
-      }
+      showToast(isNew ? 'Produk berhasil ditambahkan' : 'Produk berhasil diupdate', 'success');
 
       closeProductModal();
       btnSubmit.disabled = false;
@@ -1067,6 +1070,7 @@ async function loadProductUnitsForEdit(productId, baseUnit, basePrice) {
         unit_name: u.unit_name,
         abbreviation: u.abbreviation || '',
         conversion_qty: u.conversion_qty,
+        purchase_price: u.purchase_price || 0,
         selling_price: u.selling_price,
         is_default: u.is_default
       }));
@@ -1074,7 +1078,7 @@ async function loadProductUnitsForEdit(productId, baseUnit, basePrice) {
       productUnitRows = [];
     }
 
-    // Ensure base unit row exists
+    // Pastikan row dasar selalu ada
     const baseUnitObj = allUnits.find(u => u.name.toLowerCase() === baseUnit.toLowerCase());
     const alreadyHasDefault = productUnitRows.some(r => r.is_default);
     if (!alreadyHasDefault && baseUnitObj) {
@@ -1084,6 +1088,7 @@ async function loadProductUnitsForEdit(productId, baseUnit, basePrice) {
         unit_name: baseUnitObj.name,
         abbreviation: baseUnitObj.abbreviation,
         conversion_qty: 1,
+        purchase_price: 0,
         selling_price: basePrice,
         is_default: true
       });
@@ -1100,80 +1105,99 @@ function renderProductUnitsRows(baseUnit) {
   const container = document.getElementById('productUnitsContainer');
 
   if (productUnitRows.length === 0) {
-    container.innerHTML = `<p class="text-center" style="color:#888; font-size:13px;">Belum ada satuan jual. Klik "+ Tambah Satuan Jual" untuk menambahkan.</p>`;
+    container.innerHTML = `<p class="text-center" style="color:#888; font-size:13px;">Belum ada paket grosiran. Klik "+ Tambah Paket" untuk menambahkan.</p>`;
     return;
   }
+
+  const basePurchase = parseRupiahInput('purchasePrice') || 0;
+  const baseSelling = parseRupiahInput('sellingPrice') || 0;
 
   container.innerHTML = `
     <table class="data-table" style="font-size:13px;">
       <thead>
         <tr>
-          <th>Satuan</th>
-          <th>Konversi</th>
+          <th>Nama Paket</th>
+          <th>Isi</th>
+          <th>Harga Beli</th>
           <th>Harga Jual</th>
           <th>Tipe</th>
           <th>Aksi</th>
         </tr>
       </thead>
       <tbody>
-        ${productUnitRows.map((row, idx) => `
-          <tr>
-            <td>${escapeHtml(row.unit_name)} <small style="color:#888;">(${escapeHtml(row.abbreviation)})</small></td>
-            <td>${row.is_default ? '1 (Dasar)' : `1 ${escapeHtml(row.unit_name)} = ${row.conversion_qty} ${escapeHtml(baseUnit || '')}`}</td>
-            <td>${formatCurrency(row.selling_price)}</td>
-            <td>
-              <span class="badge ${row.is_default ? 'badge-success' : 'badge-warning'}">
-                ${row.is_default ? 'Dasar' : 'Jual'}
-              </span>
-            </td>
-            <td class="action-buttons">
-              ${row.is_default ? '' : `
-                <button type="button" class="btn-icon" onclick="editProductUnitRow(${idx})" title="Edit">✏️</button>
-                <button type="button" class="btn-icon" onclick="deleteProductUnitRow(${idx})" title="Hapus">🗑️</button>
-              `}
-            </td>
-          </tr>
-        `).join('')}
+        ${productUnitRows.map((row, idx) => {
+          const refPurchase = basePurchase * row.conversion_qty;
+          const refSelling = baseSelling * row.conversion_qty;
+          const purchaseCell = row.is_default
+            ? `<td><span style="color:#888; font-size:11px;">Dari produk</span></td>`
+            : `<td>
+                ${formatCurrency(row.purchase_price)}
+                ${refPurchase > 0 ? `<br><small style="color:#888;">Ref: ${formatCurrency(refPurchase)}</small>` : ''}
+               </td>`;
+          const sellingCell = row.is_default
+            ? `<td><span style="color:#888; font-size:11px;">Ubah via Harga Jual ↑</span></td>`
+            : `<td>
+                ${formatCurrency(row.selling_price)}
+                ${refSelling > 0 ? `<br><small style="color:#888;">Ref: ${formatCurrency(refSelling)}</small>` : ''}
+               </td>`;
+          return `
+            <tr>
+              <td>${escapeHtml(row.unit_name)}</td>
+              <td>${row.is_default ? '1 (Dasar)' : `${row.conversion_qty} ${escapeHtml(baseUnit || '')}`}</td>
+              ${purchaseCell}
+              ${sellingCell}
+              <td>
+                <span class="badge ${row.is_default ? 'badge-success' : 'badge-warning'}">
+                  ${row.is_default ? 'Dasar' : 'Paket'}
+                </span>
+              </td>
+              <td class="action-buttons">
+                ${row.is_default
+                  ? `<small style="color:#888; font-size:11px;">—</small>`
+                  : `
+                    <button type="button" class="btn-icon" onclick="editProductUnitRow(${idx})" title="Edit">✏️</button>
+                    <button type="button" class="btn-icon" onclick="deleteProductUnitRow(${idx})" title="Hapus">🗑️</button>
+                  `}
+              </td>
+            </tr>
+          `;
+        }).join('')}
       </tbody>
     </table>
   `;
 }
 
 function openAddProductUnitModal() {
-  if (!editingProductId) {
-    showToast('Simpan produk terlebih dahulu sebelum menambahkan satuan jual', 'warning');
-    return;
-  }
-
   puEditIndex = null;
-  document.getElementById('productUnitModalTitle').textContent = 'Tambah Satuan Jual';
+  document.getElementById('productUnitModalTitle').textContent = 'Tambah Paket Grosiran';
   document.getElementById('productUnitForm').reset();
   document.getElementById('puEditIndex').value = '';
   document.getElementById('productUnitFormError').style.display = 'none';
   document.getElementById('btnSubmitProductUnitText').textContent = 'Simpan';
   document.getElementById('puPriceHint').textContent = '';
+  document.getElementById('puRefInfo').style.display = 'none';
 
-  populatePuUnitSelect();
   document.getElementById('productUnitModal').style.display = 'flex';
-  setTimeout(() => document.getElementById('puUnitId').focus(), 100);
+  setTimeout(() => document.getElementById('puUnitName').focus(), 100);
 }
 
 function editProductUnitRow(idx) {
   const row = productUnitRows[idx];
   puEditIndex = idx;
 
-  document.getElementById('productUnitModalTitle').textContent = 'Edit Satuan Jual';
+  document.getElementById('productUnitModalTitle').textContent = 'Edit Paket Grosiran';
   document.getElementById('puEditIndex').value = idx;
   document.getElementById('productUnitFormError').style.display = 'none';
   document.getElementById('btnSubmitProductUnitText').textContent = 'Update';
 
-  populatePuUnitSelect();
-  document.getElementById('puUnitId').value = row.unit_id;
+  document.getElementById('puUnitName').value = row.unit_name;
   document.getElementById('puConversionQty').value = row.conversion_qty;
+  setRupiahInput('puPurchasePrice', row.purchase_price || 0);
   setRupiahInput('puSellingPrice', row.selling_price);
-  updatePuPriceHint();
+  updatePuRefAndHints();
 
   document.getElementById('productUnitModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('puUnitName').focus(), 100);
 }
 
 function deleteProductUnitRow(idx) {
@@ -1199,43 +1223,56 @@ function closeProductUnitModal() {
   puEditIndex = null;
 }
 
-function populatePuUnitSelect() {
-  const select = document.getElementById('puUnitId');
-  const activeUnits = allUnits.filter(u => u.is_active);
-  select.innerHTML = '<option value="">Pilih Satuan</option>' +
-    activeUnits.map(u => `<option value="${u.id}">${escapeHtml(u.name)} (${escapeHtml(u.abbreviation)})</option>`).join('');
-}
-
-function updatePuPriceHint() {
+function updatePuRefAndHints() {
   const convQty = parseFloat(document.getElementById('puConversionQty').value) || 0;
-  const price = parseRupiahInput('puSellingPrice');
+  const sellingPrice = parseRupiahInput('puSellingPrice');
   const baseUnit = document.getElementById('unit') ? document.getElementById('unit').value : '';
+  const basePurchase = parseRupiahInput('purchasePrice') || 0;
+  const baseSelling = parseRupiahInput('sellingPrice') || 0;
+
+  // Hint konversi
   const hint = document.getElementById('puConversionHint');
   hint.textContent = convQty > 0
-    ? `1 satuan ini = ${convQty} ${baseUnit}`
-    : 'Berapa satuan dasar dalam 1 satuan ini';
+    ? `1 paket ini = ${convQty} ${baseUnit}`
+    : 'Berapa satuan dasar dalam 1 paket ini';
 
+  // Hint harga jual per satuan dasar
   const priceHint = document.getElementById('puPriceHint');
-  if (convQty > 0 && price > 0) {
-    priceHint.textContent = `≈ ${formatCurrency(price / convQty)} per ${baseUnit}`;
+  if (convQty > 0 && sellingPrice > 0) {
+    priceHint.textContent = `≈ ${formatCurrency(sellingPrice / convQty)} per ${baseUnit}`;
   } else {
     priceHint.textContent = '';
+  }
+
+  // Ref harga otomatis
+  const refInfo = document.getElementById('puRefInfo');
+  if (convQty > 0 && (basePurchase > 0 || baseSelling > 0)) {
+    document.getElementById('puRefPurchase').textContent = basePurchase > 0 ? formatCurrency(basePurchase * convQty) : '—';
+    document.getElementById('puRefSelling').textContent = baseSelling > 0 ? formatCurrency(baseSelling * convQty) : '—';
+    refInfo.style.display = 'block';
+  } else {
+    refInfo.style.display = 'none';
   }
 }
 
 async function handleProductUnitFormSubmit(e) {
   e.preventDefault();
 
-  const unitId = parseInt(document.getElementById('puUnitId').value);
+  const unitName = document.getElementById('puUnitName').value.trim();
   const conversionQty = parseFloat(document.getElementById('puConversionQty').value) || 0;
+  const purchasePrice = parseRupiahInput('puPurchasePrice');
   const sellingPrice = parseRupiahInput('puSellingPrice');
 
-  if (!unitId) {
-    showPuFormError('Pilih satuan terlebih dahulu');
+  if (!unitName) {
+    showPuFormError('Nama paket harus diisi');
     return;
   }
   if (conversionQty <= 0) {
     showPuFormError('Nilai konversi harus lebih dari 0');
+    return;
+  }
+  if (purchasePrice <= 0) {
+    showPuFormError('Harga beli harus lebih dari 0');
     return;
   }
   if (sellingPrice <= 0) {
@@ -1243,25 +1280,20 @@ async function handleProductUnitFormSubmit(e) {
     return;
   }
 
-  const unitObj = allUnits.find(u => u.id === unitId);
-  if (!unitObj) {
-    showPuFormError('Satuan tidak valid');
-    return;
-  }
-
-  // Check duplicate (excluding current edit index)
-  const isDuplicate = productUnitRows.some((r, i) => r.unit_id === unitId && i !== puEditIndex);
+  // Cegah duplikat nama paket (kecuali row yang sedang diedit)
+  const isDuplicate = productUnitRows.some((r, i) => !r.is_default && r.unit_name.toLowerCase() === unitName.toLowerCase() && i !== puEditIndex);
   if (isDuplicate) {
-    showPuFormError('Satuan ini sudah ditambahkan');
+    showPuFormError('Nama paket ini sudah ditambahkan');
     return;
   }
 
   const rowData = {
     id: puEditIndex !== null ? productUnitRows[puEditIndex].id : null,
-    unit_id: unitId,
-    unit_name: unitObj.name,
-    abbreviation: unitObj.abbreviation,
+    unit_id: 0,
+    unit_name: unitName,
+    abbreviation: '',
     conversion_qty: conversionQty,
+    purchase_price: purchasePrice,
     selling_price: sellingPrice,
     is_default: false
   };
@@ -1275,15 +1307,15 @@ async function handleProductUnitFormSubmit(e) {
     productUnitRows.push(rowData);
   }
 
-  // Persist immediately if editing existing product
+  // Persist immediately jika sedang edit produk yang sudah ada
   if (editingProductId) {
     const saveResult = await apiClient.post(`/products/${editingProductId}/units`, { units: productUnitRows });
     if (!saveResult.success) {
       productUnitRows = prevRows; // rollback
-      showToast('Gagal menyimpan satuan jual', 'error');
+      showToast('Gagal menyimpan paket grosiran', 'error');
       return;
     }
-    // Reload from DB to get IDs
+    // Reload dari DB untuk dapat IDs terbaru
     const fresh = await apiClient.get(`/products/${editingProductId}/units`);
     if (fresh.success && Array.isArray(fresh.data)) {
       productUnitRows = fresh.data.map(u => ({
@@ -1292,6 +1324,7 @@ async function handleProductUnitFormSubmit(e) {
         unit_name: u.unit_name,
         abbreviation: u.abbreviation || '',
         conversion_qty: u.conversion_qty,
+        purchase_price: u.purchase_price || 0,
         selling_price: u.selling_price,
         is_default: u.is_default
       }));
@@ -1301,7 +1334,7 @@ async function handleProductUnitFormSubmit(e) {
   const baseUnit = document.getElementById('unit').value;
   renderProductUnitsRows(baseUnit);
   closeProductUnitModal();
-  showToast(puEditIndex !== null ? 'Satuan jual diupdate' : 'Satuan jual ditambahkan', 'success');
+  showToast(puEditIndex !== null ? 'Paket grosiran diupdate' : 'Paket grosiran ditambahkan', 'success');
 }
 
 function showPuFormError(message) {
@@ -1310,205 +1343,6 @@ function showPuFormError(message) {
   el.style.display = 'block';
 }
 
-// ============================================
-// PRODUCT PRICES (MULTI-HARGA / GROSIR)
-// ============================================
-
-// Buffer: array of { tier_name, min_qty, price }
-let productPriceRows = [];
-let ppEditIndex = null;
-
-async function loadProductPricesForEdit(productId) {
-  try {
-    const result = await apiClient.get(`/products/${productId}/prices`);
-    productPriceRows = result.success ? result.data.map(p => ({
-      tier_name: p.tier_name,
-      min_qty: p.min_qty,
-      price: p.price
-    })) : [];
-  } catch (error) {
-    console.error('loadProductPricesForEdit error:', error);
-    productPriceRows = [];
-  }
-  renderProductPricesRows();
-  document.getElementById('productPricesSection').classList.remove('hidden');
-}
-
-function renderProductPricesRows() {
-  const container = document.getElementById('productPricesContainer');
-
-  if (productPriceRows.length === 0) {
-    container.innerHTML = `<p class="text-center" style="color:#888; font-size:13px;">Belum ada tier harga. Klik "+ Tambah Tier Harga" untuk menambahkan.</p>`;
-    return;
-  }
-
-  const retailPrice = parseRupiahInput('sellingPrice');
-  const invalidRows = productPriceRows.filter(r => retailPrice > 0 && r.price >= retailPrice);
-
-  const warningBanner = invalidRows.length > 0
-    ? `<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:8px 12px;margin-bottom:8px;font-size:12px;color:#856404;">
-        ⚠️ <strong>${invalidRows.length} tier</strong> memiliki harga ≥ harga jual retail (${formatCurrency(retailPrice)}). Harap perbaiki sebelum menyimpan.
-       </div>`
-    : '';
-
-  container.innerHTML = warningBanner + `
-    <table class="data-table" style="font-size:13px;">
-      <thead>
-        <tr>
-          <th>Nama Tier</th>
-          <th>Qty Minimum</th>
-          <th>Harga per Satuan</th>
-          <th>Aksi</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${productPriceRows.map((row, idx) => {
-          const isInvalid = retailPrice > 0 && row.price >= retailPrice;
-          const rowStyle = isInvalid ? 'background:#fff3cd;' : '';
-          const priceCell = isInvalid
-            ? `<td style="color:#856404;">${formatCurrency(row.price)} <span title="Harga tier ≥ harga retail">⚠️</span></td>`
-            : `<td>${formatCurrency(row.price)}</td>`;
-          return `
-            <tr style="${rowStyle}">
-              <td>${escapeHtml(row.tier_name)}</td>
-              <td>≥ ${row.min_qty}</td>
-              ${priceCell}
-              <td class="action-buttons">
-                <button type="button" class="btn-icon" onclick="editProductPriceRow(${idx})" title="Edit">✏️</button>
-                <button type="button" class="btn-icon" onclick="deleteProductPriceRow(${idx})" title="Hapus">🗑️</button>
-              </td>
-            </tr>
-          `;
-        }).join('')}
-      </tbody>
-    </table>
-  `;
-}
-
-function openAddProductPriceModal() {
-  if (!editingProductId) {
-    showToast('Simpan produk terlebih dahulu sebelum menambahkan tier harga', 'warning');
-    return;
-  }
-
-  ppEditIndex = null;
-  document.getElementById('productPriceModalTitle').textContent = 'Tambah Tier Harga';
-  document.getElementById('productPriceForm').reset();
-  document.getElementById('ppEditIndex').value = '';
-  document.getElementById('productPriceFormError').style.display = 'none';
-  document.getElementById('btnSubmitProductPriceText').textContent = 'Simpan';
-  document.getElementById('productPriceModal').style.display = 'flex';
-  setTimeout(() => document.getElementById('ppTierName').focus(), 100);
-}
-
-function editProductPriceRow(idx) {
-  const row = productPriceRows[idx];
-  ppEditIndex = idx;
-
-  document.getElementById('productPriceModalTitle').textContent = 'Edit Tier Harga';
-  document.getElementById('ppEditIndex').value = idx;
-  document.getElementById('ppTierName').value = row.tier_name;
-  document.getElementById('ppMinQty').value = row.min_qty;
-  setRupiahInput('ppPrice', row.price);
-  document.getElementById('productPriceFormError').style.display = 'none';
-  document.getElementById('btnSubmitProductPriceText').textContent = 'Update';
-  document.getElementById('productPriceModal').style.display = 'flex';
-  setTimeout(() => document.getElementById('ppTierName').focus(), 100);
-}
-
-function deleteProductPriceRow(idx) {
-  showConfirm('Konfirmasi Hapus', 'Yakin ingin menghapus tier harga ini?', async () => {
-    const removed = productPriceRows.splice(idx, 1);
-    if (editingProductId) {
-      const saveResult = await apiClient.post(`/products/${editingProductId}/prices`, { prices: productPriceRows });
-      if (!saveResult.success) {
-        productPriceRows.splice(idx, 0, removed[0]); // rollback
-        showToast('Gagal menghapus tier harga', 'error');
-        return;
-      }
-    }
-    renderProductPricesRows();
-    showToast('Tier harga dihapus', 'success');
-  });
-}
-
-function closeProductPriceModal() {
-  document.getElementById('productPriceModal').style.display = 'none';
-  document.getElementById('productPriceForm').reset();
-  ppEditIndex = null;
-}
-
-async function handleProductPriceFormSubmit(e) {
-  e.preventDefault();
-
-  const tierName = document.getElementById('ppTierName').value.trim();
-  const minQty = parseFloat(document.getElementById('ppMinQty').value) || 0;
-  const price = parseRupiahInput('ppPrice');
-
-  if (!tierName) {
-    showPpFormError('Nama tier harus diisi');
-    return;
-  }
-  if (minQty <= 0) {
-    showPpFormError('Qty minimum harus lebih dari 0');
-    return;
-  }
-  if (price <= 0) {
-    showPpFormError('Harga harus lebih dari 0');
-    return;
-  }
-
-  const retailPrice = parseRupiahInput('sellingPrice');
-  if (retailPrice > 0 && price >= retailPrice) {
-    showPpFormError(`Harga tier grosir (${formatCurrency(price)}) harus lebih rendah dari harga jual retail (${formatCurrency(retailPrice)})`);
-    return;
-  }
-
-  // Cegah duplikat min_qty (kecuali row yang sedang diedit)
-  const duplicateQty = productPriceRows.some((r, i) => r.min_qty === minQty && i !== ppEditIndex);
-  if (duplicateQty) {
-    showPpFormError(`Qty minimum ${minQty} sudah dipakai oleh tier lain. Gunakan nilai yang berbeda.`);
-    return;
-  }
-
-  const rowData = { tier_name: tierName, min_qty: minQty, price };
-
-  // Simpan state lama untuk rollback jika API gagal
-  const prevPriceRows = [...productPriceRows];
-
-  if (ppEditIndex !== null) {
-    productPriceRows[ppEditIndex] = rowData;
-  } else {
-    productPriceRows.push(rowData);
-  }
-
-  // Sort by min_qty ascending
-  productPriceRows.sort((a, b) => a.min_qty - b.min_qty);
-
-  if (editingProductId) {
-    const saveResult = await apiClient.post(`/products/${editingProductId}/prices`, { prices: productPriceRows });
-    if (!saveResult.success) {
-      productPriceRows = prevPriceRows; // rollback
-      showToast('Gagal menyimpan tier harga', 'error');
-      return;
-    }
-    // Refresh from DB
-    const fresh = await apiClient.get(`/products/${editingProductId}/prices`);
-    if (fresh.success && Array.isArray(fresh.data)) {
-      productPriceRows = fresh.data.map(p => ({ tier_name: p.tier_name, min_qty: p.min_qty, price: p.price }));
-    }
-  }
-
-  renderProductPricesRows();
-  closeProductPriceModal();
-  showToast(ppEditIndex !== null ? 'Tier harga diupdate' : 'Tier harga ditambahkan', 'success');
-}
-
-function showPpFormError(message) {
-  const el = document.getElementById('productPriceFormError');
-  el.textContent = message;
-  el.style.display = 'block';
-}
 
 // ============================================
 // CETAK LABEL BARCODE

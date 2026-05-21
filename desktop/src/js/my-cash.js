@@ -751,7 +751,7 @@ async function loadRekapKas() {
             <div>${formatDateOnly(cash.open_time)}</div>
             <small>${formatTimeOnly(cash.open_time)}</small>
           </td>
-          <td><strong>${escapeHtml(cash.cashier_name || '-')}</strong></td>
+          <td><strong>${escapeHtml(cash.user_name || '-')}</strong></td>
           <td>
             ${cash.shift_name
               ? `<span class="badge badge-info">${escapeHtml(cash.shift_name)}</span>`

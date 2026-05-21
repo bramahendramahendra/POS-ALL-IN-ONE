@@ -276,30 +276,15 @@
             </div>
           </div>
 
-          <!-- Harga Tier Section (hanya tampil saat edit) -->
-          <div id="productPricesSection" class="hidden">
-            <hr style="margin: 16px 0;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <label style="font-weight:600; font-size:14px;">Harga Grosir / Multi-Harga</label>
-              <button type="button" class="btn btn-secondary btn-sm" id="btnAddProductPrice">➕ Tambah Tier Harga</button>
-            </div>
-            <small class="form-text" style="display:block; margin-bottom:8px;">
-              Harga retail (default) diambil dari Harga Jual di atas. Tambahkan tier grosir beserta qty minimum dan harganya.
-            </small>
-            <div id="productPricesContainer">
-              <!-- rows will be injected here -->
-            </div>
-          </div>
-
-          <!-- Satuan Jual Section (hanya tampil saat edit) -->
+          <!-- Grosiran Section -->
           <div id="productUnitsSection" class="hidden">
             <hr style="margin: 16px 0;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <label style="font-weight:600; font-size:14px;">Satuan Jual</label>
-              <button type="button" class="btn btn-secondary btn-sm" id="btnAddProductUnit">➕ Tambah Satuan Jual</button>
+              <label style="font-weight:600; font-size:14px;">Grosiran / Satuan Lain</label>
+              <button type="button" class="btn btn-secondary btn-sm" id="btnAddProductUnit">➕ Tambah Paket</button>
             </div>
             <small class="form-text" style="display:block; margin-bottom:8px;">
-              Satuan dasar = satuan pada produk. Tambahkan satuan jual lain beserta konversi dan harganya.
+              Baris <strong>Dasar</strong> mengikuti Harga Jual di atas. Tambahkan paket lain seperti <em>1 Dus (12 botol)</em>, <em>3 Botol</em>, dll. beserta harga beli dan harga jualnya.
             </small>
             <div id="productUnitsContainer">
               <!-- rows will be injected here -->
@@ -308,11 +293,16 @@
 
           <div id="productFormError" class="error-message hidden"></div>
 
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" id="btnCancelProduct">Batal</button>
-            <button type="submit" class="btn btn-primary" id="btnSubmitProduct">
-              <span id="btnSubmitProductText">Simpan</span>
-            </button>
+          <div class="modal-footer" style="flex-direction:column; align-items:stretch; gap:8px;">
+            <small id="updateSyncNote" style="display:none; color:#888; font-size:11px; text-align:right;">
+              ℹ️ Klik Update juga akan menyinkronkan Harga Jual ke harga satuan dasar.
+            </small>
+            <div style="display:flex; gap:8px; justify-content:flex-end;">
+              <button type="button" class="btn btn-secondary" id="btnCancelProduct">Batal</button>
+              <button type="submit" class="btn btn-primary" id="btnSubmitProduct">
+                <span id="btnSubmitProductText">Simpan</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -397,11 +387,11 @@
     </div>
   </div>
 
-  <!-- Modal Add/Edit Product Unit -->
+  <!-- Modal Add/Edit Product Unit (Grosiran) -->
   <div id="productUnitModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h2 id="productUnitModalTitle">Tambah Satuan Jual</h2>
+        <h2 id="productUnitModalTitle">Tambah Paket Grosiran</h2>
         <button class="modal-close" id="closeProductUnitModal">&times;</button>
       </div>
       <div class="modal-body">
@@ -409,25 +399,44 @@
           <input type="hidden" id="puEditIndex">
 
           <div class="form-group">
-            <label for="puUnitId">Satuan <span class="required">*</span></label>
-            <select id="puUnitId" required>
-              <option value="">Pilih Satuan</option>
-            </select>
+            <label for="puUnitName">Nama Paket <span class="required">*</span></label>
+            <input type="text" id="puUnitName" placeholder="Contoh: 1 Dus, 3 Botol, 1 Lusin" required>
+            <small class="form-text">Nama bebas untuk paket ini</small>
           </div>
 
           <div class="form-group">
             <label for="puConversionQty">Isi / Konversi ke Satuan Dasar <span class="required">*</span></label>
-            <input type="number" id="puConversionQty" placeholder="Contoh: 24 (1 dus = 24 botol)" min="1" step="1" required>
-            <small class="form-text" id="puConversionHint">Berapa satuan dasar dalam 1 satuan ini</small>
+            <input type="number" id="puConversionQty" placeholder="Contoh: 12 (1 Dus = 12 botol)" min="1" step="1" required>
+            <small class="form-text" id="puConversionHint">Berapa satuan dasar dalam 1 paket ini</small>
           </div>
 
-          <div class="form-group">
-            <label for="puSellingPrice">Harga Jual <span class="required">*</span></label>
-            <div class="rp-input-wrapper">
-              <span class="rp-prefix">Rp</span>
-              <input type="text" id="puSellingPrice" placeholder="0" inputmode="numeric" required>
+          <!-- Ref harga otomatis -->
+          <div id="puRefInfo" style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:6px; padding:10px 12px; margin-bottom:12px; font-size:13px; color:#0369a1; display:none;">
+            <div style="margin-bottom:4px;">📊 <strong>Referensi otomatis</strong> berdasarkan satuan dasar:</div>
+            <div style="display:flex; gap:24px; flex-wrap:wrap;">
+              <span>Ref. Harga Beli: <strong id="puRefPurchase">—</strong></span>
+              <span>Ref. Harga Jual: <strong id="puRefSelling">—</strong></span>
             </div>
-            <small class="form-text" id="puPriceHint"></small>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="puPurchasePrice">Harga Beli Aktual <span class="required">*</span></label>
+              <div class="rp-input-wrapper">
+                <span class="rp-prefix">Rp</span>
+                <input type="text" id="puPurchasePrice" placeholder="0" inputmode="numeric" required>
+              </div>
+              <small class="form-text">Harga beli nyata dari distributor</small>
+            </div>
+
+            <div class="form-group">
+              <label for="puSellingPrice">Harga Jual Aktual <span class="required">*</span></label>
+              <div class="rp-input-wrapper">
+                <span class="rp-prefix">Rp</span>
+                <input type="text" id="puSellingPrice" placeholder="0" inputmode="numeric" required>
+              </div>
+              <small class="form-text" id="puPriceHint"></small>
+            </div>
           </div>
 
           <div id="productUnitFormError" class="error-message hidden"></div>
@@ -443,50 +452,8 @@
     </div>
   </div>
 
-  <!-- Modal Add/Edit Product Price Tier -->
-  <div id="productPriceModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 id="productPriceModalTitle">Tambah Tier Harga</h2>
-        <button class="modal-close" id="closeProductPriceModal">&times;</button>
-      </div>
-      <div class="modal-body">
-        <form id="productPriceForm">
-          <input type="hidden" id="ppEditIndex">
 
-          <div class="form-group">
-            <label for="ppTierName">Nama Tier <span class="required">*</span></label>
-            <input type="text" id="ppTierName" placeholder="Contoh: Harga Grosir 1" required>
-          </div>
-
-          <div class="form-group">
-            <label for="ppMinQty">Qty Minimum <span class="required">*</span></label>
-            <input type="number" id="ppMinQty" placeholder="Contoh: 12" min="1" step="1" required>
-            <small class="form-text">Tier harga ini berlaku mulai qty ini</small>
-          </div>
-
-          <div class="form-group">
-            <label for="ppPrice">Harga per Satuan <span class="required">*</span></label>
-            <div class="rp-input-wrapper">
-              <span class="rp-prefix">Rp</span>
-              <input type="text" id="ppPrice" placeholder="0" inputmode="numeric" required>
-            </div>
-          </div>
-
-          <div id="productPriceFormError" class="error-message hidden"></div>
-
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" id="btnCancelProductPrice">Batal</button>
-            <button type="submit" class="btn btn-primary">
-              <span id="btnSubmitProductPriceText">Simpan</span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Cetak Label Barcode -->
+<!-- Modal Cetak Label Barcode -->
   <div id="labelPrintModal" class="modal">
     <div class="modal-content modal-large">
       <div class="modal-header">

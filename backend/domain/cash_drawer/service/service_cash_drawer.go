@@ -22,25 +22,13 @@ func (s *cashDrawerService) GetCurrent(userID int) (*dto_cash_drawer.CurrentCash
 	return res, nil
 }
 
-func (s *cashDrawerService) GetByID(id int) (*dto_cash_drawer.CashDrawerHistoryResponse, error) {
-	cd, err := s.repo.GetByID(id)
+func (s *cashDrawerService) GetByID(id int) (*dto_cash_drawer.CashDrawerDetailResponse, error) {
+	res, err := s.repo.GetDetailByID(id)
 	if err != nil {
 		return nil, &errors.InternalServerError{Message: err.Error()}
 	}
-	if cd == nil {
+	if res == nil {
 		return nil, &errors.NotFoundError{Message: "Kas tidak ditemukan"}
-	}
-
-	res := &dto_cash_drawer.CashDrawerHistoryResponse{
-		ID:              cd.ID,
-		OpenTime:        cd.OpenTime,
-		CloseTime:       cd.CloseTime,
-		OpeningBalance:  cd.OpeningBalance,
-		ClosingBalance:  cd.ClosingBalance,
-		ExpectedBalance: cd.ExpectedBalance,
-		Difference:      cd.Difference,
-		TotalSales:      cd.TotalSales,
-		Status:          cd.Status,
 	}
 	return res, nil
 }
@@ -70,6 +58,10 @@ func (s *cashDrawerService) Open(userID int, req *dto_cash_drawer.OpenRequest) (
 }
 
 func (s *cashDrawerService) Close(id int, req *dto_cash_drawer.CloseRequest) (*dto_cash_drawer.CloseResponse, error) {
+	if req.ClosingBalance < 0 {
+		return nil, &errors.BadRequestError{Message: "Saldo akhir tidak boleh negatif"}
+	}
+
 	current, err := s.repo.GetByID(id)
 	if err != nil {
 		return nil, &errors.InternalServerError{Message: err.Error()}
