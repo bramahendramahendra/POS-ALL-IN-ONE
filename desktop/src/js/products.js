@@ -569,9 +569,9 @@ function filterProducts() {
 
   // Filter by status
   if (statusFilter === '1') {
-    filtered = filtered.filter(product => product.is_active === 1);
+    filtered = filtered.filter(product => product.is_active === true);
   } else if (statusFilter === '0') {
-    filtered = filtered.filter(product => product.is_active === 0);
+    filtered = filtered.filter(product => product.is_active === false);
   } else if (statusFilter === 'low_stock') {
     filtered = filtered.filter(product => product.stock < product.min_stock);
   }
@@ -1811,7 +1811,7 @@ async function processImport() {
       return;
     }
 
-    const { results } = result;
+    const results = result.data;
     let html = `<div style="margin-bottom:14px;padding:12px 16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;">
       <div style="font-size:16px;font-weight:700;color:#15803d;margin-bottom:4px;">Import Selesai</div>
       <div>✅ Berhasil: <strong>${results.success}</strong> produk</div>

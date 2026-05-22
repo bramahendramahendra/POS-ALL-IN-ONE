@@ -266,7 +266,7 @@ function displayTransactionDetail(transaction) {
       <td>${escapeHtml(item.product_name)}${discLabel}</td>
       <td>
         ${hasDisc
-          ? `<span style="text-decoration:line-through;color:#aaa;font-size:11px;">${formatCurrency(item.price)}</span><br>${formatCurrency(item.price - item.discount_item_amount / item.quantity)}`
+          ? `<span style="text-decoration:line-through;color:#aaa;font-size:11px;">${formatCurrency(item.price)}</span><br>${formatCurrency(item.subtotal / item.quantity)}`
           : formatCurrency(item.price)
         }
       </td>

@@ -214,28 +214,62 @@ function renderTopProducts(products) {
   `).join('');
 }
 
+let salesExpensesChartInstance = null;
+
 function renderSalesExpensesChart(data) {
-  // Simple canvas-based chart (you can use Chart.js library if needed)
-  const canvas = document.getElementById('salesExpensesChart');
-  const ctx = canvas.getContext('2d');
+  const ctx = document.getElementById('salesExpensesChart').getContext('2d');
+  if (salesExpensesChartInstance) salesExpensesChartInstance.destroy();
 
-  // Clear canvas
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const safeData = data ?? [];
+  const labels   = safeData.map(d => {
+    const [y, m, day] = d.date.split('-');
+    return `${day}/${m}`;
+  });
+  const salesValues   = safeData.map(d => d.sales || 0);
+  const expenseValues = safeData.map(d => d.expenses || 0);
 
-  if (!data || data.length === 0) {
-    ctx.fillStyle = '#7f8c8d';
-    ctx.font = '14px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Tidak ada data untuk ditampilkan', canvas.width / 2, canvas.height / 2);
-    return;
-  }
-
-  // For now, just display text
-  ctx.fillStyle = '#2c3e50';
-  ctx.font = '14px Arial';
-  ctx.textAlign = 'center';
-  ctx.fillText(`Data ${data.length} hari`, canvas.width / 2, canvas.height / 2 - 10);
-  ctx.fillText('Chart akan ditampilkan di sini', canvas.width / 2, canvas.height / 2 + 10);
+  salesExpensesChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Penjualan',
+          data: salesValues,
+          backgroundColor: 'rgba(39,174,96,0.7)',
+          borderColor: '#27ae60',
+          borderWidth: 1
+        },
+        {
+          label: 'Pengeluaran',
+          data: expenseValues,
+          backgroundColor: 'rgba(231,76,60,0.7)',
+          borderColor: '#e74c3c',
+          borderWidth: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.dataset.label + ': Rp ' + ctx.parsed.y.toLocaleString('id-ID')
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: v => 'Rp ' + (v / 1000).toFixed(0) + 'rb'
+          }
+        }
+      }
+    }
+  });
 }
 
 // ============================================

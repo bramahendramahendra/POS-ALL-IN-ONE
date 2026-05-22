@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!kasOk) return;
 
   // Load draft if exists
-  loadDraft();
+  await loadDraft();
 
   // Setup event listeners
   setupEventListeners();
@@ -464,7 +464,7 @@ function renderCart() {
       ? `<br><span class="badge badge-danger" style="font-size:10px; margin-top:2px;">Diskon: -${formatCurrency(item.discount_item_amount)}</span>`
       : '';
     const priceDisplay = hasItemDiscount
-      ? `<span style="text-decoration:line-through; color:#aaa; font-size:11px;">${formatCurrency(item.price)}</span><br><strong style="color:#e74c3c;">${formatCurrency(item.price - (item.discount_item_amount / item.quantity))}</strong>`
+      ? `<span style="text-decoration:line-through; color:#aaa; font-size:11px;">${formatCurrency(item.price)}</span><br><strong style="color:#e74c3c;">${formatCurrency(item.subtotal / item.quantity)}</strong>`
       : formatCurrency(item.price);
 
     return `
@@ -1086,17 +1086,17 @@ function saveDraft() {
   localStorage.setItem('cart_draft', JSON.stringify(draft));
 }
 
-function loadDraft() {
+async function loadDraft() {
   const draftStr = localStorage.getItem('cart_draft');
   if (!draftStr) return;
 
   try {
     const draft = JSON.parse(draftStr);
-    
-    cart = draft.cart || [];
+
+    const rawCart = draft.cart || [];
     currentDiscount = draft.discount || { type: 'none', value: 0, amount: 0 };
     currentTax = draft.tax || { percent: 0, amount: 0 };
-    
+
     document.getElementById('customerName').value = draft.customerName || '';
     document.getElementById('notes').value = draft.notes || '';
     document.getElementById('paymentMethod').value = draft.paymentMethod || 'cash';
@@ -1107,7 +1107,7 @@ function loadDraft() {
       document.getElementById('customerSection').style.display = 'block';
       updateCreditInfo();
     }
-    
+
     if (currentDiscount.value > 0) {
       if (currentDiscount.type === 'amount') {
         setRupiahInput('discountValue', currentDiscount.value);
@@ -1116,15 +1116,58 @@ function loadDraft() {
       }
       setDiscountType(currentDiscount.type);
     }
-    
+
     if (currentTax.percent > 0) {
       document.getElementById('taxPercent').value = currentTax.percent;
     }
 
+    // Validasi stok terkini untuk setiap item draft
+    const invalidItems = [];
+    cart = [];
+    for (const item of rawCart) {
+      try {
+        const res = await apiClient.get(`/products/${item.product_id}`);
+        if (!res.success || !res.data) {
+          invalidItems.push(`${item.product_name} (produk tidak ditemukan)`);
+          continue;
+        }
+        const product = res.data;
+        const stockNeeded = item.quantity * (item.conversion_qty || 1);
+        if (!product.is_active) {
+          invalidItems.push(`${item.product_name} (produk tidak aktif)`);
+          continue;
+        }
+        if (product.stock < stockNeeded) {
+          const maxQty = Math.floor(product.stock / (item.conversion_qty || 1));
+          if (maxQty <= 0) {
+            invalidItems.push(`${item.product_name} (stok habis)`);
+            continue;
+          }
+          // Kurangi qty ke stok yang tersedia, recalculate subtotal
+          const reducedItem = { ...item, quantity: maxQty, stock: product.stock };
+          const discAmt = reducedItem.discount_item_amount || 0;
+          const discScaled = reducedItem.discount_item_type === 'percent'
+            ? (reducedItem.price * maxQty * (reducedItem.discount_item || 0)) / 100
+            : Math.min(discAmt, reducedItem.price * maxQty);
+          reducedItem.discount_item_amount = discScaled;
+          reducedItem.subtotal = maxQty * reducedItem.price - discScaled;
+          cart.push(reducedItem);
+          invalidItems.push(`${item.product_name} (qty dikurangi ke ${maxQty} ${item.unit})`);
+        } else {
+          cart.push({ ...item, stock: product.stock });
+        }
+      } catch {
+        // Jika offline, gunakan item apa adanya tanpa validasi stok
+        cart.push(item);
+      }
+    }
+
     renderCart();
     calculateTotal();
-    
-    if (cart.length > 0) {
+
+    if (invalidItems.length > 0) {
+      showToast(`Draft dimuat. Perubahan stok: ${invalidItems.join(', ')}`, 'warning');
+    } else if (cart.length > 0) {
       showToast('Draft dimuat', 'info');
     }
   } catch (error) {

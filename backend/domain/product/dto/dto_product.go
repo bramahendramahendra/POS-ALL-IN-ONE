@@ -55,6 +55,32 @@ type ImportErrorDetail struct {
 	Message string `json:"message"`
 }
 
+type BulkImportRequest struct {
+	Rows []BulkImportRow `json:"rows"`
+}
+
+type BulkImportRow struct {
+	Nama        string  `json:"nama"`
+	Barcode     string  `json:"barcode"`
+	Kategori    string  `json:"kategori"`
+	HargaBeli   float64 `json:"harga_beli"`
+	HargaJual   float64 `json:"harga_jual"`
+	Stok        float64 `json:"stok"`
+	StokMinimum float64 `json:"stok_minimum"`
+	Satuan      string  `json:"satuan"`
+}
+
+type BulkImportResult struct {
+	Success int                `json:"success"`
+	Failed  []BulkImportFailed `json:"failed"`
+}
+
+type BulkImportFailed struct {
+	Baris  int           `json:"baris"`
+	Data   BulkImportRow `json:"data"`
+	Alasan string        `json:"alasan"`
+}
+
 type ProductFilter struct {
 	Search     string
 	CategoryID *int

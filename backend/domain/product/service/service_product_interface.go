@@ -17,4 +17,5 @@ type ProductService interface {
 	Delete(id int) error
 	ToggleStatus(id int) error
 	ImportFromFile(file *multipart.FileHeader) (*dto_product.ImportResult, error)
+	ImportBulk(rows []dto_product.BulkImportRow) (*dto_product.BulkImportResult, error)
 }

@@ -34,6 +34,7 @@ func ProductRoutes(r *gin.RouterGroup) {
 		g.GET("/:id", productHand.GetByID)
 		g.POST("", middleware.RoleMiddleware("owner", "admin"), productHand.Create)
 		g.POST("/import", middleware.RoleMiddleware("owner", "admin"), productHand.Import)
+		g.POST("/import-bulk", middleware.RoleMiddleware("owner", "admin"), productHand.ImportBulk)
 		g.PUT("/:id", middleware.RoleMiddleware("owner", "admin"), productHand.Update)
 		g.DELETE("/:id", middleware.RoleMiddleware("owner", "admin"), productHand.Delete)
 		g.PATCH("/:id/toggle-status", middleware.RoleMiddleware("owner", "admin"), productHand.ToggleStatus)

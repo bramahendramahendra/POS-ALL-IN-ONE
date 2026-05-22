@@ -1,4 +1,4 @@
-Kamu adalah senior developer. Lakukan debugging menyeluruh pada fitur menu "kas harian" di aplikasi desktop.
+Kamu adalah senior developer. Lakukan debugging menyeluruh pada fitur menu "Produk" di aplikasi desktop.
 
 ## Format Laporan
 Untuk setiap bug yang ditemukan:
@@ -10,7 +10,7 @@ Untuk setiap bug yang ditemukan:
 
 =============================================
 
-Perbaiki bug nomor [X, Y, Z] dari laporan debugging fitur "kas harian".
+Perbaiki bug nomor [X, Y, Z] dari laporan debugging fitur "Produk".
 
 Sebelum mulai, baca konvensi kode yang sudah ada di folder `desktop/` dan `backend/` — ikuti standar masing-masing, jangan asumsikan.
 

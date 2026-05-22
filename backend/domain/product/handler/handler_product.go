@@ -187,6 +187,28 @@ func (h *ProductHandler) Import(c *gin.Context) {
 	})
 }
 
+// POST /api/products/import-bulk
+func (h *ProductHandler) ImportBulk(c *gin.Context) {
+	var req dto_product.BulkImportRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.Error(&errors.BadRequestError{Message: err.Error()})
+		return
+	}
+
+	result, err := h.service.ImportBulk(req.Rows)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
+		Code:    helper.StatusOk,
+		Status:  true,
+		Message: "Import selesai",
+		Data:    result,
+	})
+}
+
 // PUT /api/products/:id
 func (h *ProductHandler) Update(c *gin.Context) {
 	id, err := parseProductID(c)

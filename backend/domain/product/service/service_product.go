@@ -188,7 +188,7 @@ func (s *productService) ImportFromFile(file *multipart.FileHeader) (*dto_produc
 			return ""
 		}
 
-		name := getCol(1)
+		name := getCol(0)
 		sellingPriceStr := getCol(4)
 
 		if name == "" || sellingPriceStr == "" {
@@ -211,7 +211,7 @@ func (s *productService) ImportFromFile(file *multipart.FileHeader) (*dto_produc
 		}
 
 		req := &dto_product.ProductRequest{
-			Barcode:      getCol(0),
+			Barcode:      getCol(1),
 			Name:         name,
 			SellingPrice: sellingPrice,
 			Unit:         getCol(7),
@@ -286,6 +286,84 @@ func (s *productService) ImportFromFile(file *multipart.FileHeader) (*dto_produc
 				Row:     rowNum,
 				Message: "Gagal menyimpan produk",
 			})
+			continue
+		}
+
+		result.Success++
+	}
+
+	return result, nil
+}
+
+func (s *productService) ImportBulk(rows []dto_product.BulkImportRow) (*dto_product.BulkImportResult, error) {
+	result := &dto_product.BulkImportResult{
+		Failed: []dto_product.BulkImportFailed{},
+	}
+
+	for i, row := range rows {
+		rowNum := i + 2 // baris Excel dimulai dari 2 (baris 1 = header)
+
+		addFailed := func(alasan string) {
+			result.Failed = append(result.Failed, dto_product.BulkImportFailed{
+				Baris:  rowNum,
+				Data:   row,
+				Alasan: alasan,
+			})
+		}
+
+		req := &dto_product.ProductRequest{
+			Barcode:       strings.TrimSpace(row.Barcode),
+			Name:          strings.TrimSpace(row.Nama),
+			PurchasePrice: row.HargaBeli,
+			SellingPrice:  row.HargaJual,
+			Stock:         row.Stok,
+			MinStock:      row.StokMinimum,
+			Unit:          strings.TrimSpace(row.Satuan),
+		}
+
+		if req.Name == "" {
+			addFailed("Nama produk kosong")
+			continue
+		}
+		if req.Unit == "" {
+			addFailed("Satuan kosong")
+			continue
+		}
+
+		kategori := strings.TrimSpace(row.Kategori)
+		if kategori != "" {
+			cat, err := s.catRepo.GetByName(kategori)
+			if err != nil {
+				addFailed(fmt.Sprintf("Gagal mencari kategori: %s", kategori))
+				continue
+			}
+			if cat == nil {
+				newID, err := s.catRepo.Create(kategori, "")
+				if err != nil {
+					addFailed(fmt.Sprintf("Gagal membuat kategori: %s", kategori))
+					continue
+				}
+				id := int(newID)
+				req.CategoryID = &id
+			} else {
+				req.CategoryID = &cat.ID
+			}
+		}
+
+		if req.Barcode != "" {
+			exists, err := s.repo.CheckBarcodeExists(req.Barcode, 0)
+			if err != nil {
+				addFailed("Gagal memeriksa barcode")
+				continue
+			}
+			if exists {
+				addFailed(fmt.Sprintf("Barcode sudah digunakan: %s", req.Barcode))
+				continue
+			}
+		}
+
+		if _, err := s.repo.Create(req); err != nil {
+			addFailed("Gagal menyimpan produk")
 			continue
 		}
 
