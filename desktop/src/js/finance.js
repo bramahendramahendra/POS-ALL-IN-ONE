@@ -35,6 +35,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   await checkCurrentCashDrawer();
   await loadDashboard();
 
+  // Muat riwayat kas jika elemen tabel tersedia di halaman ini
+  if (document.getElementById('cashDrawerTableBody')) {
+    await loadCashDrawerHistory();
+  }
+
   // Populate dropdowns
   populateExpenseCategories();
 });
@@ -124,6 +129,8 @@ function switchTab(tabName) {
     loadExpenses();
   } else if (tabName === 'shift-summary') {
     loadShiftSummary();
+  } else if (tabName === 'cash-history') {
+    if (document.getElementById('cashDrawerTableBody')) loadCashDrawerHistory();
   }
 }
 
@@ -148,6 +155,11 @@ async function loadDashboard() {
       startDate: document.getElementById('dashboardStartDate').value,
       endDate: document.getElementById('dashboardEndDate').value
     };
+
+    if (!window.api?.finance) {
+      showToast('Dashboard keuangan tidak tersedia: koneksi IPC belum siap, coba refresh halaman', 'error');
+      return;
+    }
 
     const result = await window.api.finance.getDashboard(filters);
 
@@ -180,6 +192,7 @@ async function loadDashboard() {
 }
 
 async function loadTopProducts(filters) {
+  if (!window.api?.finance) return;
   try {
     const result = await window.api.finance.getTopProducts(filters);
 

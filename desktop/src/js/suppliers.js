@@ -184,7 +184,8 @@ function renderSuppliersTable(suppliers) {
         </button>
         <button
           class="btn-icon"
-          onclick="confirmDeleteSupplier(${s.id}, '${escapeHtml(s.name)}')"
+          onclick="confirmDeleteSupplier(${s.id})"
+          data-name="${escapeHtml(s.name)}"
           title="Hapus"
         >
           🗑️
@@ -195,7 +196,7 @@ function renderSuppliersTable(suppliers) {
 }
 
 function updateStats(suppliers) {
-  const active = suppliers.filter(s => s.is_active == 1).length;
+  const active = suppliers.filter(s => !!s.is_active).length;
   document.getElementById('statTotal').textContent = suppliers.length;
   document.getElementById('statActive').textContent = active;
   document.getElementById('statInactive').textContent = suppliers.length - active;
@@ -402,9 +403,12 @@ async function toggleSupplierStatus(id, currentStatus) {
 // ============================================
 
 function confirmDeleteSupplier(id, name) {
+  const displayName = name
+    || document.querySelector(`[onclick="confirmDeleteSupplier(${id})"]`)?.dataset?.name
+    || '';
   showConfirm(
     'Konfirmasi Hapus',
-    `Yakin ingin menghapus supplier "${name}"? Supplier yang sudah digunakan di pembelian tidak dapat dihapus.`,
+    `Yakin ingin menghapus supplier "${displayName}"? Supplier yang sudah digunakan di pembelian tidak dapat dihapus.`,
     async () => { await deleteSupplier(id); }
   );
 }
@@ -971,7 +975,7 @@ async function handlePayPurchase(e) {
   e.preventDefault();
   const purchaseId = parseInt(document.getElementById('payPurchaseId').value);
   const amount = parseRupiahInput('payAmount');
-  const remaining = parseCurrency(document.getElementById('payRemaining').textContent);
+  const remaining = parseFloat(document.getElementById('payAmount').dataset.remaining) || 0;
 
   if (amount <= 0) { showPayPurchaseError('Jumlah bayar harus lebih dari 0'); return; }
   if (amount > remaining) { showPayPurchaseError('Jumlah bayar melebihi sisa hutang'); return; }

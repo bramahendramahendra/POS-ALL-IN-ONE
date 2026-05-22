@@ -52,9 +52,11 @@ async function loadConflicts() {
 
   try {
     const res = await apiClient.get('/sync/conflicts', params);
-    // res may be array or { data, total }
-    const items = Array.isArray(res) ? res : (res?.data ?? []);
-    const total = res?.total ?? items.length;
+    // apiClient membungkus response: { success, data, message }
+    // data bisa berupa array langsung atau { items, total }
+    const raw   = res?.data;
+    const items = Array.isArray(raw) ? raw : (raw?.items ?? []);
+    const total = Array.isArray(raw) ? raw.length : (raw?.total ?? items.length);
     state.conflicts.data  = items;
     state.conflicts.total = total;
     renderConflicts(items);
@@ -180,7 +182,7 @@ async function loadQueue() {
       const params = { page: state.queue.page, limit: LIMIT };
       if (status) params.status = status;
       const res = await apiClient.get('/sync/queue', params);
-      items = Array.isArray(res) ? res : (res?.data ?? []);
+      items = res?.data ?? [];
       total = res?.total ?? items.length;
     }
 
@@ -249,7 +251,7 @@ async function retryQueueItem(itemId) {
   try {
     // Reset status item ke PENDING agar bisa diproses ulang oleh Sync Engine
     if (typeof window.syncQueue !== 'undefined') {
-      await window.syncQueue.updateStatus({ id: itemId, status: 'PENDING', errorMsg: null });
+      await window.syncQueue.updateStatus({ id: itemId, status: 'pending', errorMsg: null });
     } else {
       await apiClient.post(`/sync/queue/${itemId}/retry`);
     }
@@ -294,7 +296,7 @@ async function loadHistory() {
 
   try {
     const res   = await apiClient.get('/sync/history', params);
-    const items = Array.isArray(res) ? res : (res?.data ?? []);
+    const items = res?.data ?? [];
     const total = res?.total ?? items.length;
     state.history.data  = items;
     state.history.total = total;
@@ -382,6 +384,11 @@ document.addEventListener('DOMContentLoaded', () => {
   checkConnection();
   // Re-check koneksi setiap 30 detik
   setInterval(checkConnection, 30_000);
+
+  // Load data awal otomatis
+  loadConflicts();
+  loadQueue();
+  loadHistory();
 
   // Conflicts
   document.getElementById('btnLoadConflicts').addEventListener('click', () => {

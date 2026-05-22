@@ -411,8 +411,7 @@ async function deleteUser(userId) {
 }
 
 // Handle search
-function handleSearch(e) {
-  const searchTerm = e.target.value.toLowerCase();
+function handleSearch() {
   handleFilter();
 }
 
@@ -439,7 +438,7 @@ function handleFilter() {
 
   // Filter by status
   if (filterStatus !== '') {
-    filtered = filtered.filter(user => user.is_active === parseInt(filterStatus));
+    filtered = filtered.filter(user => !!user.is_active === (filterStatus === '1'));
   }
 
   renderUsersTable(filtered);

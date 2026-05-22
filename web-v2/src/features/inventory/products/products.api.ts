@@ -24,6 +24,28 @@ import type {
   UpdateUnitPayload,
 } from './products.types'
 
+// ─── Import ───────────────────────────────────────────────────────────────────
+
+interface ImportProductsResult {
+  imported: number
+  failed: number
+  errors?: string[]
+}
+
+export function useImportProductsCsvMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: Record<string, unknown>[]) =>
+      api.post<ImportProductsResult>('/products/import', payload),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: queryKeys.products.all() })
+      const result = data as unknown as ImportProductsResult
+      toast.success(`${result.imported} produk berhasil diimport${result.failed > 0 ? `, ${result.failed} gagal` : ''}`)
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+}
+
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
 export function useProductListQuery(filter?: ProductFilter) {

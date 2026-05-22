@@ -4,6 +4,7 @@ let cart = [];
 let currentDiscount = { type: 'none', value: 0, amount: 0 };
 let currentTax = { percent: 0, amount: 0 };
 let searchTimeout = null;
+let saveDraftTimeout = null;
 // pending product for unit selection
 let pendingProduct = null;
 let currentCashDrawerId = null;
@@ -150,6 +151,9 @@ function setupEventListeners() {
   document.getElementById('btnPayment').addEventListener('click', openPaymentModal);
   document.getElementById('btnHold').addEventListener('click', saveDraft);
   document.getElementById('btnCancel').addEventListener('click', confirmClearCart);
+
+  // Customer select: update info kredit saat pelanggan dipilih
+  document.getElementById('customerSelect').addEventListener('change', updateCreditInfo);
 
   // Metode bayar: tampilkan/sembunyikan section pelanggan kredit
   document.getElementById('paymentMethod').addEventListener('change', onPaymentMethodChange);
@@ -347,7 +351,15 @@ async function updateCartItemQty(index, newQty) {
   const convQty = item.conversion_qty || 1;
   const stockNeeded = newQty * convQty;
 
-  if (stockNeeded > item.stock) {
+  // Subtract stock already reserved by other cart entries for the same product
+  const reservedByOthers = cart.reduce((sum, entry, i) => {
+    if (i !== index && entry.product_id === item.product_id) {
+      return sum + entry.quantity * (entry.conversion_qty || 1);
+    }
+    return sum;
+  }, 0);
+
+  if (stockNeeded + reservedByOthers > item.stock) {
     showToast(`Stok tidak mencukupi (tersedia: ${Math.floor(item.stock / convQty)} ${item.unit})`, 'error');
     return;
   }
@@ -363,6 +375,9 @@ async function updateCartItemQty(index, newQty) {
     cart[index].discount_item_amount = (activePrice * newQty * discVal) / 100;
   } else if (discType === 'amount' && discVal > 0) {
     cart[index].discount_item_amount = Math.min(discVal, activePrice * newQty);
+  } else {
+    // tipe 'none' atau tidak konsisten — reset agar tidak pakai nilai stale
+    cart[index].discount_item_amount = 0;
   }
 
   const discAmt = cart[index].discount_item_amount || 0;
@@ -422,7 +437,6 @@ async function loadCustomerList() {
       select.appendChild(opt);
     });
 
-    select.addEventListener('change', updateCreditInfo);
   } catch (error) {
     console.error('loadCustomerList error:', error);
   }
@@ -834,7 +848,7 @@ async function processTransaction() {
     tax_percent: currentTax.percent || 0,
     tax_amount: currentTax.amount || 0,
     total_amount: total,
-    payment_method: paymentMethod,
+    payment_method: paymentMethod === 'kredit' ? 'credit' : paymentMethod,
     payment_amount: isCredit ? 0 : paymentAmount,
     change_amount: isCredit ? 0 : (paymentAmount - total),
     customer_name: customerName,
@@ -909,7 +923,9 @@ async function processTransaction() {
       }
 
       // Open receipt
-      window.api.window.openReceipt(result.data?.id);
+      if (window.api?.window) {
+        window.api.window.openReceipt(result.data?.id);
+      }
 
     } else {
       showToast(result.message || 'Gagal menyimpan transaksi', 'error');
@@ -1104,6 +1120,11 @@ function getPaymentMethodLabel(method) {
 // ============================================
 
 function saveDraft() {
+  clearTimeout(saveDraftTimeout);
+  saveDraftTimeout = setTimeout(_writeDraft, 400);
+}
+
+function _writeDraft() {
   const draft = {
     cart,
     discount: currentDiscount,
@@ -1116,6 +1137,7 @@ function saveDraft() {
 
   localStorage.setItem('cart_draft', JSON.stringify(draft));
 }
+
 
 async function loadDraft() {
   const draftStr = localStorage.getItem('cart_draft');
@@ -1132,7 +1154,11 @@ async function loadDraft() {
     document.getElementById('notes').value = draft.notes || '';
     document.getElementById('paymentMethod').value = draft.paymentMethod || 'cash';
     if (draft.customerId) {
-      document.getElementById('customerSelect').value = draft.customerId;
+      const sel = document.getElementById('customerSelect');
+      sel.value = draft.customerId;
+      if (sel.value !== String(draft.customerId)) {
+        showToast('Pelanggan kredit pada draft tidak ditemukan (mungkin sudah dinonaktifkan)', 'warning');
+      }
     }
     if (draft.paymentMethod === 'kredit') {
       document.getElementById('customerSection').style.display = 'block';

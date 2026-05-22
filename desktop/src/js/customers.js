@@ -88,7 +88,7 @@ function renderTable(customers) {
           <button class="btn btn-sm ${c.is_active ? 'btn-warning' : 'btn-success'}" onclick="toggleStatus(${c.id})">
             ${c.is_active ? 'Nonaktif' : 'Aktifkan'}
           </button>
-          <button class="btn btn-sm btn-danger" onclick="openDeleteModal(${c.id}, '${escapeHtml(c.name)}')">Hapus</button>
+          <button class="btn btn-sm btn-danger" onclick="openDeleteModal(${c.id})" data-name="${escapeHtml(c.name)}">Hapus</button>
         </td>
       </tr>
     `;
@@ -129,13 +129,9 @@ function closeCustomerModal() {
 }
 
 async function generateCustomerCode() {
-  try {
-    const result = await apiClient.get('/customers');
-    const count = result.success ? result.data.items.length + 1 : 1;
-    document.getElementById('customerCode').value = `PLG-${String(count).padStart(3, '0')}`;
-  } catch (e) {
-    document.getElementById('customerCode').value = `PLG-001`;
-  }
+  // Gunakan timestamp (detik) agar kode unik meski ada record yang dihapus
+  const ts = String(Date.now()).slice(-6);
+  document.getElementById('customerCode').value = `PLG-${ts}`;
 }
 
 async function saveCustomer(e) {
@@ -198,7 +194,11 @@ async function toggleStatus(id) {
 
 function openDeleteModal(id, name) {
   deleteTargetId = id;
-  document.getElementById('deleteCustomerName').textContent = name;
+  // name bisa dari parameter (legacy) atau dari dataset di tombol pemanggilnya
+  const displayName = name
+    || document.querySelector(`[onclick="openDeleteModal(${id})"]`)?.dataset?.name
+    || '';
+  document.getElementById('deleteCustomerName').textContent = displayName;
   document.getElementById('deleteCustomerModal').style.display = 'flex';
 }
 

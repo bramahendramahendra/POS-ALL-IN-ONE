@@ -65,3 +65,26 @@ export const getApplicablePrice = (
 export const isPaymentSufficient = (grandTotal: number, amountPaid: number): boolean => {
   return amountPaid >= grandTotal
 }
+
+export function calculateItemDiscount(
+  price: number,
+  qty: number,
+  type: 'percent' | 'nominal',
+  value: number
+): { discount_amount: number; effective_price: number; subtotal: number } {
+  if (value <= 0) {
+    return { discount_amount: 0, effective_price: price, subtotal: price * qty }
+  }
+
+  if (type === 'percent') {
+    const pct = Math.min(value, 100)
+    const effective_price = Math.round(price * (1 - pct / 100))
+    const discount_amount = (price - effective_price) * qty
+    return { discount_amount, effective_price, subtotal: effective_price * qty }
+  }
+
+  // nominal: value adalah potongan per unit
+  const effective_price = Math.max(0, price - value)
+  const discount_amount = (price - effective_price) * qty
+  return { discount_amount, effective_price, subtotal: effective_price * qty }
+}

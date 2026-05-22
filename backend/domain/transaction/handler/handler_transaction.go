@@ -27,8 +27,9 @@ func (h *TransactionHandler) GetAll(c *gin.Context) {
 	filter := &dto_transaction.TransactionFilter{
 		Status:        c.Query("status"),
 		PaymentMethod: c.Query("payment_method"),
-		DateFrom:      c.Query("date_from"),
-		DateTo:        c.Query("date_to"),
+		DateFrom:      c.Query("start_date"),
+		DateTo:        c.Query("end_date"),
+		Search:        c.Query("search"),
 	}
 
 	if uidStr := c.Query("user_id"); uidStr != "" {

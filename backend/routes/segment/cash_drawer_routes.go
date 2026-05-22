@@ -4,7 +4,6 @@ import (
 	cash_drawer_handler "pos_api/domain/cash_drawer/handler"
 	cash_drawer_repo "pos_api/domain/cash_drawer/repo"
 	cash_drawer_service "pos_api/domain/cash_drawer/service"
-	middleware "pos_api/middleware"
 	pkgdatabase "pos_api/pkg/database"
 
 	"github.com/gin-gonic/gin"
@@ -18,7 +17,7 @@ func CashDrawerRoutes(r *gin.RouterGroup) {
 	g := r.Group("/cash-drawer")
 	{
 		g.GET("/current", cashDrawerHand.GetCurrent)
-		g.GET("", middleware.RoleMiddleware("owner", "admin"), cashDrawerHand.GetHistory)
+		g.GET("", cashDrawerHand.GetHistory)
 		g.GET("/:id", cashDrawerHand.GetByID)
 		g.POST("/open", cashDrawerHand.Open)
 		g.POST("/:id/close", cashDrawerHand.Close)

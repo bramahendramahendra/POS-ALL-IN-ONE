@@ -1,5 +1,5 @@
 export type DiscountType = 'none' | 'percent' | 'amount'
-export type PaymentMethod = 'cash' | 'transfer' | 'qris' | 'card'
+export type PaymentMethod = 'cash' | 'transfer' | 'qris' | 'card' | 'kredit'
 
 export interface CartItem {
   product_id: number
@@ -11,6 +11,11 @@ export interface CartItem {
   price: number
   subtotal: number
   notes?: string
+  // Per-item discount fields
+  discount_type?: 'percent' | 'nominal'
+  discount_value?: number
+  discount_amount?: number   // total potongan dalam rupiah
+  effective_price?: number   // harga per unit setelah diskon
 }
 
 export interface Discount {
@@ -40,6 +45,9 @@ export interface PaymentPayload {
     price: number
     subtotal: number
     notes?: string
+    discount_type?: 'percent' | 'nominal'
+    discount_value?: number
+    discount_amount?: number
   }>
   subtotal: number
   discount_type: DiscountType

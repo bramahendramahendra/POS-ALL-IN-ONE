@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware'
 import type { Product, ProductUnit } from '@/features/inventory/products'
 
 import type { CartItem, Discount, DiscountType, Tax } from './cashier.types'
-import { calcDiscountAmount, calcItemSubtotal, calcTaxAmount } from './cashier.utils'
+import { calcDiscountAmount, calcItemSubtotal, calcTaxAmount, calculateItemDiscount } from './cashier.utils'
 
 const DEFAULT_DISCOUNT: Discount = { type: 'none', value: 0, amount: 0 }
 const DEFAULT_TAX: Tax = { percent: 0, amount: 0 }
@@ -27,6 +27,7 @@ interface CashierState {
   updateQty: (productId: number, unitId: number, qty: number) => void
   updateNotes: (productId: number, unitId: number, notes: string) => void
   updatePrice: (productId: number, unitId: number, price: number) => void
+  setItemDiscount: (productId: number, unitId: number, type: 'percent' | 'nominal', value: number) => void
   clearCart: () => void
 
   // Actions — Discount & Tax
@@ -81,11 +82,16 @@ export const useCashierStore = create<CashierState>()(
         let newCart: CartItem[]
         if (existing) {
           const newQty = existing.qty + item.qty
-          newCart = cart.map((i) =>
-            i.product_id === item.product_id && i.unit_id === item.unit_id
-              ? { ...i, qty: newQty, subtotal: calcItemSubtotal(newQty, i.price) }
-              : i
-          )
+          newCart = cart.map((i) => {
+            if (i.product_id !== item.product_id || i.unit_id !== item.unit_id) return i
+            if (i.discount_type && i.discount_value) {
+              const { discount_amount, effective_price, subtotal } = calculateItemDiscount(
+                i.price, newQty, i.discount_type, i.discount_value
+              )
+              return { ...i, qty: newQty, discount_amount, effective_price, subtotal }
+            }
+            return { ...i, qty: newQty, subtotal: calcItemSubtotal(newQty, i.price) }
+          })
         } else {
           newCart = [...cart, { ...item, subtotal: calcItemSubtotal(item.qty, item.price) }]
         }
@@ -107,11 +113,16 @@ export const useCashierStore = create<CashierState>()(
           return
         }
         const { cart, discount, tax } = get()
-        const newCart = cart.map((i) =>
-          i.product_id === productId && i.unit_id === unitId
-            ? { ...i, qty, subtotal: calcItemSubtotal(qty, i.price) }
-            : i
-        )
+        const newCart = cart.map((i) => {
+          if (i.product_id !== productId || i.unit_id !== unitId) return i
+          if (i.discount_type && i.discount_value) {
+            const { discount_amount, effective_price, subtotal } = calculateItemDiscount(
+              i.price, qty, i.discount_type, i.discount_value
+            )
+            return { ...i, qty, discount_amount, effective_price, subtotal }
+          }
+          return { ...i, qty, subtotal: calcItemSubtotal(qty, i.price) }
+        })
         const { discount: newDiscount, tax: newTax } = recalcDiscountAndTax(newCart, discount, tax)
         set({ cart: newCart, discount: newDiscount, tax: newTax })
       },
@@ -126,11 +137,39 @@ export const useCashierStore = create<CashierState>()(
 
       updatePrice: (productId, unitId, price) => {
         const { cart, discount, tax } = get()
-        const newCart = cart.map((i) =>
-          i.product_id === productId && i.unit_id === unitId
-            ? { ...i, price, subtotal: calcItemSubtotal(i.qty, price) }
-            : i
-        )
+        const newCart = cart.map((i) => {
+          if (i.product_id !== productId || i.unit_id !== unitId) return i
+          if (i.discount_type && i.discount_value) {
+            const { discount_amount, effective_price, subtotal } = calculateItemDiscount(
+              price, i.qty, i.discount_type, i.discount_value
+            )
+            return { ...i, price, discount_amount, effective_price, subtotal }
+          }
+          return { ...i, price, subtotal: calcItemSubtotal(i.qty, price) }
+        })
+        const { discount: newDiscount, tax: newTax } = recalcDiscountAndTax(newCart, discount, tax)
+        set({ cart: newCart, discount: newDiscount, tax: newTax })
+      },
+
+      setItemDiscount: (productId, unitId, type, value) => {
+        const { cart, discount, tax } = get()
+        const newCart = cart.map((i) => {
+          if (i.product_id !== productId || i.unit_id !== unitId) return i
+          if (value <= 0) {
+            return {
+              ...i,
+              discount_type: undefined,
+              discount_value: undefined,
+              discount_amount: undefined,
+              effective_price: undefined,
+              subtotal: calcItemSubtotal(i.qty, i.price),
+            }
+          }
+          const { discount_amount, effective_price, subtotal } = calculateItemDiscount(
+            i.price, i.qty, type, value
+          )
+          return { ...i, discount_type: type, discount_value: value, discount_amount, effective_price, subtotal }
+        })
         const { discount: newDiscount, tax: newTax } = recalcDiscountAndTax(newCart, discount, tax)
         set({ cart: newCart, discount: newDiscount, tax: newTax })
       },

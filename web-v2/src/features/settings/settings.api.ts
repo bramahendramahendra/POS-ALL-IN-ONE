@@ -91,3 +91,34 @@ export function useAppVersionListQuery() {
     queryFn: () => api.get<AppVersion[]>('/settings/app-versions'),
   })
 }
+
+// ─── Printer ──────────────────────────────────────────────────────────────────
+
+export interface PrinterSettings {
+  paper_size: '58mm' | '80mm'
+  receipt_header: string
+  receipt_footer: string
+  show_logo: boolean
+  auto_print: boolean
+}
+
+const PRINTER_QK = ['settings', 'printer'] as const
+
+export function usePrinterSettingsQuery() {
+  return useQuery({
+    queryKey: PRINTER_QK,
+    queryFn: () => api.get<PrinterSettings>('/settings/printer'),
+  })
+}
+
+export function useUpdatePrinterSettingsMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: PrinterSettings) => api.put<PrinterSettings>('/settings/printer', payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: PRINTER_QK })
+      toast.success('Pengaturan printer berhasil disimpan')
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+}

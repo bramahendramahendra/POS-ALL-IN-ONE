@@ -1,10 +1,9 @@
 import { useRef, useState } from 'react'
 import { Upload } from 'lucide-react'
-import { toast } from 'sonner'
 
 import { FormModal } from '@/shared/components'
-import { api } from '@/services/api.client'
 
+import { useImportProductsCsvMutation } from '../products.api'
 import { validateImportRow } from '../products.utils'
 
 interface ImportCsvModalProps {
@@ -55,7 +54,7 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [rows, setRows] = useState<ParsedRow[]>([])
   const [fileName, setFileName] = useState('')
-  const [isImporting, setIsImporting] = useState(false)
+  const { mutate: importCsv, isPending: isImporting } = useImportProductsCsvMutation()
 
   const validRows = rows.filter((r) => r.valid)
   const invalidRows = rows.filter((r) => !r.valid)
@@ -73,28 +72,23 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
     reader.readAsText(file)
   }
 
-  const handleImport = async () => {
+  const handleImport = () => {
     if (validRows.length === 0) return
-    setIsImporting(true)
-    try {
-      const payload = validRows.map((r) => ({
-        name: r.data['name'],
-        sku: r.data['sku'] || undefined,
-        category_name: r.data['category_name'] || undefined,
-        price: r.data['price'] ? Number(r.data['price']) : undefined,
-        stock: r.data['stock'] ? Number(r.data['stock']) : undefined,
-      }))
-      await api.post('/products/import', payload)
-      toast.success(`${validRows.length} produk berhasil diimport`)
-      onOpenChange(false)
-      setRows([])
-      setFileName('')
-    } catch (e) {
-      const err = e as Error
-      toast.error(err.message)
-    } finally {
-      setIsImporting(false)
-    }
+    const payload = validRows.map((r) => ({
+      name: r.data['name'],
+      sku: r.data['sku'] || undefined,
+      category_name: r.data['category_name'] || undefined,
+      price: r.data['price'] ? Number(r.data['price']) : undefined,
+      stock: r.data['stock'] ? Number(r.data['stock']) : undefined,
+    }))
+    importCsv(payload, {
+      onSuccess: () => {
+        onOpenChange(false)
+        setRows([])
+        setFileName('')
+        if (fileInputRef.current) fileInputRef.current.value = ''
+      },
+    })
   }
 
   const handleClose = (open: boolean) => {

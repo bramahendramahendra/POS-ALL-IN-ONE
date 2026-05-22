@@ -2,82 +2,53 @@ import { useState } from 'react'
 
 import { PageHeader } from '@/shared/components'
 
-import {
-  useCashierReportQuery,
-  useExportReportMutation,
-  useProductReportQuery,
-  useSalesReportQuery,
-} from './reports.api'
-import type { ExportFormat, ReportFilter, ReportType } from './reports.types'
-import { ReportFilter as ReportFilterBar } from './components/ReportFilter'
-import { ReportTable } from './components/ReportTable'
+import { SalesReportTab } from './components/SalesReportTab'
+import { ProfitLossTab } from './components/ProfitLossTab'
+import { StockReportTab } from './components/StockReportTab'
+import { CashierPerformanceTab } from './components/CashierPerformanceTab'
 
-const PAGE_SIZE = 10
+type TabKey = 'sales' | 'profit-loss' | 'stock' | 'cashier'
 
-function monthStart(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
-}
-
-function today(): string {
-  return new Date().toISOString().split('T')[0]
-}
+const TABS: { key: TabKey; label: string }[] = [
+  { key: 'sales', label: 'Penjualan' },
+  { key: 'profit-loss', label: 'Laba Rugi' },
+  { key: 'stock', label: 'Stok' },
+  { key: 'cashier', label: 'Kinerja Kasir' },
+]
 
 export function ReportsPage() {
-  const [activeFilter, setActiveFilter] = useState<ReportFilter>({
-    type: 'sales',
-    date_from: monthStart(),
-    date_to: today(),
-    group_by: 'day',
-    page: 1,
-    page_size: PAGE_SIZE,
-  })
-
-  const { mutate: exportReport, isPending: isExporting } = useExportReportMutation()
-
-  const salesQuery = useSalesReportQuery(activeFilter)
-  const productQuery = useProductReportQuery(activeFilter)
-  const cashierQuery = useCashierReportQuery(activeFilter)
-
-  const getActiveQuery = () => {
-    if (activeFilter.type === 'sales') return salesQuery
-    if (activeFilter.type === 'products') return productQuery
-    return cashierQuery
-  }
-
-  const { data, isLoading } = getActiveQuery()
-  const rows = data?.data?.data ?? []
-  const total = data?.data?.total ?? 0
-
-  const handleApply = (filter: ReportFilter) => {
-    setActiveFilter({ ...filter, page: 1, page_size: PAGE_SIZE })
-  }
-
-  const handleExport = (format: ExportFormat) => {
-    exportReport({ ...activeFilter, format })
-  }
-
-  const handlePageChange = (page: number) => {
-    setActiveFilter((f) => ({ ...f, page }))
-  }
+  const [activeTab, setActiveTab] = useState<TabKey>('sales')
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4">
       <PageHeader title="Laporan" breadcrumbs={[{ label: 'Reporting' }, { label: 'Laporan' }]} />
 
-      <ReportFilterBar onApply={handleApply} onExport={handleExport} isExporting={isExporting} />
+      {/* Tab bar */}
+      <div className="border-b bg-white">
+        <div className="flex gap-0">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === tab.key
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-      <ReportTable
-        reportType={activeFilter.type as ReportType}
-        data={rows}
-        isLoading={isLoading}
-        pagination={{
-          page: activeFilter.page ?? 1,
-          pageSize: PAGE_SIZE,
-          total,
-          onPageChange: handlePageChange,
-        }}
-      />
+      {/* Tab content */}
+      <div>
+        {activeTab === 'sales' && <SalesReportTab />}
+        {activeTab === 'profit-loss' && <ProfitLossTab />}
+        {activeTab === 'stock' && <StockReportTab />}
+        {activeTab === 'cashier' && <CashierPerformanceTab />}
+      </div>
     </div>
   )
 }

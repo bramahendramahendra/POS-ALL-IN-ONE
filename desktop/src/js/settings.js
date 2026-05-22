@@ -113,7 +113,7 @@ function setupEventListeners() {
 
   // Reset button
   document.getElementById('btnResetSettings').addEventListener('click', () => {
-    showConfirm(
+    showSettingsConfirm(
       'Reset Pengaturan',
       'Yakin ingin mereset semua pengaturan ke nilai default? Perubahan yang belum disimpan akan hilang.',
       async () => {
@@ -321,7 +321,12 @@ async function handleBackupNow() {
   btn.textContent = '⏳ Membuat backup...';
 
   try {
-    const blob = await apiClient.get('/backup/export', {}, { responseType: 'blob' });
+    const response = await fetch(`${apiClient.baseURL}/backup/export`, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${apiClient.token}` }
+    });
+    if (!response.ok) throw new Error(`Server error: ${response.status}`);
+    const blob = await response.blob();
     const filename = `backup-${new Date().toISOString().slice(0, 10)}.sql`;
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -354,7 +359,7 @@ async function handleRestoreBackup() {
     const fileName = file.name;
 
     // Step 2: Konfirmasi
-    showConfirm(
+    showSettingsConfirm(
       '⚠️ Restore Database',
       `Anda akan mengganti database aktif dengan:\n"${fileName}"\n\nData saat ini akan digantikan dan TIDAK BISA DIKEMBALIKAN.\nAplikasi akan restart otomatis setelah restore.\n\nYakin ingin melanjutkan?`,
       async () => {
@@ -394,7 +399,7 @@ function showBackupStatus(message, type) {
 // CONFIRM MODAL
 // ============================================
 
-function showConfirm(title, message, callback) {
+function showSettingsConfirm(title, message, callback) {
   document.getElementById('confirmModalTitle').textContent  = title;
   document.getElementById('confirmModalMessage').textContent = message;
   document.getElementById('confirmModal').style.display     = 'flex';
@@ -431,6 +436,11 @@ async function loadPrinterListForSettings() {
   if (!select) return;
 
   select.innerHTML = '<option value="">— Gunakan printer default sistem —</option>';
+
+  if (!window.api?.printer) {
+    select.innerHTML += '<option value="" disabled>(Daftar printer tidak tersedia)</option>';
+    return;
+  }
 
   try {
     const res = await window.api.printer.getAll();

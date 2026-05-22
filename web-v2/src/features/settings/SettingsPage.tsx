@@ -4,14 +4,16 @@ import { PageHeader } from '@/shared/components'
 import { Button } from '@/shared/components/ui/button'
 
 import { AppVersionTab } from './components/AppVersionTab'
+import { PrinterSettingsTab } from './components/PrinterSettingsTab'
 import { StoreProfileForm } from './components/StoreProfileForm'
 import { UserManagementTab } from './components/UserManagementTab'
 
-type Tab = 'store' | 'users' | 'versions'
+type Tab = 'store' | 'users' | 'printer' | 'versions'
 
 const TABS: { label: string; value: Tab }[] = [
   { label: 'Profil Toko', value: 'store' },
   { label: 'Manajemen User', value: 'users' },
+  { label: 'Printer', value: 'printer' },
   { label: 'Versi Aplikasi', value: 'versions' },
 ]
 
@@ -45,6 +47,7 @@ export function SettingsPage() {
       <div>
         {activeTab === 'store' && <StoreProfileForm />}
         {activeTab === 'users' && <UserManagementTab />}
+        {activeTab === 'printer' && <PrinterSettingsTab />}
         {activeTab === 'versions' && <AppVersionTab />}
       </div>
     </div>

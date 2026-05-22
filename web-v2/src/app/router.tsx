@@ -16,6 +16,11 @@ const SuppliersPage    = lazy(() => import('@/features/inventory/suppliers/Suppl
 const DashboardPage    = lazy(() => import('@/features/reporting/dashboard/DashboardPage').then(m => ({ default: m.DashboardPage })))
 const ReportsPage      = lazy(() => import('@/features/reporting/reports/ReportsPage').then(m => ({ default: m.ReportsPage })))
 const FinancePage      = lazy(() => import('@/features/finance/overview/FinancePage').then(m => ({ default: m.FinancePage })))
+const CashDrawerPage   = lazy(() => import('@/features/finance/cash-drawer/CashDrawerPage').then(m => ({ default: m.CashDrawerPage })))
+const MyCashPage             = lazy(() => import('@/features/finance/my-cash/MyCashPage').then(m => ({ default: m.MyCashPage })))
+const SupplierPurchasesPage  = lazy(() => import('@/features/inventory/supplier-purchases/SupplierPurchasesPage').then(m => ({ default: m.SupplierPurchasesPage })))
+const SupplierReturnsPage    = lazy(() => import('@/features/inventory/supplier-returns/SupplierReturnsPage').then(m => ({ default: m.SupplierReturnsPage })))
+const ExpensesPage     = lazy(() => import('@/features/finance/expenses/ExpensesPage').then(m => ({ default: m.ExpensesPage })))
 const ReceivablesPage  = lazy(() => import('@/features/finance/receivables/ReceivablesPage').then(m => ({ default: m.ReceivablesPage })))
 const ShiftsPage       = lazy(() => import('@/features/shifts/ShiftsPage').then(m => ({ default: m.ShiftsPage })))
 const SyncCenterPage   = lazy(() => import('@/features/sync/SyncCenterPage').then(m => ({ default: m.SyncCenterPage })))
@@ -32,7 +37,8 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute allowedRoles={[...ALL_ROLES]} />,
     children: [
-      { path: ROUTES.KASIR, element: <LazyRoute><CashierPage /></LazyRoute> },
+      { path: ROUTES.KASIR,          element: <LazyRoute><CashierPage /></LazyRoute> },
+      { path: ROUTES.FINANCE_MY_CASH, element: <LazyRoute><MyCashPage /></LazyRoute> },
     ],
   },
   // Protected — owner & admin
@@ -41,11 +47,15 @@ export const router = createBrowserRouter([
     children: [
       { path: ROUTES.DASHBOARD,    element: <LazyRoute><DashboardPage /></LazyRoute> },
       { path: ROUTES.PRODUCTS,     element: <LazyRoute><ProductsPage /></LazyRoute> },
-      { path: ROUTES.SUPPLIERS,    element: <LazyRoute><SuppliersPage /></LazyRoute> },
+      { path: ROUTES.SUPPLIERS,          element: <LazyRoute><SuppliersPage /></LazyRoute> },
+      { path: ROUTES.SUPPLIER_PURCHASES, element: <LazyRoute><SupplierPurchasesPage /></LazyRoute> },
+      { path: ROUTES.SUPPLIER_RETURNS,   element: <LazyRoute><SupplierReturnsPage /></LazyRoute> },
       { path: ROUTES.TRANSACTIONS, element: <LazyRoute><TransactionsPage /></LazyRoute> },
       { path: ROUTES.CUSTOMERS,    element: <LazyRoute><CustomersPage /></LazyRoute> },
       { path: ROUTES.RECEIVABLES,  element: <LazyRoute><ReceivablesPage /></LazyRoute> },
-      { path: ROUTES.FINANCE,      element: <LazyRoute><FinancePage /></LazyRoute> },
+      { path: ROUTES.FINANCE,              element: <LazyRoute><FinancePage /></LazyRoute> },
+      { path: ROUTES.FINANCE_CASH_DRAWER, element: <LazyRoute><CashDrawerPage /></LazyRoute> },
+      { path: ROUTES.FINANCE_EXPENSES,    element: <LazyRoute><ExpensesPage /></LazyRoute> },
       { path: ROUTES.REPORTS,      element: <LazyRoute><ReportsPage /></LazyRoute> },
       { path: ROUTES.SHIFTS,       element: <LazyRoute><ShiftsPage /></LazyRoute> },
       { path: ROUTES.SYNC,         element: <LazyRoute><SyncCenterPage /></LazyRoute> },

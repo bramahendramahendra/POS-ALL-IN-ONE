@@ -127,7 +127,7 @@ async function loadTransactions() {
     if (result.success) {
       allTransactions = result.data.items;
       renderTransactionsTable(allTransactions);
-      updateSummary(allTransactions);
+      updateSummary(allTransactions, result.data.total);
       updatePagination();
     } else {
       showToast('Gagal memuat data transaksi', 'error');
@@ -180,12 +180,13 @@ function renderTransactionsTable(transactions) {
   `).join('');
 }
 
-function updateSummary(transactions) {
+function updateSummary(transactions, serverTotal) {
   const completedTransactions = transactions.filter(t => t.status === 'completed');
   const totalSales = completedTransactions.reduce((sum, t) => sum + t.total_amount, 0);
-  
+
   document.getElementById('totalSales').textContent = formatCurrency(totalSales);
-  document.getElementById('totalTransactions').textContent = completedTransactions.length;
+  document.getElementById('totalTransactions').textContent =
+    serverTotal != null ? serverTotal.toLocaleString('id-ID') : completedTransactions.length;
 }
 
 function updatePagination() {
@@ -363,8 +364,10 @@ function getPaymentMethodLabel(method) {
     cash: 'Cash',
     debit: 'Debit Card',
     credit: 'Credit Card',
+    kredit: 'Kredit',
     qris: 'QRIS',
-    transfer: 'Transfer'
+    transfer: 'Transfer',
+    ewallet: 'E-Wallet'
   };
   return labels[method] || method;
 }

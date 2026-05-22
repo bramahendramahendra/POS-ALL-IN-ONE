@@ -31,6 +31,17 @@ export function useProductBarcodeSearchQuery(code: string, enabled: boolean) {
 export { useCustomerListQuery } from '@/features/customers'
 export { useActiveShiftQuery } from '@/features/shifts'
 
+export function useCustomerCreditQuery(customerId: number | null) {
+  return useQuery({
+    queryKey: ['customers', 'credit', customerId],
+    queryFn: () =>
+      api.get<{ id: number; name: string; credit_limit: number; outstanding_amount: number }>(
+        `/customers/${customerId}`
+      ),
+    enabled: customerId !== null && customerId > 0,
+  })
+}
+
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 export function useCheckoutMutation() {

@@ -97,7 +97,10 @@ class ApiClient {
     }
 
     get(endpoint, params = {}) {
-        const query = new URLSearchParams(params).toString();
+        const cleaned = Object.fromEntries(
+            Object.entries(params).filter(([, v]) => v !== undefined && v !== null)
+        );
+        const query = new URLSearchParams(cleaned).toString();
         const url = query ? `${endpoint}?${query}` : endpoint;
         return this.request('GET', url);
     }
