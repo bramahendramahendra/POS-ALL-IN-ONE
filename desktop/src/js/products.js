@@ -13,6 +13,7 @@ let puEditIndex = null;
 // Label print state
 let selectedProductIds = new Set();
 let labelPrintProducts = [];
+let _labelPrintSavedIds = null; // simpan saat cetak label tunggal
 
 // Check authentication on page load
 document.addEventListener('DOMContentLoaded', async () => {
@@ -187,7 +188,7 @@ function setupEventListeners() {
   });
 }
 
-function switchTab(tabName) {
+async function switchTab(tabName) {
   // Update tab buttons
   const tabButtons = document.querySelectorAll('.tab-button');
   tabButtons.forEach(btn => {
@@ -205,6 +206,12 @@ function switchTab(tabName) {
   });
 
   document.getElementById(`${tabName}-tab`).classList.add('active');
+
+  // Reload data saat kembali ke tab produk agar filter dan tabel mencerminkan perubahan terbaru
+  if (tabName === 'products') {
+    await loadCategories();
+    await loadProducts();
+  }
 }
 
 // ============================================
@@ -249,8 +256,8 @@ function renderCategoriesTable(categories) {
         <button class="btn-icon" onclick="editCategory(${category.id})" title="Edit">
           ✏️
         </button>
-        <button 
-          class="btn-icon" 
+        <button
+          class="btn-icon"
           onclick="confirmDeleteCategory(${category.id}, '${escapeHtml(category.name)}', ${category.product_count || 0})"
           title="Hapus"
         >
@@ -433,7 +440,7 @@ function showCategoryFormError(message) {
 
 async function loadProducts() {
   try {
-    const result = await apiClient.get('/products');
+    const result = await apiClient.get('/products', { limit: 10000 });
 
     if (result.success) {
       allProducts = result.data.items ?? result.data;
@@ -569,9 +576,9 @@ function filterProducts() {
 
   // Filter by status
   if (statusFilter === '1') {
-    filtered = filtered.filter(product => product.is_active === true);
+    filtered = filtered.filter(product => product.is_active == true);
   } else if (statusFilter === '0') {
-    filtered = filtered.filter(product => product.is_active === false);
+    filtered = filtered.filter(product => product.is_active == false);
   } else if (statusFilter === 'low_stock') {
     filtered = filtered.filter(product => product.stock < product.min_stock);
   }
@@ -746,6 +753,11 @@ async function handleProductFormSubmit(e) {
     return;
   }
 
+  if (formData.selling_price <= 0) {
+    showProductFormError('Harga jual harus lebih dari 0');
+    return;
+  }
+
   if (formData.selling_price < formData.purchase_price) {
     showProductFormError('Harga jual tidak boleh lebih rendah dari harga beli');
     return;
@@ -784,6 +796,7 @@ async function saveProduct(formData) {
       const savedProductId = editingProductId || result.data?.id;
 
       // Simpan grosiran jika ada di buffer
+      let unitSaveFailed = false;
       if (savedProductId && productUnitRows.length > 0) {
         // Pastikan default row selalu sinkron dengan harga produk terbaru
         const defIdx = productUnitRows.findIndex(r => r.is_default);
@@ -794,11 +807,21 @@ async function saveProduct(formData) {
             selling_price: formData.selling_price,
           };
         }
-        await apiClient.post(`/products/${savedProductId}/units`, { units: productUnitRows });
+        const unitResult = await apiClient.post(`/products/${savedProductId}/units`, { units: productUnitRows });
+        if (!unitResult.success) {
+          unitSaveFailed = true;
+        }
       }
 
       await loadProducts();
-      showToast(isNew ? 'Produk berhasil ditambahkan' : 'Produk berhasil diupdate', 'success');
+      if (unitSaveFailed) {
+        showToast(
+          (isNew ? 'Produk berhasil ditambahkan' : 'Produk berhasil diupdate') + ', tapi gagal menyimpan satuan jual. Buka kembali produk dan coba lagi.',
+          'warning'
+        );
+      } else {
+        showToast(isNew ? 'Produk berhasil ditambahkan' : 'Produk berhasil diupdate', 'success');
+      }
 
       closeProductModal();
       btnSubmit.disabled = false;
@@ -1289,7 +1312,7 @@ async function handleProductUnitFormSubmit(e) {
 
   const rowData = {
     id: puEditIndex !== null ? productUnitRows[puEditIndex].id : null,
-    unit_id: 0,
+    unit_id: null,
     unit_name: unitName,
     abbreviation: '',
     conversion_qty: conversionQty,
@@ -1364,6 +1387,7 @@ function updateBulkLabelBtn() {
 }
 
 function openSingleLabelPrint(productId) {
+  _labelPrintSavedIds = new Set(selectedProductIds);
   selectedProductIds.clear();
   selectedProductIds.add(productId);
   updateBulkLabelBtn();
@@ -1414,6 +1438,11 @@ async function openLabelPrintModal() {
 function closeLabelPrintModal() {
   document.getElementById('labelPrintModal').style.display = 'none';
   labelPrintProducts = [];
+  if (_labelPrintSavedIds !== null) {
+    selectedProductIds = _labelPrintSavedIds;
+    _labelPrintSavedIds = null;
+    updateBulkLabelBtn();
+  }
 }
 
 async function loadPrinterList() {
@@ -1565,7 +1594,7 @@ function doLabelPrint() {
 
   const labels = items.map((p, idx) => `
     <div class="label">
-      <div class="product-name">${p.name.length > 24 ? p.name.slice(0, 23) + '…' : escapeHtml(p.name)}</div>
+      <div class="product-name">${escapeHtml(p.name.length > 24 ? p.name.slice(0, 23) + '…' : p.name)}</div>
       <svg data-barcode="${escapeHtml(p.barcode)}" id="bc-${idx}"></svg>
       <div class="price">Rp ${Number(p.selling_price).toLocaleString('id-ID')}</div>
     </div>
@@ -1705,6 +1734,7 @@ function validateImportRows() {
 
   importValidated = importParsedRows.map((row, idx) => {
     const errors = [];
+    const warnings = [];
     const nama = String(row.nama || '').trim();
     const barcode = String(row.barcode || '').trim();
     const kategori = String(row.kategori || '').trim();
@@ -1720,12 +1750,12 @@ function validateImportRows() {
       seenBarcodes.add(barcode.toLowerCase());
     }
     if (kategori && !categoryNames.has(kategori.toLowerCase())) {
-      errors.push(`Kategori "${kategori}" tidak ditemukan`);
+      warnings.push(`Kategori "${kategori}" belum ada — akan dibuat otomatis`);
     }
     if (harga_jual < harga_beli) errors.push('Harga jual < harga beli');
     if (!row.satuan) errors.push('Satuan kosong');
 
-    return { rowNum: idx + 2, data: row, errors };
+    return { rowNum: idx + 2, data: row, errors, warnings };
   });
 }
 
@@ -1735,11 +1765,13 @@ function renderImportPreview() {
 
   const totalRows = importValidated.length;
   const errorRows = importValidated.filter(r => r.errors.length > 0).length;
+  const warnRows  = importValidated.filter(r => r.errors.length === 0 && r.warnings && r.warnings.length > 0).length;
   const validRows = totalRows - errorRows;
 
   document.getElementById('importSummaryBar').innerHTML =
     `Total: <strong>${totalRows}</strong> baris &nbsp;|&nbsp; ` +
     `<span style="color:#16a34a;">✅ Valid: <strong>${validRows}</strong></span> &nbsp;|&nbsp; ` +
+    (warnRows > 0 ? `<span style="color:#d97706;">⚠️ Warning: <strong>${warnRows}</strong></span> &nbsp;|&nbsp; ` : '') +
     `<span style="color:#dc2626;">❌ Error: <strong>${errorRows}</strong></span>`;
 
   let rows = importValidated;
@@ -1752,12 +1784,20 @@ function renderImportPreview() {
   }
 
   tbody.innerHTML = rows.map(r => {
-    const isError = r.errors.length > 0;
+    const isError   = r.errors.length > 0;
+    const hasWarn   = !isError && r.warnings && r.warnings.length > 0;
     const statusCell = isError
       ? `<td><span class="badge badge-danger" title="${r.errors.join('; ')}">❌ Error</span></td>`
-      : `<td><span class="badge badge-success">✅ Valid</span></td>`;
-    const rowStyle = isError ? 'background:#fff5f5;' : '';
+      : hasWarn
+        ? `<td><span class="badge badge-warning" title="${r.warnings.join('; ')}">⚠️ Warning</span></td>`
+        : `<td><span class="badge badge-success">✅ Valid</span></td>`;
+    const rowStyle = isError ? 'background:#fff5f5;' : hasWarn ? 'background:#fffbeb;' : '';
     const d = r.data;
+    const noteRow = isError
+      ? `<tr style="background:#fff5f5;"><td colspan="10" style="font-size:12px;color:#dc2626;padding:2px 12px 8px;">↳ ${r.errors.join(' · ')}</td></tr>`
+      : hasWarn
+        ? `<tr style="background:#fffbeb;"><td colspan="10" style="font-size:12px;color:#d97706;padding:2px 12px 8px;">↳ ${r.warnings.join(' · ')}</td></tr>`
+        : '';
     return `<tr style="${rowStyle}">
       <td>${r.rowNum}</td>
       <td>${escHtml(String(d.nama || ''))}</td>
@@ -1769,7 +1809,7 @@ function renderImportPreview() {
       <td>${d.stok_minimum || 5}</td>
       <td>${escHtml(String(d.satuan || ''))}</td>
       ${statusCell}
-    </tr>` + (isError ? `<tr style="background:#fff5f5;"><td colspan="10" style="font-size:12px;color:#dc2626;padding:2px 12px 8px;">↳ ${r.errors.join(' · ')}</td></tr>` : '');
+    </tr>${noteRow}`;
   }).join('');
 }
 

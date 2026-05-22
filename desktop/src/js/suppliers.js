@@ -132,7 +132,7 @@ async function loadSuppliers() {
     const result = await apiClient.get('/suppliers', params);
 
     if (result.success) {
-      allSuppliers = result.data.items ?? [];
+      allSuppliers = result.data.items ?? result.data ?? [];
       renderSuppliersTable(allSuppliers);
       updateStats(allSuppliers);
     } else {
@@ -221,7 +221,7 @@ function handleFilter() {
   }
 
   if (status !== '') {
-    filtered = filtered.filter(s => s.is_active === parseInt(status));
+    filtered = filtered.filter(s => s.is_active == parseInt(status));
   }
 
   renderSuppliersTable(filtered);
@@ -344,7 +344,7 @@ async function saveSupplier(formData) {
       closeSupplierModal();
       await loadSuppliers();
       showToast(
-        editingSupplierId ? 'Supplier berhasil diupdate' : `Supplier berhasil ditambahkan (${result.supplier_code})`,
+        editingSupplierId ? 'Supplier berhasil diupdate' : `Supplier berhasil ditambahkan (${result.data?.supplier_code ?? ''})`,
         'success'
       );
     } else {
@@ -634,7 +634,7 @@ async function loadPurchases() {
     const result = await apiClient.get('/purchases', params);
 
     if (result.success) {
-      allPurchases = result.data.items;
+      allPurchases = result.data.items ?? result.data ?? [];
       renderPurchasesTable(allPurchases);
       updatePurchasesSummary(allPurchases);
     } else {
@@ -878,8 +878,10 @@ async function handlePurchaseFormSubmit(e) {
 }
 
 async function savePurchase(formData) {
+  const btn = document.getElementById('btnSubmitPurchase');
   const btnSubmit = document.getElementById('btnSubmitPurchaseText');
   const originalText = btnSubmit.textContent;
+  btn.disabled = true;
   btnSubmit.textContent = 'Menyimpan...';
 
   try {
@@ -890,11 +892,13 @@ async function savePurchase(formData) {
       showToast('Pembelian berhasil disimpan', 'success');
     } else {
       showPurchaseFormError(result.message || 'Gagal menyimpan pembelian');
+      btn.disabled = false;
       btnSubmit.textContent = originalText;
     }
   } catch (error) {
     console.error('Save purchase error:', error);
     showPurchaseFormError('Terjadi kesalahan saat menyimpan');
+    btn.disabled = false;
     btnSubmit.textContent = originalText;
   }
 }
@@ -1365,11 +1369,12 @@ async function handleReturnFormSubmit(e) {
   }
 
   const checkedItems = [];
-  document.querySelectorAll('.return-item-check:checked').forEach(chk => {
+  const checkedEls = document.querySelectorAll('.return-item-check:checked');
+  for (const chk of checkedEls) {
     const index = parseInt(chk.dataset.index);
     const item = returnPurchaseItems[index];
     const qty = parseFloat(document.querySelector(`.return-qty-input[data-index="${index}"]`).value) || 0;
-    if (qty <= 0) return;
+    if (qty <= 0) continue;
     if (qty > item.quantity) {
       errorEl.textContent = `Qty retur untuk "${item.product_name}" melebihi qty beli`;
       errorEl.classList.remove('hidden');
@@ -1384,7 +1389,7 @@ async function handleReturnFormSubmit(e) {
       purchase_price: item.purchase_price,
       subtotal: qty * item.purchase_price
     });
-  });
+  }
 
   if (checkedItems.length === 0) {
     errorEl.textContent = 'Pilih minimal satu item yang akan diretur';

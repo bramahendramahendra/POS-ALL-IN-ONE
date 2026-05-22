@@ -101,9 +101,10 @@ func (s *categoryService) Delete(id int) error {
 
 func toCategoryResponse(c *model_master.Category) *dto_master.CategoryResponse {
 	return &dto_master.CategoryResponse{
-		ID:          c.ID,
-		Name:        c.Name,
-		Description: c.Description,
-		CreatedAt:   c.CreatedAt,
+		ID:           c.ID,
+		Name:         c.Name,
+		Description:  c.Description,
+		ProductCount: c.ProductCount,
+		CreatedAt:    c.CreatedAt,
 	}
 }

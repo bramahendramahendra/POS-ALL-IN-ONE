@@ -23,6 +23,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const kasOk = await checkCashDrawerOnLoad();
   if (!kasOk) return;
 
+  // Load customer list dulu agar customerSelect sudah terisi sebelum draft di-restore
+  await loadCustomerList();
+
   // Load draft if exists
   await loadDraft();
 
@@ -151,9 +154,6 @@ function setupEventListeners() {
   // Metode bayar: tampilkan/sembunyikan section pelanggan kredit
   document.getElementById('paymentMethod').addEventListener('change', onPaymentMethodChange);
 
-  // Load daftar pelanggan aktif
-  loadCustomerList();
-
   // Payment modal
   document.getElementById('closePaymentModal').addEventListener('click', closePaymentModal);
   document.getElementById('btnCancelPayment').addEventListener('click', closePaymentModal);
@@ -277,10 +277,17 @@ async function addToCart(product, quantity, unitInfo) {
   const conversionQty = unitInfo ? unitInfo.conversion_qty : 1;
   const price = unitInfo ? unitInfo.selling_price : product.selling_price;
 
+  // Stok yang sudah direservasi di cart untuk produk yang sama dengan unit BERBEDA
+  const reservedStock = cart
+    .filter(item => item.product_id === product.id && item.unit_id !== unitId)
+    .reduce((sum, item) => sum + item.quantity * (item.conversion_qty || 1), 0);
+
+  const stockAvailable = product.stock - reservedStock;
+
   // Stock cek dalam satuan dasar
   const stockNeeded = quantity * conversionQty;
-  if (product.stock < stockNeeded) {
-    showToast(`Stok ${product.name} tidak mencukupi (tersedia: ${product.stock} ${product.unit || 'pcs'})`, 'error');
+  if (stockAvailable < stockNeeded) {
+    showToast(`Stok ${product.name} tidak mencukupi (tersedia: ${Math.floor(stockAvailable / conversionQty)} ${unitName})`, 'error');
     return;
   }
 
@@ -293,12 +300,19 @@ async function addToCart(product, quantity, unitInfo) {
     const newQty = cart[existingIndex].quantity + quantity;
     const newStockNeeded = newQty * conversionQty;
 
-    if (newStockNeeded > product.stock) {
+    if (newStockNeeded > stockAvailable) {
       showToast(`Stok ${product.name} tidak mencukupi`, 'error');
       return;
     }
 
     cart[existingIndex].quantity = newQty;
+    const discType = cart[existingIndex].discount_item_type;
+    const discVal = cart[existingIndex].discount_item || 0;
+    if (discType === 'percent' && discVal > 0) {
+      cart[existingIndex].discount_item_amount = (cart[existingIndex].price * newQty * discVal) / 100;
+    } else if (discType === 'amount' && discVal > 0) {
+      cart[existingIndex].discount_item_amount = Math.min(discVal, cart[existingIndex].price * newQty);
+    }
     const existingDiscAmt = cart[existingIndex].discount_item_amount || 0;
     cart[existingIndex].subtotal = newQty * cart[existingIndex].price - existingDiscAmt;
   } else {
@@ -374,6 +388,8 @@ function clearCart() {
 
   document.getElementById('discountValue').value = '';
   document.getElementById('taxPercent').value = '';
+  document.getElementById('discountTypePercent').classList.remove('active');
+  document.getElementById('discountTypeAmount').classList.remove('active');
   document.getElementById('customerName').value = '';
   document.getElementById('notes').value = '';
   document.getElementById('paymentMethod').value = 'cash';
@@ -436,7 +452,14 @@ function updateCreditInfo() {
   if (limit === 0) {
     infoEl.innerHTML = `<span style="color:#27ae60;">Limit: Tak terbatas &bull; Outstanding: ${formatCurrency(outstanding)}</span>`;
   } else {
-    const color = sisa !== null && sisa < 0 ? '#e74c3c' : '#f39c12';
+    let color;
+    if (sisa < 0) {
+      color = '#e74c3c';
+    } else if (limit > 0 && sisa < limit * 0.2) {
+      color = '#f39c12';
+    } else {
+      color = '#27ae60';
+    }
     infoEl.innerHTML = `<span style="color:${color};">Limit: ${formatCurrency(limit)} &bull; Outstanding: ${formatCurrency(outstanding)} &bull; Sisa: ${formatCurrency(sisa)}</span>`;
   }
 }
@@ -637,17 +660,24 @@ function setDiscountType(type) {
 
 function applyDiscount(type, value) {
   const subtotal = calculateSubtotal();
-  
+
   if (type === 'percent') {
-    currentDiscount.amount = (subtotal * value) / 100;
+    const clampedPct = Math.min(value, 100);
+    currentDiscount.amount = (subtotal * clampedPct) / 100;
   } else if (type === 'amount') {
-    currentDiscount.amount = value;
+    currentDiscount.amount = Math.min(value, subtotal);
   } else {
     currentDiscount.amount = 0;
   }
 
   currentDiscount.value = value;
-  
+
+  // Recalculate tax amount based on updated after-discount value
+  if (currentTax.percent > 0) {
+    const afterDiscount = subtotal - currentDiscount.amount;
+    currentTax.amount = (afterDiscount * currentTax.percent) / 100;
+  }
+
   calculateTotal();
 }
 
@@ -813,8 +843,6 @@ async function processTransaction() {
     is_credit: isCredit ? 1 : 0,
     items: items
   };
-
-  console.log('Transaction data to send:', transactionData);
 
   // Disable button
   const btnProcess = document.getElementById('btnProcessPayment');
@@ -1048,6 +1076,9 @@ function applyUnitChange(unitId) {
   cart[replaceCartIndex].unit_id = u.unit_id;
   cart[replaceCartIndex].conversion_qty = convQty;
   cart[replaceCartIndex].price = u.selling_price;
+  cart[replaceCartIndex].discount_item = 0;
+  cart[replaceCartIndex].discount_item_type = 'none';
+  cart[replaceCartIndex].discount_item_amount = 0;
   cart[replaceCartIndex].subtotal = cart[replaceCartIndex].quantity * u.selling_price;
 
   closeUnitSelectModal();
@@ -1109,12 +1140,12 @@ async function loadDraft() {
     }
 
     if (currentDiscount.value > 0) {
+      setDiscountType(currentDiscount.type);
       if (currentDiscount.type === 'amount') {
         setRupiahInput('discountValue', currentDiscount.value);
       } else {
         document.getElementById('discountValue').value = currentDiscount.value;
       }
-      setDiscountType(currentDiscount.type);
     }
 
     if (currentTax.percent > 0) {

@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	getAllCategoriesQuery  = `SELECT id, name, description, created_at FROM categories ORDER BY name`
-	getCategoryByIDQuery   = `SELECT id, name, description, created_at FROM categories WHERE id = ? LIMIT 1`
+	getAllCategoriesQuery  = `SELECT c.id, c.name, c.description, (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id) AS product_count, c.created_at FROM categories c ORDER BY c.name`
+	getCategoryByIDQuery   = `SELECT c.id, c.name, c.description, (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id) AS product_count, c.created_at FROM categories c WHERE c.id = ? LIMIT 1`
 	getCategoryByNameQuery = `SELECT id, name, description, created_at FROM categories WHERE name = ? LIMIT 1`
 	checkCategoryNameQuery = `SELECT id FROM categories WHERE name = ? AND id != ? LIMIT 1`
 	checkCategoryUsedQuery = `SELECT COUNT(*) FROM products WHERE category_id = ?`
@@ -35,7 +35,7 @@ func (r *categoryRepo) GetAll() ([]*model_master.Category, error) {
 	var categories []*model_master.Category
 	for rows.Next() {
 		var c model_master.Category
-		if err := rows.Scan(&c.ID, &c.Name, &c.Description, &c.CreatedAt); err != nil {
+		if err := rows.Scan(&c.ID, &c.Name, &c.Description, &c.ProductCount, &c.CreatedAt); err != nil {
 			return nil, err
 		}
 		categories = append(categories, &c)
