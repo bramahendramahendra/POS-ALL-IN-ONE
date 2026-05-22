@@ -30,6 +30,7 @@ type CashDrawerFilter struct {
 	StartDate string
 	EndDate   string
 	UserID    *int
+	ShiftID   *int
 	Status    string
 	Page      int
 	Limit     int
@@ -52,6 +53,7 @@ type CurrentCashDrawerResponse struct {
 	TotalExpenses   float64   `json:"total_expenses"`
 	ExpectedBalance float64   `json:"expected_balance"`
 	Status          string    `json:"status"`
+	OpenNotes       *string   `json:"open_notes"`
 }
 
 type CashDrawerHistoryResponse struct {

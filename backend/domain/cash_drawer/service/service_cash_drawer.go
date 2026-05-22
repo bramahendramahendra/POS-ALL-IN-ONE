@@ -22,13 +22,16 @@ func (s *cashDrawerService) GetCurrent(userID int) (*dto_cash_drawer.CurrentCash
 	return res, nil
 }
 
-func (s *cashDrawerService) GetByID(id int) (*dto_cash_drawer.CashDrawerDetailResponse, error) {
+func (s *cashDrawerService) GetByID(id int, requestingUserID int, role string) (*dto_cash_drawer.CashDrawerDetailResponse, error) {
 	res, err := s.repo.GetDetailByID(id)
 	if err != nil {
 		return nil, &errors.InternalServerError{Message: err.Error()}
 	}
 	if res == nil {
 		return nil, &errors.NotFoundError{Message: "Kas tidak ditemukan"}
+	}
+	if role != "owner" && role != "admin" && res.UserID != requestingUserID {
+		return nil, &errors.UnauthorizededError{Message: "Anda tidak memiliki akses ke kas ini"}
 	}
 	return res, nil
 }
@@ -61,7 +64,7 @@ func (s *cashDrawerService) Open(userID int, req *dto_cash_drawer.OpenRequest) (
 	return &dto_cash_drawer.OpenResponse{ID: id}, nil
 }
 
-func (s *cashDrawerService) Close(id int, req *dto_cash_drawer.CloseRequest) (*dto_cash_drawer.CloseResponse, error) {
+func (s *cashDrawerService) Close(id int, req *dto_cash_drawer.CloseRequest, requestingUserID int, role string) (*dto_cash_drawer.CloseResponse, error) {
 	if req.ClosingBalance < 0 {
 		return nil, &errors.BadRequestError{Message: "Saldo akhir tidak boleh negatif"}
 	}
@@ -73,11 +76,14 @@ func (s *cashDrawerService) Close(id int, req *dto_cash_drawer.CloseRequest) (*d
 	if current == nil {
 		return nil, &errors.NotFoundError{Message: "Kas tidak ditemukan"}
 	}
+	if role != "owner" && role != "admin" && current.UserID != requestingUserID {
+		return nil, &errors.UnauthorizededError{Message: "Anda tidak memiliki akses ke kas ini"}
+	}
 	if current.Status != "open" {
 		return nil, &errors.BadRequestError{Message: "Kas sudah ditutup"}
 	}
 
-	expected := current.OpeningBalance + current.TotalCashSales - current.TotalExpenses
+	expected := current.ExpectedBalance
 	difference := req.ClosingBalance - expected
 
 	if err := s.repo.Close(id, req.ClosingBalance, expected, difference, req.Notes); err != nil {
@@ -91,13 +97,19 @@ func (s *cashDrawerService) Close(id int, req *dto_cash_drawer.CloseRequest) (*d
 	}, nil
 }
 
-func (s *cashDrawerService) UpdateSales(id int, req *dto_cash_drawer.UpdateSalesRequest) error {
+func (s *cashDrawerService) UpdateSales(id int, req *dto_cash_drawer.UpdateSalesRequest, requestingUserID int, role string) error {
 	cd, err := s.repo.GetByID(id)
 	if err != nil {
 		return &errors.InternalServerError{Message: err.Error()}
 	}
 	if cd == nil {
 		return &errors.NotFoundError{Message: "Kas tidak ditemukan"}
+	}
+	if role != "owner" && role != "admin" && cd.UserID != requestingUserID {
+		return &errors.UnauthorizededError{Message: "Anda tidak memiliki akses ke kas ini"}
+	}
+	if cd.Status != "open" {
+		return &errors.BadRequestError{Message: "Kas sudah ditutup"}
 	}
 
 	if err := s.repo.UpdateSales(id, req.TotalSales, req.TotalCashSales); err != nil {
@@ -106,13 +118,19 @@ func (s *cashDrawerService) UpdateSales(id int, req *dto_cash_drawer.UpdateSales
 	return nil
 }
 
-func (s *cashDrawerService) UpdateExpenses(id int, req *dto_cash_drawer.UpdateExpensesRequest) error {
+func (s *cashDrawerService) UpdateExpenses(id int, req *dto_cash_drawer.UpdateExpensesRequest, requestingUserID int, role string) error {
 	cd, err := s.repo.GetByID(id)
 	if err != nil {
 		return &errors.InternalServerError{Message: err.Error()}
 	}
 	if cd == nil {
 		return &errors.NotFoundError{Message: "Kas tidak ditemukan"}
+	}
+	if role != "owner" && role != "admin" && cd.UserID != requestingUserID {
+		return &errors.UnauthorizededError{Message: "Anda tidak memiliki akses ke kas ini"}
+	}
+	if cd.Status != "open" {
+		return &errors.BadRequestError{Message: "Kas sudah ditutup"}
 	}
 
 	if err := s.repo.UpdateExpenses(id, req.TotalExpenses); err != nil {

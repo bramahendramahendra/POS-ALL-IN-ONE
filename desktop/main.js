@@ -519,11 +519,12 @@ ipcMain.handle('cashDrawer:updateSales', async (event, amount) => {
 
     if (cashDrawer) {
       dbModule.run(
-        `UPDATE cash_drawer 
+        `UPDATE cash_drawer
          SET total_sales = total_sales + ?,
-             total_cash_sales = total_cash_sales + ?
+             total_cash_sales = total_cash_sales + ?,
+             expected_balance = opening_balance + total_cash_sales + ? - total_expenses
          WHERE id = ?`,
-        [amount, amount, cashDrawer.id]
+        [amount, amount, amount, cashDrawer.id]
       );
     }
 
@@ -553,8 +554,11 @@ ipcMain.handle('cashDrawer:updateExpenses', async (event, amount) => {
 
     if (cashDrawer) {
       dbModule.run(
-        'UPDATE cash_drawer SET total_expenses = total_expenses + ? WHERE id = ?',
-        [amount, cashDrawer.id]
+        `UPDATE cash_drawer
+         SET total_expenses = total_expenses + ?,
+             expected_balance = opening_balance + total_cash_sales - total_expenses - ?
+         WHERE id = ?`,
+        [amount, amount, cashDrawer.id]
       );
     }
 

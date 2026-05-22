@@ -53,9 +53,24 @@ func (h *CashDrawerHandler) GetHistory(c *gin.Context) {
 		Status:    c.Query("status"),
 	}
 
-	if uidStr := c.Query("user_id"); uidStr != "" {
-		if uid, err := strconv.Atoi(uidStr); err == nil {
-			filter.UserID = &uid
+	role := helper.GetUserRole(c)
+	requestingUserID := helper.GetUserID(c)
+
+	if role == "owner" || role == "admin" {
+		// owner/admin boleh filter by user_id lain
+		if uidStr := c.Query("user_id"); uidStr != "" {
+			if uid, err := strconv.Atoi(uidStr); err == nil {
+				filter.UserID = &uid
+			}
+		}
+	} else {
+		// kasir hanya boleh melihat riwayat miliknya sendiri
+		filter.UserID = &requestingUserID
+	}
+
+	if shiftStr := c.Query("shift_id"); shiftStr != "" {
+		if sid, err := strconv.Atoi(shiftStr); err == nil {
+			filter.ShiftID = &sid
 		}
 	}
 
@@ -91,7 +106,7 @@ func (h *CashDrawerHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	res, svcErr := h.service.GetByID(id)
+	res, svcErr := h.service.GetByID(id, helper.GetUserID(c), helper.GetUserRole(c))
 	if svcErr != nil {
 		c.Error(svcErr)
 		return
@@ -144,7 +159,7 @@ func (h *CashDrawerHandler) Close(c *gin.Context) {
 		return
 	}
 
-	res, svcErr := h.service.Close(id, &req)
+	res, svcErr := h.service.Close(id, &req, helper.GetUserID(c), helper.GetUserRole(c))
 	if svcErr != nil {
 		c.Error(svcErr)
 		return
@@ -172,7 +187,7 @@ func (h *CashDrawerHandler) UpdateSales(c *gin.Context) {
 		return
 	}
 
-	if svcErr := h.service.UpdateSales(id, &req); svcErr != nil {
+	if svcErr := h.service.UpdateSales(id, &req, helper.GetUserID(c), helper.GetUserRole(c)); svcErr != nil {
 		c.Error(svcErr)
 		return
 	}
@@ -198,7 +213,7 @@ func (h *CashDrawerHandler) UpdateExpenses(c *gin.Context) {
 		return
 	}
 
-	if svcErr := h.service.UpdateExpenses(id, &req); svcErr != nil {
+	if svcErr := h.service.UpdateExpenses(id, &req, helper.GetUserID(c), helper.GetUserRole(c)); svcErr != nil {
 		c.Error(svcErr)
 		return
 	}

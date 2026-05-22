@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Load initial data
   await loadShiftsFilterDropdown();
+  await checkCurrentCashDrawer();
   await loadDashboard();
 
   // Populate dropdowns
@@ -62,6 +63,20 @@ function setupEventListeners() {
   setupRupiahInput('expenseAmount');
   document.getElementById('closingBalance').addEventListener('input', calculateDifference);
 
+  // Open cash modal
+  document.getElementById('closeOpenCashModal').addEventListener('click', closeOpenCashModal);
+  document.getElementById('btnCancelOpenCash').addEventListener('click', closeOpenCashModal);
+  document.getElementById('openCashForm').addEventListener('submit', handleOpenCash);
+
+  // Close cash modal
+  document.getElementById('closeCloseCashModal').addEventListener('click', closeCloseCashModal);
+  document.getElementById('btnCancelCloseCash').addEventListener('click', closeCloseCashModal);
+  document.getElementById('closeCashForm').addEventListener('submit', handleCloseCash);
+
+  // Detail cash modal
+  document.getElementById('closeDetailCashModal').addEventListener('click', closeDetailCashModal);
+  document.getElementById('btnCloseDetailCash').addEventListener('click', closeDetailCashModal);
+
   // Expenses
   document.getElementById('btnAddExpense').addEventListener('click', openAddExpenseModal);
   document.getElementById('btnApplyExpenseFilter').addEventListener('click', loadExpenses);
@@ -71,7 +86,7 @@ function setupEventListeners() {
 
   // Close modals when clicking outside
   window.addEventListener('click', (e) => {
-    const modals = ['expenseModal'];
+    const modals = ['openCashModal', 'closeCashModal', 'detailCashModal', 'expenseModal'];
     modals.forEach(modalId => {
       const modal = document.getElementById(modalId);
       if (e.target === modal) {
@@ -234,15 +249,32 @@ async function checkCurrentCashDrawer() {
       renderCashStatus(currentCashDrawer);
     } else {
       showToast('Gagal memuat status kas', 'error');
+      const container = document.getElementById('cashStatusContent');
+      if (container) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <p class="text-danger">Gagal memuat status kas. Coba refresh halaman.</p>
+          </div>
+        `;
+      }
     }
   } catch (error) {
     console.error('Check current cash drawer error:', error);
-    renderCashStatus(null);
+    showToast('Gagal memuat status kas, coba refresh halaman', 'error');
+    const container = document.getElementById('cashStatusContent');
+    if (container) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <p class="text-danger">Gagal memuat status kas. Coba refresh halaman.</p>
+        </div>
+      `;
+    }
   }
 }
 
 function renderCashStatus(cashDrawer) {
   const container = document.getElementById('cashStatusContent');
+  if (!container) return;
 
   if (!cashDrawer) {
     // Kas belum dibuka
@@ -256,7 +288,6 @@ function renderCashStatus(cashDrawer) {
     `;
   } else {
     // Kas sudah dibuka
-    const openTime = new Date(cashDrawer.open_time);
     container.innerHTML = `
       <div class="cash-status-open">
         <div class="status-badge badge-success">● KAS TERBUKA</div>
@@ -283,10 +314,10 @@ function renderCashStatus(cashDrawer) {
           </div>
           <div class="cash-info-item">
             <span class="label">Expected Balance:</span>
-            <strong class="text-success">${formatCurrency(cashDrawer.opening_balance + cashDrawer.total_cash_sales - cashDrawer.total_expenses)}</strong>
+            <strong class="text-success">${formatCurrency(cashDrawer.expected_balance)}</strong>
           </div>
         </div>
-        ${cashDrawer.notes ? `<p class="cash-notes">Catatan: ${escapeHtml(cashDrawer.notes)}</p>` : ''}
+        ${cashDrawer.open_notes ? `<p class="cash-notes">Catatan: ${escapeHtml(cashDrawer.open_notes)}</p>` : ''}
         <button class="btn btn-danger btn-large" onclick="openCloseCashModal(${cashDrawer.id})">
           🔒 Tutup Kas
         </button>
@@ -319,7 +350,7 @@ async function loadCashDrawerHistory() {
     });
 
     if (result.success) {
-      allCashDrawers = result.history || [];
+      allCashDrawers = result.data?.items || [];
       renderCashDrawerTable(allCashDrawers);
     } else {
       showToast('Gagal memuat riwayat kas', 'error');
@@ -348,7 +379,7 @@ function renderCashDrawerTable(cashDrawers) {
         <div>${formatDateOnly(cash.open_time)}</div>
         <small>${formatTimeOnly(cash.open_time)}</small>
       </td>
-      <td>${escapeHtml(cash.cashier_name)}</td>
+      <td>${escapeHtml(cash.user_name || '-')}</td>
       <td>
         ${cash.shift_name
           ? `<span class="badge badge-info">${escapeHtml(cash.shift_name)}</span>`
@@ -360,8 +391,8 @@ function renderCashDrawerTable(cashDrawers) {
       <td>${formatCurrency(cash.expected_balance || 0)}</td>
       <td>${cash.closing_balance !== null ? formatCurrency(cash.closing_balance) : '-'}</td>
       <td>
-        ${cash.difference !== null ? 
-          `<span class="${cash.difference === 0 ? 'text-success' : 'text-danger'}">${formatCurrency(cash.difference)}</span>` 
+        ${cash.difference !== null ?
+          `<span class="${cash.difference === 0 ? 'text-success' : cash.difference > 0 ? 'text-warning' : 'text-danger'}">${formatCurrency(cash.difference)}</span>`
           : '-'}
       </td>
       <td>
@@ -396,6 +427,8 @@ function closeOpenCashModal() {
 async function handleOpenCash(e) {
   e.preventDefault();
 
+  const shiftEl = document.getElementById('openShiftSelect');
+  const shiftId = shiftEl ? (parseInt(shiftEl.value) || null) : null;
   const openingBalance = parseRupiahInput('openingBalance');
   const notes = document.getElementById('openCashNotes').value.trim();
 
@@ -408,7 +441,7 @@ async function handleOpenCash(e) {
     'Konfirmasi Buka Kas',
     `Yakin ingin membuka kas dengan saldo awal ${formatCurrency(openingBalance)}?`,
     async () => {
-      await openCashDrawer({ opening_balance: openingBalance, notes });
+      await openCashDrawer({ shift_id: shiftId, opening_balance: openingBalance, notes });
     }
   );
 }
@@ -454,23 +487,42 @@ function showOpenCashError(message) {
 }
 
 // Close Cash Drawer Modal
-function openCloseCashModal(cashDrawerId) {
+async function openCloseCashModal(cashDrawerId) {
   if (!currentCashDrawer) return;
 
+  // Reset form dan tampilkan modal dengan state loading
   document.getElementById('closeCashDrawerId').value = cashDrawerId;
-  document.getElementById('closeOpeningBalance').textContent = formatCurrency(currentCashDrawer.opening_balance);
-  document.getElementById('closeCashSales').textContent = formatCurrency(currentCashDrawer.total_cash_sales);
-  document.getElementById('closeExpenses').textContent = formatCurrency(currentCashDrawer.total_expenses);
-
-  const expected = currentCashDrawer.opening_balance + currentCashDrawer.total_cash_sales - currentCashDrawer.total_expenses;
-  document.getElementById('closeExpectedBalance').textContent = formatCurrency(expected);
-
   document.getElementById('closingBalance').value = '';
   document.getElementById('closeCashNotes').value = '';
   document.getElementById('differenceDisplay').style.display = 'none';
   document.getElementById('closeCashError').style.display = 'none';
-
+  document.getElementById('closeOpeningBalance').textContent = 'Memuat...';
+  document.getElementById('closeCashSales').textContent = 'Memuat...';
+  document.getElementById('closeExpenses').textContent = 'Memuat...';
+  document.getElementById('closeExpectedBalance').textContent = 'Memuat...';
   document.getElementById('closeCashModal').style.display = 'flex';
+
+  // Ambil data terkini sebelum tampilkan angka — jika gagal batalkan proses
+  try {
+    const result = await apiClient.get('/cash-drawer/current');
+    if (result.success && result.data) {
+      currentCashDrawer = result.data;
+    } else {
+      showToast('Gagal memuat data kas terkini, coba lagi', 'error');
+      document.getElementById('closeCashModal').style.display = 'none';
+      return;
+    }
+  } catch (e) {
+    console.error('Refresh cash drawer error:', e);
+    showToast('Gagal memuat data kas terkini, coba lagi', 'error');
+    document.getElementById('closeCashModal').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('closeOpeningBalance').textContent = formatCurrency(currentCashDrawer.opening_balance);
+  document.getElementById('closeCashSales').textContent = formatCurrency(currentCashDrawer.total_cash_sales);
+  document.getElementById('closeExpenses').textContent = formatCurrency(currentCashDrawer.total_expenses);
+  document.getElementById('closeExpectedBalance').textContent = formatCurrency(currentCashDrawer.expected_balance);
 
   setTimeout(() => {
     document.getElementById('closingBalance').focus();
@@ -485,19 +537,28 @@ function calculateDifference() {
   if (!currentCashDrawer) return;
 
   const closingBalance = parseRupiahInput('closingBalance');
-  const expected = currentCashDrawer.opening_balance + currentCashDrawer.total_cash_sales - currentCashDrawer.total_expenses;
-  const difference = closingBalance - expected;
+  const difference = closingBalance - currentCashDrawer.expected_balance;
 
   const differenceEl = document.getElementById('differenceAmount');
+  const displayDiv = document.getElementById('differenceDisplay');
+
   differenceEl.textContent = formatCurrency(difference);
 
   if (difference === 0) {
     differenceEl.className = 'text-success';
+    displayDiv.style.backgroundColor = '#d5f4e6';
+    displayDiv.style.borderColor = '#27ae60';
+  } else if (difference > 0) {
+    differenceEl.className = 'text-warning';
+    displayDiv.style.backgroundColor = '#fff3cd';
+    displayDiv.style.borderColor = '#f39c12';
   } else {
     differenceEl.className = 'text-danger';
+    displayDiv.style.backgroundColor = '#fee';
+    displayDiv.style.borderColor = '#e74c3c';
   }
 
-  document.getElementById('differenceDisplay').style.display = 'flex';
+  displayDiv.style.display = 'flex';
 }
 
 async function handleCloseCash(e) {
@@ -512,9 +573,22 @@ async function handleCloseCash(e) {
     return;
   }
 
+  const difference = closingBalance - currentCashDrawer.expected_balance;
+
+  let confirmMessage = `Yakin ingin menutup kas dengan saldo akhir ${formatCurrency(closingBalance)}?`;
+
+  if (difference !== 0) {
+    confirmMessage += `\n\nSelisih: ${formatCurrency(difference)}`;
+    if (difference > 0) {
+      confirmMessage += ' (Uang lebih)';
+    } else {
+      confirmMessage += ' (Uang kurang)';
+    }
+  }
+
   showConfirm(
     'Konfirmasi Tutup Kas',
-    `Yakin ingin menutup kas dengan saldo akhir ${formatCurrency(closingBalance)}?`,
+    confirmMessage,
     async () => {
       await closeCashDrawer(cashDrawerId, { closing_balance: closingBalance, notes });
     }
@@ -529,7 +603,6 @@ async function closeCashDrawer(cashDrawerId, data) {
       showToast('Kas berhasil ditutup', 'success');
       closeCloseCashModal();
       await checkCurrentCashDrawer();
-      await loadCashDrawerHistory();
     } else {
       showCloseCashError(result.message || 'Gagal menutup kas');
     }
@@ -568,10 +641,9 @@ function displayCashDrawerDetail(cashDrawer) {
   const transactions = cashDrawer.transactions || [];
   const expenses = cashDrawer.expenses || [];
 
-  // Use calculated values if available (more accurate)
-  const totalCashSales = cashDrawer.calculated_cash_sales || cashDrawer.total_cash_sales;
-  const totalExpenses = cashDrawer.calculated_expenses || cashDrawer.total_expenses;
-  const expectedBalance = cashDrawer.opening_balance + totalCashSales - totalExpenses;
+  const totalCashSales = cashDrawer.total_cash_sales;
+  const totalExpenses = cashDrawer.total_expenses;
+  const expectedBalance = cashDrawer.expected_balance;
 
   container.innerHTML = `
     <div class="detail-section">
@@ -694,8 +766,8 @@ function displayCashDrawerDetail(cashDrawer) {
         </div>
         <div class="payment-row">
           <span>Selisih:</span>
-          <strong class="${cashDrawer.difference === 0 ? 'text-success' : 'text-danger'}">
-            ${formatCurrency(cashDrawer.closing_balance - expectedBalance)}
+          <strong class="${cashDrawer.difference === 0 ? 'text-success' : cashDrawer.difference > 0 ? 'text-warning' : 'text-danger'}">
+            ${formatCurrency(cashDrawer.difference)}
           </strong>
         </div>
         ` : ''}

@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	getCurrentCashDrawerQuery  = `SELECT cd.id, cd.user_id, u.full_name as user_name, cd.shift_id, s.name as shift_name, s.start_time as shift_start, s.end_time as shift_end, cd.open_time, cd.opening_balance, cd.total_sales, cd.total_cash_sales, cd.total_expenses, cd.expected_balance, cd.status FROM cash_drawer cd LEFT JOIN users u ON cd.user_id = u.id LEFT JOIN shifts s ON cd.shift_id = s.id WHERE cd.user_id = ? AND cd.status = 'open' LIMIT 1`
+	getCurrentCashDrawerQuery  = `SELECT cd.id, cd.user_id, u.full_name as user_name, cd.shift_id, s.name as shift_name, s.start_time as shift_start, s.end_time as shift_end, cd.open_time, cd.opening_balance, cd.total_sales, cd.total_cash_sales, cd.total_expenses, cd.expected_balance, cd.status, cd.open_notes FROM cash_drawer cd LEFT JOIN users u ON cd.user_id = u.id LEFT JOIN shifts s ON cd.shift_id = s.id WHERE cd.user_id = ? AND cd.status = 'open' LIMIT 1`
 	getOpenCashDrawerQuery     = `SELECT id, user_id, shift_id, open_time, opening_balance, total_sales, total_cash_sales, total_expenses, expected_balance, status FROM cash_drawer WHERE user_id = ? AND status = 'open' LIMIT 1`
 	getCashDrawerByIDQuery     = `SELECT id, user_id, shift_id, open_time, close_time, opening_balance, closing_balance, total_sales, total_cash_sales, total_expenses, expected_balance, difference, status, notes FROM cash_drawer WHERE id = ? LIMIT 1`
 	openCashDrawerQuery        = `INSERT INTO cash_drawer (user_id, shift_id, open_time, opening_balance, open_notes, status) VALUES (?, ?, NOW(), ?, ?, 'open')`
@@ -32,8 +32,9 @@ const (
 		LEFT JOIN shifts s ON cd.shift_id = s.id
 		WHERE cd.id = ? LIMIT 1`
 
-	// Filter transaksi cash berdasarkan user dan rentang waktu sesi kas
-	// COALESCE(close_time, NOW()) digunakan agar kas yang masih open tetap bisa menampilkan transaksi
+	// next_open_time: open_time sesi berikutnya milik user yang sama, digunakan sebagai
+	// batas atas transaksi agar sesi-sesi yang berurutan tidak tumpang tindih.
+	// Batas atas efektif = LEAST(close_time, next_open_time), fallback ke NOW().
 	getCashDrawerTransactionsQuery = `
 		SELECT DATE_FORMAT(t.transaction_date, '%Y-%m-%dT%H:%i:%s') as transaction_date,
 		       t.transaction_code,
@@ -45,18 +46,20 @@ const (
 		  AND t.payment_method = 'cash'
 		  AND t.status = 'completed'
 		  AND t.transaction_date >= ?
-		  AND t.transaction_date <= COALESCE(?, NOW())
+		  AND t.transaction_date < COALESCE(?, ?, NOW())
 		ORDER BY t.transaction_date ASC`
 
-	// Filter pengeluaran berdasarkan user dan rentang tanggal sesi kas.
-	// DATE() digunakan karena expense_date bertipe DATE, bukan DATETIME.
 	getCashDrawerExpensesQuery = `
 		SELECT e.category, e.description, e.amount
 		FROM expenses e
 		WHERE e.user_id = ?
-		  AND e.expense_date >= DATE(?)
-		  AND e.expense_date <= DATE(COALESCE(?, NOW()))
+		  AND e.created_at >= ?
+		  AND e.created_at < COALESCE(?, ?, NOW())
 		ORDER BY e.created_at ASC`
+
+	getNextSessionOpenTimeQuery = `
+		SELECT MIN(open_time) FROM cash_drawer
+		WHERE user_id = ? AND open_time > ? AND id != ?`
 )
 
 type cashDrawerRepo struct {
@@ -108,12 +111,12 @@ func (r *cashDrawerRepo) GetHistory(filter *dto_cash_drawer.CashDrawerFilter) ([
 	conditions := ""
 
 	if filter.StartDate != "" {
-		conditions += " AND DATE(cd.open_time) >= ?"
+		conditions += " AND cd.open_time >= ?"
 		args = append(args, filter.StartDate)
 		countArgs = append(countArgs, filter.StartDate)
 	}
 	if filter.EndDate != "" {
-		conditions += " AND DATE(cd.open_time) <= ?"
+		conditions += " AND cd.open_time < DATE_ADD(?, INTERVAL 1 DAY)"
 		args = append(args, filter.EndDate)
 		countArgs = append(countArgs, filter.EndDate)
 	}
@@ -121,6 +124,11 @@ func (r *cashDrawerRepo) GetHistory(filter *dto_cash_drawer.CashDrawerFilter) ([
 		conditions += " AND cd.user_id = ?"
 		args = append(args, *filter.UserID)
 		countArgs = append(countArgs, *filter.UserID)
+	}
+	if filter.ShiftID != nil {
+		conditions += " AND cd.shift_id = ?"
+		args = append(args, *filter.ShiftID)
+		countArgs = append(countArgs, *filter.ShiftID)
 	}
 	if filter.Status != "" {
 		conditions += " AND cd.status = ?"
@@ -180,14 +188,19 @@ func (r *cashDrawerRepo) GetDetailByID(id int) (*dto_cash_drawer.CashDrawerDetai
 		return nil, nil
 	}
 
-	if err := r.db.Raw(getCashDrawerTransactionsQuery, res.UserID, res.OpenTime, res.CloseTime).Scan(&res.Transactions).Error; err != nil {
+	// Cari open_time sesi berikutnya milik user yang sama sebagai batas atas transaksi.
+	// Ini mencegah transaksi sesi berikutnya masuk ke detail sesi ini.
+	var nextOpenTime *string
+	r.db.Raw(getNextSessionOpenTimeQuery, res.UserID, res.OpenTime, res.ID).Scan(&nextOpenTime)
+
+	if err := r.db.Raw(getCashDrawerTransactionsQuery, res.UserID, res.OpenTime, res.CloseTime, nextOpenTime).Scan(&res.Transactions).Error; err != nil {
 		return nil, err
 	}
 	if res.Transactions == nil {
 		res.Transactions = []dto_cash_drawer.CashDrawerTransaction{}
 	}
 
-	if err := r.db.Raw(getCashDrawerExpensesQuery, res.UserID, res.OpenTime, res.CloseTime).Scan(&res.Expenses).Error; err != nil {
+	if err := r.db.Raw(getCashDrawerExpensesQuery, res.UserID, res.OpenTime, res.CloseTime, nextOpenTime).Scan(&res.Expenses).Error; err != nil {
 		return nil, err
 	}
 	if res.Expenses == nil {
@@ -198,11 +211,14 @@ func (r *cashDrawerRepo) GetDetailByID(id int) (*dto_cash_drawer.CashDrawerDetai
 }
 
 func (r *cashDrawerRepo) Open(userID int, shiftID *int, openingBalance float64, notes string) (int, error) {
-	if err := r.db.Exec(openCashDrawerQuery, userID, shiftID, openingBalance, notes).Error; err != nil {
-		return 0, err
-	}
 	var id int
-	if err := r.db.Raw(`SELECT LAST_INSERT_ID()`).Scan(&id).Error; err != nil {
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec(openCashDrawerQuery, userID, shiftID, openingBalance, notes).Error; err != nil {
+			return err
+		}
+		return tx.Raw(`SELECT LAST_INSERT_ID()`).Scan(&id).Error
+	})
+	if err != nil {
 		return 0, err
 	}
 	return id, nil
