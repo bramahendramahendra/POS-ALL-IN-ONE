@@ -15,8 +15,8 @@ const (
 	getCashDrawerByIDQuery     = `SELECT id, user_id, shift_id, open_time, close_time, opening_balance, closing_balance, total_sales, total_cash_sales, total_expenses, expected_balance, difference, status, notes FROM cash_drawer WHERE id = ? LIMIT 1`
 	openCashDrawerQuery        = `INSERT INTO cash_drawer (user_id, shift_id, open_time, opening_balance, open_notes, status) VALUES (?, ?, NOW(), ?, ?, 'open')`
 	closeCashDrawerQuery       = `UPDATE cash_drawer SET close_time = NOW(), closing_balance = ?, expected_balance = ?, difference = ?, status = 'closed', notes = ?, updated_at = NOW() WHERE id = ?`
-	updateSalesQuery           = `UPDATE cash_drawer SET total_sales = ?, total_cash_sales = ?, expected_balance = opening_balance + total_cash_sales - total_expenses, updated_at = NOW() WHERE id = ?`
-	updateExpensesQuery        = `UPDATE cash_drawer SET total_expenses = ?, expected_balance = opening_balance + total_cash_sales - ?, updated_at = NOW() WHERE id = ?`
+	updateSalesQuery           = `UPDATE cash_drawer SET total_sales = total_sales + ?, total_cash_sales = total_cash_sales + ?, expected_balance = opening_balance + total_cash_sales - total_expenses, updated_at = NOW() WHERE id = ?`
+	updateExpensesQuery        = `UPDATE cash_drawer SET total_expenses = total_expenses + ?, expected_balance = opening_balance + total_cash_sales - total_expenses, updated_at = NOW() WHERE id = ?`
 	getCashDrawerHistoryBase   = `SELECT cd.id, u.full_name as user_name, s.name as shift_name, cd.open_time, cd.close_time, cd.opening_balance, cd.closing_balance, cd.expected_balance, CASE WHEN cd.status = 'closed' THEN cd.difference ELSE NULL END as difference, cd.total_sales, cd.total_cash_sales, cd.total_expenses, cd.status FROM cash_drawer cd LEFT JOIN users u ON cd.user_id = u.id LEFT JOIN shifts s ON cd.shift_id = s.id WHERE 1=1`
 	countCashDrawerHistoryBase = `SELECT COUNT(*) FROM cash_drawer cd WHERE 1=1`
 
@@ -36,7 +36,7 @@ const (
 	// batas atas transaksi agar sesi-sesi yang berurutan tidak tumpang tindih.
 	// Batas atas efektif = LEAST(close_time, next_open_time), fallback ke NOW().
 	getCashDrawerTransactionsQuery = `
-		SELECT DATE_FORMAT(t.transaction_date, '%Y-%m-%dT%H:%i:%s') as transaction_date,
+		SELECT t.transaction_date,
 		       t.transaction_code,
 		       COALESCE(c.name, '') as customer_name,
 		       t.total_amount
@@ -233,5 +233,5 @@ func (r *cashDrawerRepo) UpdateSales(id int, totalSales, totalCashSales float64)
 }
 
 func (r *cashDrawerRepo) UpdateExpenses(id int, totalExpenses float64) error {
-	return r.db.Exec(updateExpensesQuery, totalExpenses, totalExpenses, id).Error
+	return r.db.Exec(updateExpensesQuery, totalExpenses, id).Error
 }

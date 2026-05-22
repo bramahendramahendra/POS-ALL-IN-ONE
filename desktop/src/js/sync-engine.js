@@ -40,7 +40,9 @@ class SyncEngine {
 
             for (const item of ordered) {
                 if (!connectionMonitor.isOnline) break; // berhenti jika offline lagi
-                await this._processItem(item);
+                // ordered diteruskan agar _processItem bisa patch server_id item close
+                // secara in-memory setelah open berhasil — menghindari stale null dari snapshot awal.
+                await this._processItem(item, ordered);
             }
         } finally {
             this.isRunning = false;
@@ -64,7 +66,7 @@ class SyncEngine {
         });
     }
 
-    async _processItem(item) {
+    async _processItem(item, allItems = []) {
         // Tandai sebagai SYNCING
         await window.syncQueue.updateStatus({ id: item.id, status: 'SYNCING' });
 
@@ -91,6 +93,43 @@ class SyncEngine {
                     localId:  item.local_id,
                     serverId: response?.id || response?.transaction_id || null,
                 });
+
+                // Update kas harian jika transaksi tunai.
+                // Gunakan cash_drawer_id dari payload jika tersedia (tersimpan saat offline).
+                // Fallback ke GET current hanya jika null — terjadi saat kas juga dibuka offline
+                // dan sudah tersync duluan (prioritas 0), sehingga GET current mengembalikan sesi yang benar.
+                if (payload.payment_method === 'cash' && payload.total_amount) {
+                    try {
+                        let drawerId = payload.cash_drawer_id || null;
+                        if (!drawerId) {
+                            const drawerRes = await apiClient.get('/cash-drawer/current');
+                            drawerId = drawerRes.success ? (drawerRes.data?.id || null) : null;
+                        }
+                        if (drawerId) {
+                            await apiClient.patch(`/cash-drawer/${drawerId}/update-sales`, {
+                                total_sales:      payload.total_amount,
+                                total_cash_sales: payload.total_amount,
+                            });
+                        }
+                    } catch (e) {
+                        console.error('Failed to update cash drawer after sync:', e);
+                    }
+                }
+            }
+
+            // Setelah cash_drawer:open berhasil, teruskan server_id ke item cash_drawer:close
+            // yang memiliki local_id yang sama agar URL endpoint-nya bisa dibangun dengan benar.
+            // Patch juga objek di array allItems agar _getEndpoint tidak membaca server_id null
+            // dari snapshot awal yang diambil sebelum open tersinkronisasi.
+            if (item.entity === 'cash_drawer' && item.action === 'open' && item.local_id) {
+                const serverId = response?.id ?? null;
+                if (serverId) {
+                    await window.syncQueue.updateServerId({ localId: item.local_id, serverId });
+                    const closeItem = allItems.find(
+                        i => i.entity === 'cash_drawer' && i.action === 'close' && i.local_id === item.local_id
+                    );
+                    if (closeItem) closeItem.server_id = serverId;
+                }
             }
 
             await window.syncQueue.updateStatus({ id: item.id, status: 'SYNCED' });

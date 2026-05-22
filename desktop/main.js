@@ -243,6 +243,19 @@ ipcMain.handle('syncQueue:resetSyncing', async () => {
     return count;
 });
 
+// Update server_id pada item PENDING yang memiliki local_id yang sama.
+// Digunakan setelah cash_drawer:open tersinkronisasi agar cash_drawer:close
+// mendapatkan server_id yang benar untuk membangun URL endpoint-nya.
+ipcMain.handle('syncQueue:updateServerId', async (event, { localId, serverId }) => {
+    if (!localId || !serverId) return false;
+    const now = new Date().toISOString();
+    localDbRun(
+        `UPDATE sync_queue SET server_id = ?, updated_at = ? WHERE local_id = ? AND status = 'PENDING'`,
+        [serverId, now, localId]
+    );
+    return true;
+});
+
 // ============================================
 // RESET STUCK SYNC ITEMS — dijalankan sekali saat startup
 // ============================================

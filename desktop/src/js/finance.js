@@ -4,6 +4,8 @@ let allExpenses = [];
 let allCashDrawers = [];
 let editingExpenseId = null;
 let currentCashDrawer = null;
+// true setelah checkCurrentCashDrawer berhasil minimal sekali — membedakan "belum dimuat" dari "dimuat, hasilnya null"
+let cashDrawerStatusLoaded = false;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
@@ -246,6 +248,7 @@ async function checkCurrentCashDrawer() {
 
     if (result.success) {
       currentCashDrawer = result.data;
+      cashDrawerStatusLoaded = true;
       renderCashStatus(currentCashDrawer);
     } else {
       showToast('Gagal memuat status kas', 'error');
@@ -260,6 +263,13 @@ async function checkCurrentCashDrawer() {
     }
   } catch (error) {
     console.error('Check current cash drawer error:', error);
+    // Jika offline dan currentCashDrawer sudah pernah dimuat sebelumnya,
+    // tampilkan state terakhir yang diketahui — bukan pesan error yang menyembunyikan tombol Tutup Kas.
+    const isOffline = typeof connectionMonitor !== 'undefined' && !connectionMonitor.isOnline;
+    if (isOffline && cashDrawerStatusLoaded) {
+      renderCashStatus(currentCashDrawer);
+      return;
+    }
     showToast('Gagal memuat status kas, coba refresh halaman', 'error');
     const container = document.getElementById('cashStatusContent');
     if (container) {
@@ -450,13 +460,32 @@ async function openCashDrawer(data) {
   // Offline — antri ke sync_queue
   if (typeof connectionMonitor !== 'undefined' && !connectionMonitor.isOnline) {
     try {
+      const localId = crypto.randomUUID();
       await window.syncQueue.add({
         entity:  'cash_drawer',
         action:  'open',
+        localId,
         payload: { ...data, date: new Date().toISOString().slice(0, 10) },
       });
       showToast('Kas harian dibuka offline. Akan disinkronkan saat online.', 'warning');
       closeOpenCashModal();
+      // Tampilkan status optimistis agar UI tidak stuck di "Kas Belum Dibuka".
+      // _localId disimpan agar item tutup-kas offline bisa di-link ke item buka-kas ini
+      // sehingga sync engine dapat meneruskan server_id setelah open tersinkronisasi.
+      currentCashDrawer = {
+        id:               null,
+        _localId:         localId,
+        opening_balance:  data.opening_balance,
+        total_cash_sales: 0,
+        total_expenses:   0,
+        expected_balance: data.opening_balance,
+        open_time:        new Date().toISOString(),
+        status:           'open',
+        shift_name:       null,
+        open_notes:       data.notes || null,
+      };
+      cashDrawerStatusLoaded = true;
+      renderCashStatus(currentCashDrawer);
     } catch (err) {
       console.error('Offline open cash drawer error:', err);
       showOpenCashError('Gagal menyimpan kas offline');
@@ -490,23 +519,68 @@ function showOpenCashError(message) {
 async function openCloseCashModal(cashDrawerId) {
   if (!currentCashDrawer) return;
 
-  // Reset form dan tampilkan modal dengan state loading
-  document.getElementById('closeCashDrawerId').value = cashDrawerId;
+  // Reset form
+  document.getElementById('closeCashDrawerId').value = cashDrawerId ?? '';
   document.getElementById('closingBalance').value = '';
   document.getElementById('closeCashNotes').value = '';
   document.getElementById('differenceDisplay').style.display = 'none';
   document.getElementById('closeCashError').style.display = 'none';
+  document.getElementById('closeCashModal').style.display = 'flex';
+
+  // Jika offline, gunakan data currentCashDrawer yang sudah ada di memori —
+  // tidak perlu API call yang akan selalu gagal saat offline.
+  // Hitung ulang expected_balance dari antrian sync agar transaksi & pengeluaran offline ikut terhitung.
+  if (typeof connectionMonitor !== 'undefined' && !connectionMonitor.isOnline) {
+    let offlineCashSales = 0;
+    let offlineExpenses = 0;
+    if (typeof window.syncQueue !== 'undefined') {
+      try {
+        const pending = await window.syncQueue.getPending();
+        offlineCashSales = pending
+          .filter(i => i.entity === 'transaction' && i.action === 'create')
+          .reduce((sum, i) => {
+            const p = typeof i.payload === 'string' ? JSON.parse(i.payload) : i.payload;
+            return sum + (p.payment_method === 'cash' ? (p.total_amount || 0) : 0);
+          }, 0);
+        offlineExpenses = pending
+          .filter(i => i.entity === 'expense' && i.action === 'create')
+          .reduce((sum, i) => {
+            const p = typeof i.payload === 'string' ? JSON.parse(i.payload) : i.payload;
+            return sum + (p.amount || 0);
+          }, 0);
+      } catch (e) {
+        console.error('Failed to read offline queue for expected balance:', e);
+        offlineCashSales = currentCashDrawer.total_cash_sales || 0;
+      }
+    } else {
+      offlineCashSales = currentCashDrawer.total_cash_sales || 0;
+    }
+    const totalExpenses = (currentCashDrawer.total_expenses || 0) + offlineExpenses;
+    const offlineExpected = currentCashDrawer.opening_balance + offlineCashSales - totalExpenses;
+    // Perbarui hanya expected_balance agar calculateDifference() memakai angka yang sama.
+    // total_cash_sales dan total_expenses TIDAK diubah agar pembukaan modal berikutnya tidak double-count.
+    currentCashDrawer = { ...currentCashDrawer, expected_balance: offlineExpected };
+
+    document.getElementById('closeOpeningBalance').textContent = formatCurrency(currentCashDrawer.opening_balance);
+    document.getElementById('closeCashSales').textContent = formatCurrency(offlineCashSales);
+    document.getElementById('closeExpenses').textContent = formatCurrency(totalExpenses);
+    document.getElementById('closeExpectedBalance').textContent = formatCurrency(offlineExpected);
+    setTimeout(() => document.getElementById('closingBalance').focus(), 100);
+    return;
+  }
+
+  // Online: refresh dari API untuk mendapatkan angka terkini dan server ID yang valid.
   document.getElementById('closeOpeningBalance').textContent = 'Memuat...';
   document.getElementById('closeCashSales').textContent = 'Memuat...';
   document.getElementById('closeExpenses').textContent = 'Memuat...';
   document.getElementById('closeExpectedBalance').textContent = 'Memuat...';
-  document.getElementById('closeCashModal').style.display = 'flex';
 
-  // Ambil data terkini sebelum tampilkan angka — jika gagal batalkan proses
   try {
     const result = await apiClient.get('/cash-drawer/current');
     if (result.success && result.data) {
       currentCashDrawer = result.data;
+      // Perbarui hidden field dengan server ID yang valid — menghindari NaN jika kas dibuka offline.
+      document.getElementById('closeCashDrawerId').value = result.data.id;
     } else {
       showToast('Gagal memuat data kas terkini, coba lagi', 'error');
       document.getElementById('closeCashModal').style.display = 'none';
@@ -568,6 +642,15 @@ async function handleCloseCash(e) {
   const closingBalance = parseRupiahInput('closingBalance');
   const notes = document.getElementById('closeCashNotes').value.trim();
 
+  // Validasi ID sebelum konfirmasi ditampilkan.
+  // Mode offline dengan kas yang dibuka offline (id null) ditangani di closeCashDrawer() via _localId,
+  // sehingga hanya blokir jika online dengan ID tidak valid.
+  const isOffline = typeof connectionMonitor !== 'undefined' && !connectionMonitor.isOnline;
+  if (!isOffline && (isNaN(cashDrawerId) || cashDrawerId <= 0)) {
+    showCloseCashError('ID kas tidak valid. Coba refresh halaman.');
+    return;
+  }
+
   if (closingBalance < 0) {
     showCloseCashError('Saldo akhir tidak boleh negatif');
     return;
@@ -596,6 +679,32 @@ async function handleCloseCash(e) {
 }
 
 async function closeCashDrawer(cashDrawerId, data) {
+  // Offline — antri ke sync_queue
+  if (typeof connectionMonitor !== 'undefined' && !connectionMonitor.isOnline) {
+    try {
+      // Jika kas dibuka saat offline, cashDrawerId adalah null/NaN dan server_id
+      // belum diketahui. Gunakan _localId dari sesi buka-kas agar sync engine bisa
+      // meneruskan server_id setelah cash_drawer:open tersinkronisasi.
+      const openedOffline = !cashDrawerId || isNaN(cashDrawerId);
+      await window.syncQueue.add({
+        entity:   'cash_drawer',
+        action:   'close',
+        localId:  openedOffline ? (currentCashDrawer?._localId || null) : null,
+        serverId: openedOffline ? null : cashDrawerId,
+        payload:  data,
+      });
+      showToast('Kas akan ditutup saat koneksi pulih.', 'warning');
+      closeCloseCashModal();
+      // Perbarui UI optimistis agar status tampil "Kas Belum Dibuka"
+      currentCashDrawer = null;
+      renderCashStatus(null);
+    } catch (err) {
+      console.error('Offline close cash drawer error:', err);
+      showCloseCashError('Gagal menyimpan tutup kas offline');
+    }
+    return;
+  }
+
   try {
     const result = await apiClient.post(`/cash-drawer/${cashDrawerId}/close`, data);
 
@@ -603,6 +712,7 @@ async function closeCashDrawer(cashDrawerId, data) {
       showToast('Kas berhasil ditutup', 'success');
       closeCloseCashModal();
       await checkCurrentCashDrawer();
+      await loadCashDrawerHistory();
     } else {
       showCloseCashError(result.message || 'Gagal menutup kas');
     }
@@ -946,7 +1056,7 @@ function renderExpensesTable(expenses) {
         <button class="btn-icon" onclick="editExpense(${expense.id})" title="Edit">
           ✏️
         </button>
-        <button class="btn-icon" onclick="confirmDeleteExpense(${expense.id}, '${escapeHtml(expense.description)}')" title="Hapus">
+        <button class="btn-icon" onclick="confirmDeleteExpense(${expense.id})" title="Hapus">
           🗑️
         </button>
       </td>
@@ -1085,7 +1195,7 @@ async function saveExpense(formData) {
         entity:  'expense',
         action:  'create',
         localId: localId,
-        payload: { ...formData, local_id: localId },
+        payload: { ...formData, local_id: localId, cash_drawer_id: currentCashDrawer?.id || null },
       });
       closeExpenseModal();
       showToast('Pengeluaran disimpan offline. Akan disinkronkan saat online.', 'warning');
@@ -1121,7 +1231,9 @@ async function saveExpense(formData) {
   }
 }
 
-function confirmDeleteExpense(expenseId, description) {
+function confirmDeleteExpense(expenseId) {
+  const expense = allExpenses.find(e => e.id === expenseId);
+  const description = expense ? expense.description : '';
   showConfirm(
     'Konfirmasi Hapus',
     `Yakin ingin menghapus pengeluaran "${description}"?`,

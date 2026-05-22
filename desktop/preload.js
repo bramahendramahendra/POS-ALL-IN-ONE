@@ -61,10 +61,11 @@ contextBridge.exposeInMainWorld('localDB', {
 // SYNC QUEUE — Antrian sinkronisasi offline via IPC
 // ============================================
 contextBridge.exposeInMainWorld('syncQueue', {
-    add:          (item)   => ipcRenderer.invoke('syncQueue:add', item),
-    getPending:   ()       => ipcRenderer.invoke('syncQueue:getPending'),
-    updateStatus: (params) => ipcRenderer.invoke('syncQueue:updateStatus', params),
-    getAll:       (params) => ipcRenderer.invoke('syncQueue:getAll', params || {}),
-    retryFailed:  ()       => ipcRenderer.invoke('syncQueue:retryFailed'),
-    resetSyncing: ()       => ipcRenderer.invoke('syncQueue:resetSyncing'),
+    add:            (item)   => ipcRenderer.invoke('syncQueue:add', item),
+    getPending:     ()       => ipcRenderer.invoke('syncQueue:getPending'),
+    updateStatus:   (params) => ipcRenderer.invoke('syncQueue:updateStatus', params),
+    updateServerId: (params) => ipcRenderer.invoke('syncQueue:updateServerId', params),
+    getAll:         (params) => ipcRenderer.invoke('syncQueue:getAll', params || {}),
+    retryFailed:    ()       => ipcRenderer.invoke('syncQueue:retryFailed'),
+    resetSyncing:   ()       => ipcRenderer.invoke('syncQueue:resetSyncing'),
 });

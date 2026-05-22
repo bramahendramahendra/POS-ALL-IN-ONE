@@ -75,10 +75,10 @@ type CashDrawerHistoryResponse struct {
 // Detail items
 
 type CashDrawerTransaction struct {
-	TransactionDate string  `json:"transaction_date"`
-	TransactionCode string  `json:"transaction_code"`
-	CustomerName    string  `json:"customer_name"`
-	TotalAmount     float64 `json:"total_amount"`
+	TransactionDate time.Time `json:"transaction_date"`
+	TransactionCode string    `json:"transaction_code"`
+	CustomerName    string    `json:"customer_name"`
+	TotalAmount     float64   `json:"total_amount"`
 }
 
 type CashDrawerExpenseItem struct {

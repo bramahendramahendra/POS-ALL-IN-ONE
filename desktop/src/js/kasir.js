@@ -6,6 +6,7 @@ let currentTax = { percent: 0, amount: 0 };
 let searchTimeout = null;
 // pending product for unit selection
 let pendingProduct = null;
+let currentCashDrawerId = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
@@ -43,7 +44,10 @@ async function checkCashDrawerOnLoad() {
     const result = await apiClient.get('/cash-drawer/current');
     const isOpen = result.success && result.data && result.data.status === 'open';
 
-    if (isOpen) return true;
+    if (isOpen) {
+      currentCashDrawerId = result.data.id;
+      return true;
+    }
 
     const role = currentUser?.role;
 
@@ -827,7 +831,7 @@ async function processTransaction() {
         return;
       }
       const localId = crypto.randomUUID();
-      const offlineData = { ...transactionData, device_source: 'desktop', local_id: localId };
+      const offlineData = { ...transactionData, device_source: 'desktop', local_id: localId, cash_drawer_id: currentCashDrawerId || null };
 
       await dbLocal.saveTransaction(offlineData);
       await window.syncQueue.add({
@@ -851,10 +855,12 @@ async function processTransaction() {
 
     if (result.success) {
       // Update cash drawer if payment is cash
-      if (paymentMethod === 'cash') {
+      if (paymentMethod === 'cash' && currentCashDrawerId) {
         try {
-          await window.api.cashDrawer.updateSales(total);
-          console.log('Cash drawer updated');
+          await apiClient.patch(`/cash-drawer/${currentCashDrawerId}/update-sales`, {
+            total_sales: total,
+            total_cash_sales: total,
+          });
         } catch (error) {
           console.error('Failed to update cash drawer:', error);
           // Don't block transaction if cash drawer update fails
@@ -887,7 +893,7 @@ async function processTransaction() {
     if (error.offline && dbLocal.isAvailable()) {
       try {
         const localId = crypto.randomUUID();
-        const offlineData = { ...transactionData, device_source: 'desktop', local_id: localId };
+        const offlineData = { ...transactionData, device_source: 'desktop', local_id: localId, cash_drawer_id: currentCashDrawerId || null };
         await dbLocal.saveTransaction(offlineData);
         await window.syncQueue.add({
           entity:  'transaction',
