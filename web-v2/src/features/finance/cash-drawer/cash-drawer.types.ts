@@ -23,3 +23,8 @@ export interface CashDrawerFilter {
 export interface CloseCashDrawerBody {
   notes: string
 }
+
+export interface CurrentCashDrawer {
+  id: number
+  status: 'open' | 'closed'
+}

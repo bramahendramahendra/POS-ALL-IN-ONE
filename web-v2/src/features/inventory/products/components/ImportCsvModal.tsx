@@ -18,15 +18,39 @@ interface ParsedRow {
   errors: string[]
 }
 
+function parseCsvLine(line: string): string[] {
+  const result: string[] = []
+  let current = ''
+  let inQuotes = false
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i]
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"'
+        i++
+      } else {
+        inQuotes = !inQuotes
+      }
+    } else if (ch === ',' && !inQuotes) {
+      result.push(current.trim())
+      current = ''
+    } else {
+      current += ch
+    }
+  }
+  result.push(current.trim())
+  return result
+}
+
 function parseCsv(text: string): ParsedRow[] {
   const lines = text.trim().split('\n')
   if (lines.length < 2) return []
 
-  const headers = lines[0].split(',').map((h) => h.trim().replace(/^"|"$/g, ''))
+  const headers = parseCsvLine(lines[0])
   const rows: ParsedRow[] = []
 
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',').map((v) => v.trim().replace(/^"|"$/g, ''))
+    const values = parseCsvLine(lines[i])
     const data: Record<string, string> = {}
     headers.forEach((h, idx) => {
       data[h] = values[idx] ?? ''
@@ -162,6 +186,7 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
                   <th className="px-3 py-2 text-left font-medium text-gray-600">SKU</th>
                   <th className="px-3 py-2 text-left font-medium text-gray-600">Kategori</th>
                   <th className="px-3 py-2 text-right font-medium text-gray-600">Harga</th>
+                  <th className="px-3 py-2 text-right font-medium text-gray-600">Stok</th>
                   <th className="px-3 py-2 text-left font-medium text-gray-600">Status</th>
                 </tr>
               </thead>
@@ -173,6 +198,7 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
                     <td className="px-3 py-1.5 font-mono">{row.data['sku'] || '—'}</td>
                     <td className="px-3 py-1.5">{row.data['category_name'] || '—'}</td>
                     <td className="px-3 py-1.5 text-right">{row.data['price'] || '—'}</td>
+                    <td className="px-3 py-1.5 text-right">{row.data['stock'] || '—'}</td>
                     <td className="px-3 py-1.5">
                       {row.valid ? (
                         <span className="text-green-600 font-medium">✓ Valid</span>

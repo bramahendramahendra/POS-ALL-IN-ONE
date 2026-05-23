@@ -127,14 +127,14 @@ export const NAV_ITEMS: NavItem[] = [
     path: ROUTES.DASHBOARD,
     icon: LayoutDashboard,
     allowedRoles: [ROLES.OWNER, ROLES.ADMIN],
-    group: 'Keuangan',
+    group: 'Pelaporan',
   },
   {
     label: 'Laporan',
     path: ROUTES.REPORTS,
     icon: BarChart2,
     allowedRoles: [ROLES.OWNER, ROLES.ADMIN],
-    group: 'Keuangan',
+    group: 'Pelaporan',
   },
 
   // Operasional

@@ -48,6 +48,7 @@ export function Sidebar() {
               <NavLink
                 key={item.path}
                 to={item.path}
+                end
                 style={({ isActive }) => ({
                   display: 'flex',
                   alignItems: 'center',

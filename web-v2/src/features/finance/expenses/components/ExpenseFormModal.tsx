@@ -37,17 +37,19 @@ const CATEGORIES: { value: ExpenseCategory; label: string }[] = [
   { value: 'lainnya', label: 'Lainnya' },
 ]
 
-const EMPTY_FORM: ExpenseFormData = {
-  expense_date: todayString(),
-  category: 'operasional',
-  description: '',
-  amount: 0,
-  notes: '',
+function getEmptyForm(): ExpenseFormData {
+  return {
+    expense_date: todayString(),
+    category: 'operasional',
+    description: '',
+    amount: 0,
+    notes: '',
+  }
 }
 
 export function ExpenseFormModal({ open, expense, onClose }: ExpenseFormModalProps) {
   const isEdit = expense !== null
-  const [form, setForm] = useState<ExpenseFormData>(EMPTY_FORM)
+  const [form, setForm] = useState<ExpenseFormData>(getEmptyForm)
 
   useEffect(() => {
     if (expense) {
@@ -59,12 +61,12 @@ export function ExpenseFormModal({ open, expense, onClose }: ExpenseFormModalPro
         notes: expense.notes ?? '',
       })
     } else {
-      setForm({ ...EMPTY_FORM, expense_date: todayString() })
+      setForm(getEmptyForm())
     }
   }, [expense, open])
 
   const createMutation = useCreateExpenseMutation()
-  const updateMutation = useUpdateExpenseMutation(expense?.id ?? 0)
+  const updateMutation = useUpdateExpenseMutation()
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
@@ -74,8 +76,8 @@ export function ExpenseFormModal({ open, expense, onClose }: ExpenseFormModalPro
       notes: form.notes || undefined,
     }
 
-    if (isEdit) {
-      updateMutation.mutate(payload, { onSuccess: onClose })
+    if (isEdit && expense) {
+      updateMutation.mutate({ id: expense.id, ...payload }, { onSuccess: onClose })
     } else {
       createMutation.mutate(payload, { onSuccess: onClose })
     }

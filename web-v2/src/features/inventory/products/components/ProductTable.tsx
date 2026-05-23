@@ -23,8 +23,10 @@ interface ProductTableProps {
 function getDefaultPrice(product: Product): number | null {
   const defaultUnit = product.units.find((u) => u.is_default)
   if (!defaultUnit) return null
-  const price = product.prices.find((p) => p.unit_id === defaultUnit.unit_id && p.min_qty <= 1)
-  return price?.price ?? null
+  const tiers = product.prices
+    .filter((p) => p.unit_id === defaultUnit.unit_id)
+    .sort((a, b) => a.min_qty - b.min_qty)
+  return tiers[0]?.price ?? null
 }
 
 export function ProductTable({
@@ -137,8 +139,8 @@ export function ProductTable({
             <Button variant="outline" size="sm" onClick={onPrintLabel}>
               Cetak Label
             </Button>
-            <Button variant="destructive" size="sm" onClick={() => clearSelection()}>
-              Hapus Semua
+            <Button variant="outline" size="sm" onClick={() => clearSelection()}>
+              Batalkan Pilihan
             </Button>
           </div>
         </div>

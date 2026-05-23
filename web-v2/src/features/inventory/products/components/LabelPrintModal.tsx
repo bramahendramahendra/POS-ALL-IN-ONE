@@ -32,8 +32,10 @@ const SIZE_CONFIG: Record<LabelSize, { width: string; fontSize: string; label: s
 function getDefaultPrice(product: Product): number | null {
   const defaultUnit = product.units.find((u) => u.is_default)
   if (!defaultUnit) return null
-  const price = product.prices.find((p) => p.unit_id === defaultUnit.unit_id && p.min_qty <= 1)
-  return price?.price ?? null
+  const tiers = product.prices
+    .filter((p) => p.unit_id === defaultUnit.unit_id)
+    .sort((a, b) => a.min_qty - b.min_qty)
+  return tiers[0]?.price ?? null
 }
 
 export function LabelPrintModal({ open, onOpenChange, products }: LabelPrintModalProps) {
@@ -99,7 +101,14 @@ export function LabelPrintModal({ open, onOpenChange, products }: LabelPrintModa
           <style>{`
             @media print {
               .no-print { display: none !important; }
-              body > *:not(.print-root) { display: none !important; }
+              body * { visibility: hidden; }
+              .print-root, .print-root * { visibility: visible; }
+              .print-root {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+              }
               .label-grid {
                 display: grid !important;
                 grid-template-columns: repeat(${cols}, 1fr) !important;

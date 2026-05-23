@@ -1,10 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 
 import { api } from '@/services/api.client'
 import { queryKeys } from '@/shared/constants'
 import type { PaginatedResponse } from '@/shared/types'
 
-import type { CashDrawer, CashDrawerFilter, CloseCashDrawerBody } from './cash-drawer.types'
+import type { CashDrawer, CashDrawerFilter, CloseCashDrawerBody, CurrentCashDrawer } from './cash-drawer.types'
+
+export function useCashDrawerCurrentQuery() {
+  return useQuery({
+    queryKey: ['cashDrawer', 'current'],
+    queryFn: () => api.get<CurrentCashDrawer | null>('/cash-drawer/current'),
+  })
+}
 
 export function useCashDrawerListQuery(filter?: CashDrawerFilter) {
   return useQuery({
@@ -27,6 +35,8 @@ export function useCloseCashDrawerMutation() {
     mutationFn: (body: CloseCashDrawerBody) => api.post<CashDrawer>('/cash-drawer/close', body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cashDrawer'] })
+      toast.success('Kas harian berhasil ditutup')
     },
+    onError: (e: Error) => toast.error(e.message),
   })
 }

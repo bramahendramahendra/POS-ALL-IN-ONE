@@ -13,7 +13,7 @@ import {
 import { useAuthStore } from '@/features/auth'
 import { ROLES } from '@/shared/constants/roles'
 
-import { useCashDrawerListQuery, useCloseCashDrawerMutation } from './cash-drawer.api'
+import { useCashDrawerCurrentQuery, useCashDrawerListQuery, useCloseCashDrawerMutation } from './cash-drawer.api'
 import type { CashDrawerFilter, CashDrawer } from './cash-drawer.types'
 import { CashDrawerTable } from './components/CashDrawerTable'
 import { CashDrawerDetailModal } from './components/CashDrawerDetailModal'
@@ -49,13 +49,14 @@ export function CashDrawerPage() {
   }
 
   const { data, isLoading } = useCashDrawerListQuery(filter)
+  const { data: currentData } = useCashDrawerCurrentQuery()
   const closeMutation = useCloseCashDrawerMutation()
 
   const items: CashDrawer[] = data?.data?.data ?? []
   const total = data?.data?.total ?? 0
 
-  const todayRecord = items.find((item) => item.date === today)
-  const todayIsOpen = todayRecord?.status === 'open' || !todayRecord
+  const currentDrawer = currentData?.data ?? null
+  const todayIsOpen = currentDrawer?.status === 'open'
 
   function handleClose() {
     closeMutation.mutate(

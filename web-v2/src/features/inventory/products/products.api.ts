@@ -87,7 +87,7 @@ export function useUnitListQuery() {
 
 export function useProductUnitsQuery(productId: number) {
   return useQuery({
-    queryKey: queryKeys.products.priceTiers(productId),
+    queryKey: queryKeys.products.productUnits(productId),
     queryFn: () => api.get<ProductUnit[]>(`/products/${productId}/units`),
     enabled: productId > 0,
   })
@@ -218,7 +218,7 @@ export function useAddProductUnitMutation(productId: number) {
     mutationFn: (payload: CreateProductUnitPayload) =>
       api.post<ProductUnit>(`/products/${productId}/units`, payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.products.detail(productId) })
+      qc.invalidateQueries({ queryKey: queryKeys.products.productUnits(productId) })
     },
     onError: (e: Error) => toast.error(e.message),
   })
@@ -230,7 +230,7 @@ export function useUpdateProductUnitMutation(productId: number) {
     mutationFn: ({ unitId, ...payload }: UpdateProductUnitPayload) =>
       api.put<ProductUnit>(`/products/${productId}/units/${unitId}`, payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.products.detail(productId) })
+      qc.invalidateQueries({ queryKey: queryKeys.products.productUnits(productId) })
     },
     onError: (e: Error) => toast.error(e.message),
   })
@@ -241,7 +241,7 @@ export function useDeleteProductUnitMutation(productId: number) {
   return useMutation({
     mutationFn: (unitId: number) => api.delete<void>(`/products/${productId}/units/${unitId}`),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.products.detail(productId) })
+      qc.invalidateQueries({ queryKey: queryKeys.products.productUnits(productId) })
     },
     onError: (e: Error) => toast.error(e.message),
   })
