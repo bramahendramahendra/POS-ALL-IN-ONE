@@ -11,7 +11,7 @@ import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
 import { Textarea } from '@/shared/components/ui/textarea'
-import { useDebounce, useDisclosure } from '@/shared/hooks'
+import { useDebounce, useDisclosure, usePagination } from '@/shared/hooks'
 import type { ColumnDef } from '@/shared/components/DataTable/DataTable.types'
 
 import {
@@ -39,6 +39,8 @@ export function CategoryTab() {
   const [deletingCategory, setDeletingCategory] = useState<Category | null>(null)
   const [pendingValues, setPendingValues] = useState<CategoryFormValues | null>(null)
 
+  const { page, pageSize, onPageChange, onPageSizeChange, reset: resetPage } = usePagination({ initialPageSize: 10 })
+
   const { data: categories = [], isLoading } = useCategoryListQuery()
   const { mutate: createCategory, isPending: isCreating } = useCreateCategoryMutation()
   const { mutate: updateCategory, isPending: isUpdating } = useUpdateCategoryMutation()
@@ -50,6 +52,8 @@ export function CategoryTab() {
   const filtered = debouncedSearch
     ? categories.filter((c) => c.name.toLowerCase().includes(debouncedSearch.toLowerCase()))
     : categories
+
+  const paginatedCategories = filtered.slice((page - 1) * pageSize, page * pageSize)
 
   const {
     register,
@@ -253,7 +257,7 @@ export function CategoryTab() {
           <Input
             placeholder="Cari kategori..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); resetPage() }}
             className="pl-8 h-9 text-sm"
           />
         </div>
@@ -267,7 +271,14 @@ export function CategoryTab() {
 
       <DataTable<Category & Record<string, unknown>>
         columns={columns}
-        data={filtered as (Category & Record<string, unknown>)[]}
+        data={paginatedCategories as (Category & Record<string, unknown>)[]}
+        pagination={{
+          page,
+          pageSize,
+          total: filtered.length,
+          onPageChange,
+          onPageSizeChange,
+        }}
         isLoading={isLoading}
         emptyMessage={debouncedSearch ? 'Kategori tidak ditemukan' : 'Belum ada kategori'}
         emptyDescription={

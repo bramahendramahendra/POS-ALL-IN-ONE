@@ -9,10 +9,12 @@ interface DeleteTarget {
 interface ProductsState {
   editingProductId: number | null
   editingUnitId: number | null
+  detailProductId: number | null
 
   productModalOpen: boolean
   unitModalOpen: boolean
   deleteConfirmOpen: boolean
+  detailModalOpen: boolean
   deleteTarget: DeleteTarget | null
 
   openProductModal: (id?: number) => void
@@ -21,15 +23,19 @@ interface ProductsState {
   closeUnitModal: () => void
   openDeleteConfirm: (target: DeleteTarget) => void
   closeDeleteConfirm: () => void
+  openDetailModal: (id: number) => void
+  closeDetailModal: () => void
 }
 
 export const useProductsStore = create<ProductsState>((set) => ({
   editingProductId: null,
   editingUnitId: null,
+  detailProductId: null,
 
   productModalOpen: false,
   unitModalOpen: false,
   deleteConfirmOpen: false,
+  detailModalOpen: false,
   deleteTarget: null,
 
   openProductModal: (id) => set({ productModalOpen: true, editingProductId: id ?? null }),
@@ -40,4 +46,7 @@ export const useProductsStore = create<ProductsState>((set) => ({
 
   openDeleteConfirm: (target) => set({ deleteConfirmOpen: true, deleteTarget: target }),
   closeDeleteConfirm: () => set({ deleteConfirmOpen: false, deleteTarget: null }),
+
+  openDetailModal: (id) => set({ detailModalOpen: true, detailProductId: id }),
+  closeDetailModal: () => set({ detailModalOpen: false, detailProductId: null }),
 }))

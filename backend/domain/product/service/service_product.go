@@ -437,12 +437,17 @@ func (s *productService) ImportBulk(rows []dto_product.BulkImportRow) (*dto_prod
 }
 
 func toProductResponse(p *model_product.Product, categoryName string) *dto_product.ProductResponse {
+	catName := categoryName
+	if catName == "" {
+		catName = p.CategoryName
+	}
 	return &dto_product.ProductResponse{
 		ID:            p.ID,
 		Barcode:       p.Barcode,
+		SKU:           p.SKU,
 		Name:          p.Name,
 		CategoryID:    p.CategoryID,
-		CategoryName:  categoryName,
+		CategoryName:  catName,
 		PurchasePrice: p.PurchasePrice,
 		SellingPrice:  p.SellingPrice,
 		Stock:         p.Stock,

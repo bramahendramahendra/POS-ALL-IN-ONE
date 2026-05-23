@@ -21,9 +21,13 @@ export interface ProductUnit {
   product_id: number
   unit_id: number
   unit_name: string
-  barcode?: string
-  cost_price: number
+  abbreviation: string
+  conversion_qty: number
+  purchase_price: number
+  selling_price: number
   is_default: boolean
+  barcode?: string
+  cost_price?: number
 }
 
 export interface PriceTier {

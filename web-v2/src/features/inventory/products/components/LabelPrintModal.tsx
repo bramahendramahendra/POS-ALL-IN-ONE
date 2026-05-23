@@ -30,9 +30,9 @@ const SIZE_CONFIG: Record<LabelSize, { width: string; fontSize: string; label: s
 }
 
 function getDefaultPrice(product: Product): number | null {
-  const defaultUnit = product.units.find((u) => u.is_default)
+  const defaultUnit = (product.units ?? []).find((u) => u.is_default)
   if (!defaultUnit) return null
-  const tiers = product.prices
+  const tiers = (product.prices ?? [])
     .filter((p) => p.unit_id === defaultUnit.unit_id)
     .sort((a, b) => a.min_qty - b.min_qty)
   return tiers[0]?.price ?? null
@@ -131,8 +131,8 @@ export function LabelPrintModal({ open, onOpenChange, products }: LabelPrintModa
           >
             {products.map((product) => {
               const price = getDefaultPrice(product)
-              const defaultUnit = product.units.find((u) => u.is_default)
-              const barcode = defaultUnit?.barcode
+              const defaultUnit = (product.units ?? []).find((u) => u.is_default)
+              const barcode = defaultUnit?.barcode ?? product.barcode
 
               return (
                 <div
@@ -142,9 +142,9 @@ export function LabelPrintModal({ open, onOpenChange, products }: LabelPrintModa
                 >
                   <p className="font-bold leading-tight line-clamp-2">{product.name}</p>
                   {product.sku && <p className="font-mono text-gray-500">{product.sku}</p>}
-                  {price !== null && (
-                    <p className="font-semibold text-gray-800">{formatRupiah(price)}</p>
-                  )}
+                  <p className="font-semibold text-gray-800">
+                    {formatRupiah(price ?? product.selling_price)}
+                  </p>
                   {barcode && <p className="font-mono text-gray-400 text-[0.7em]">{barcode}</p>}
                 </div>
               )

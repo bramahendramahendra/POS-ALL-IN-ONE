@@ -5,8 +5,10 @@ import "time"
 type Product struct {
 	ID            int       `db:"id"`
 	Barcode       string    `db:"barcode"`
+	SKU           string    `db:"sku"`
 	Name          string    `db:"name"`
 	CategoryID    *int      `db:"category_id"`
+	CategoryName  string    `db:"category_name"`
 	PurchasePrice float64   `db:"purchase_price"`
 	SellingPrice  float64   `db:"selling_price"`
 	Stock         float64   `db:"stock"`

@@ -3,7 +3,6 @@ import { toast } from 'sonner'
 
 import { api } from '@/services'
 import { queryKeys } from '@/shared/constants'
-import type { ApiResponse } from '@/shared/types'
 
 import type {
   Category,

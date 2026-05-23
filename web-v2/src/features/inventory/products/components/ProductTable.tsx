@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Lock, LockOpen, Pencil, Trash2 } from 'lucide-react'
+import { Eye, Lock, LockOpen, Pencil, Printer, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { ROLES } from '@/shared/constants'
@@ -20,6 +20,8 @@ interface ProductTableProps {
   onSelectionChange?: (products: Product[]) => void
   onPrintLabel?: () => void
   onImportCsv?: () => void
+  onDetailProduct?: (product: Product) => void
+  onPrintSingleLabel?: (product: Product) => void
 }
 
 
@@ -35,6 +37,8 @@ export function ProductTable({
   onSelectionChange,
   onPrintLabel,
   onImportCsv,
+  onDetailProduct,
+  onPrintSingleLabel,
 }: ProductTableProps) {
   const { openProductModal, openDeleteConfirm } = useProductsStore()
   const { mutate: toggleStatus } = useToggleProductStatusMutation()
@@ -55,13 +59,21 @@ export function ProductTable({
     },
     {
       key: 'barcode',
-      header: 'Barcode',
-      cell: (row) =>
-        row.barcode ? (
-          <code className="text-xs">{row.barcode}</code>
-        ) : (
-          <span className="text-gray-400 text-sm">—</span>
-        ),
+      header: 'Barcode / SKU',
+      cell: (row) => (
+        <div className="flex flex-col gap-0.5">
+          {row.barcode ? (
+            <code className="text-xs text-gray-700">{row.barcode}</code>
+          ) : (
+            <span className="text-gray-400 text-xs">—</span>
+          )}
+          {row.sku ? (
+            <span className="text-xs text-gray-500">{row.sku}</span>
+          ) : (
+            <span className="text-gray-300 text-xs">—</span>
+          )}
+        </div>
+      ),
     },
     {
       key: 'category_name',
@@ -153,6 +165,24 @@ export function ProductTable({
       width: '120px',
       cell: (row) => (
         <div className="flex items-center justify-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-gray-500 hover:text-blue-600"
+            onClick={() => onDetailProduct?.(row)}
+            title="Lihat Detail"
+          >
+            <Eye size={14} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-gray-500 hover:text-indigo-600"
+            onClick={() => onPrintSingleLabel?.(row)}
+            title="Cetak Label"
+          >
+            <Printer size={14} />
+          </Button>
           <RoleGuard allowedRoles={[ROLES.OWNER, ROLES.ADMIN]}>
             <Button
               variant="ghost"

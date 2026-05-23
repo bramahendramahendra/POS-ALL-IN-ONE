@@ -11,6 +11,7 @@ import { useProductsStore } from './products.store'
 import type { Product, ProductFilter } from './products.types'
 import { ImportCsvModal } from './components/ImportCsvModal'
 import { LabelPrintModal } from './components/LabelPrintModal'
+import { ProductDetailModal } from './components/ProductDetailModal'
 import { ProductFilterBar } from './components/ProductFilter'
 import { ProductFormModal } from './components/ProductFormModal'
 import { ProductTable } from './components/ProductTable'
@@ -18,6 +19,7 @@ import { ProductTable } from './components/ProductTable'
 export function ProductsPage() {
   const [filter, setFilter] = useState<ProductFilter>({})
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([])
+  const [singleLabelProduct, setSingleLabelProduct] = useState<Product | null>(null)
   const { page, pageSize, onPageChange, onPageSizeChange, reset } = usePagination()
   const {
     openProductModal,
@@ -27,6 +29,10 @@ export function ProductsPage() {
     deleteConfirmOpen,
     deleteTarget,
     closeDeleteConfirm,
+    detailModalOpen,
+    detailProductId,
+    openDetailModal,
+    closeDetailModal,
   } = useProductsStore()
 
   const { isOpen: importOpen, open: openImport, close: closeImport } = useDisclosure()
@@ -142,6 +148,8 @@ export function ProductsPage() {
           onSelectionChange={setSelectedProducts}
           onPrintLabel={() => openLabel()}
           onImportCsv={() => openImport()}
+          onDetailProduct={(product) => openDetailModal(product.id)}
+          onPrintSingleLabel={(product) => { setSingleLabelProduct(product); openLabel() }}
         />
       </div>
 
@@ -176,9 +184,17 @@ export function ProductsPage() {
       <LabelPrintModal
         open={labelOpen}
         onOpenChange={(open) => {
-          if (!open) closeLabel()
+          if (!open) { closeLabel(); setSingleLabelProduct(null) }
         }}
-        products={selectedProducts}
+        products={singleLabelProduct ? [singleLabelProduct] : selectedProducts}
+      />
+
+      <ProductDetailModal
+        open={detailModalOpen}
+        onOpenChange={(open) => {
+          if (!open) closeDetailModal()
+        }}
+        productId={detailProductId ?? undefined}
       />
     </div>
   )

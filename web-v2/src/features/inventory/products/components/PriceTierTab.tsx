@@ -185,7 +185,7 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
       key: 'cost_price',
       header: 'Harga Pokok',
       align: 'right',
-      cell: (row) => <span>{formatRupiah(row.cost_price)}</span>,
+      cell: (row) => <span>{formatRupiah(row.cost_price ?? 0)}</span>,
     },
     {
       key: 'is_default',

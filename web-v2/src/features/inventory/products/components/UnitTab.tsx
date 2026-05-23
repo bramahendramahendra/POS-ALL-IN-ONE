@@ -10,7 +10,7 @@ import { ConfirmDialog, DataTable, FormModal, RoleGuard } from '@/shared/compone
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
-import { useDebounce, useDisclosure } from '@/shared/hooks'
+import { useDebounce, useDisclosure, usePagination } from '@/shared/hooks'
 import type { ColumnDef } from '@/shared/components/DataTable/DataTable.types'
 
 import {
@@ -38,6 +38,8 @@ export function UnitTab() {
   const [deletingUnit, setDeletingUnit] = useState<Unit | null>(null)
   const [pendingValues, setPendingValues] = useState<UnitFormValues | null>(null)
 
+  const { page, pageSize, onPageChange, onPageSizeChange, reset: resetPage } = usePagination({ initialPageSize: 10 })
+
   const { data: units = [], isLoading } = useUnitListQuery()
   const { mutate: createUnit, isPending: isCreating } = useCreateUnitMutation()
   const { mutate: updateUnit, isPending: isUpdating } = useUpdateUnitMutation()
@@ -49,6 +51,8 @@ export function UnitTab() {
   const filtered = debouncedSearch
     ? units.filter((u) => u.name.toLowerCase().includes(debouncedSearch.toLowerCase()))
     : units
+
+  const paginatedUnits = filtered.slice((page - 1) * pageSize, page * pageSize)
 
   const {
     register,
@@ -222,7 +226,7 @@ export function UnitTab() {
           <Input
             placeholder="Cari satuan..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); resetPage() }}
             className="pl-8 h-9 text-sm"
           />
         </div>
@@ -236,8 +240,15 @@ export function UnitTab() {
 
       <DataTable<Unit & Record<string, unknown>>
         columns={columns}
-        data={filtered as (Unit & Record<string, unknown>)[]}
+        data={paginatedUnits as (Unit & Record<string, unknown>)[]}
         isLoading={isLoading}
+        pagination={{
+          page,
+          pageSize,
+          total: filtered.length,
+          onPageChange,
+          onPageSizeChange,
+        }}
         emptyMessage="Belum ada satuan"
         emptyDescription="Tambah satuan pertama Anda untuk memulai."
       />

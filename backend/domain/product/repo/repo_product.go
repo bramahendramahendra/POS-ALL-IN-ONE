@@ -21,14 +21,14 @@ const (
 		WHERE 1=1`
 
 	getProductByIDQuery = `
-		SELECT p.id, p.barcode, p.name, p.category_id, p.purchase_price,
-		       p.selling_price, p.stock, p.min_stock, p.unit, p.is_active, p.created_at, p.updated_at
-		FROM products p WHERE p.id = ? LIMIT 1`
+		SELECT p.id, p.barcode, COALESCE(p.sku, '') as sku, p.name, p.category_id, COALESCE(c.name, '') as category_name,
+		       p.purchase_price, p.selling_price, p.stock, p.min_stock, p.unit, p.is_active, p.created_at, p.updated_at
+		FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.id = ? LIMIT 1`
 
 	getProductByBarcodeQuery = `
-		SELECT p.id, p.barcode, p.name, p.category_id, p.purchase_price,
-		       p.selling_price, p.stock, p.min_stock, p.unit, p.is_active, p.created_at, p.updated_at
-		FROM products p WHERE p.barcode = ? LIMIT 1`
+		SELECT p.id, p.barcode, COALESCE(p.sku, '') as sku, p.name, p.category_id, COALESCE(c.name, '') as category_name,
+		       p.purchase_price, p.selling_price, p.stock, p.min_stock, p.unit, p.is_active, p.created_at, p.updated_at
+		FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.barcode = ? LIMIT 1`
 
 	searchProductsQuery = `
 		SELECT id, barcode, name, selling_price, stock, unit
@@ -135,25 +135,37 @@ func (r *productRepo) GetAll(filter *dto_product.ProductFilter) ([]*dto_product.
 }
 
 func (r *productRepo) GetByID(id int) (*model_product.Product, error) {
-	var p model_product.Product
-	result := r.db.Raw(getProductByIDQuery, id).Scan(&p)
-	if result.Error != nil {
-		return nil, result.Error
+	rows, err := r.db.Raw(getProductByIDQuery, id).Rows()
+	if err != nil {
+		return nil, err
 	}
-	if result.RowsAffected == 0 {
+	defer rows.Close()
+	if !rows.Next() {
 		return nil, nil
+	}
+	var p model_product.Product
+	if err := rows.Scan(&p.ID, &p.Barcode, &p.SKU, &p.Name, &p.CategoryID, &p.CategoryName,
+		&p.PurchasePrice, &p.SellingPrice, &p.Stock, &p.MinStock, &p.Unit, &p.IsActive,
+		&p.CreatedAt, &p.UpdatedAt); err != nil {
+		return nil, err
 	}
 	return &p, nil
 }
 
 func (r *productRepo) GetByBarcode(barcode string) (*model_product.Product, error) {
-	var p model_product.Product
-	result := r.db.Raw(getProductByBarcodeQuery, barcode).Scan(&p)
-	if result.Error != nil {
-		return nil, result.Error
+	rows, err := r.db.Raw(getProductByBarcodeQuery, barcode).Rows()
+	if err != nil {
+		return nil, err
 	}
-	if result.RowsAffected == 0 {
+	defer rows.Close()
+	if !rows.Next() {
 		return nil, nil
+	}
+	var p model_product.Product
+	if err := rows.Scan(&p.ID, &p.Barcode, &p.SKU, &p.Name, &p.CategoryID, &p.CategoryName,
+		&p.PurchasePrice, &p.SellingPrice, &p.Stock, &p.MinStock, &p.Unit, &p.IsActive,
+		&p.CreatedAt, &p.UpdatedAt); err != nil {
+		return nil, err
 	}
 	return &p, nil
 }

@@ -8,9 +8,7 @@ import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { ConfirmDialog, FormModal } from '@/shared/components'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
-import { Textarea } from '@/shared/components/ui/textarea'
 import { Label } from '@/shared/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/shared/components/ui/radio-group'
 import { RupiahInput } from '@/shared/components/ui/rupiah-input'
 import {
   Select,
@@ -26,13 +24,13 @@ import {
   useGenerateBarcodeQuery,
   useGenerateSkuQuery,
   useProductDetailQuery,
+  useProductUnitsQuery,
   useUnitListQuery,
   useUpdateProductMutation,
   useSaveProductUnitsBulkMutation,
   type GrosirRow,
 } from '../products.api'
 import type { Product } from '../products.types'
-import { PriceTierTab } from './PriceTierTab'
 
 const productSchema = z
   .object({
@@ -60,8 +58,6 @@ interface ProductFormModalProps {
   onOpenChange: (open: boolean) => void
   productId?: number
 }
-
-type ModalTab = 'info' | 'prices'
 
 function calcMargin(purchasePrice: number, sellingPrice: number): number {
   if (purchasePrice <= 0 || sellingPrice <= 0) return 0
@@ -194,7 +190,6 @@ function GrosirRowForm({
 
 export function ProductFormModal({ open, onOpenChange, productId }: ProductFormModalProps) {
   const isEdit = productId !== undefined
-  const [activeTab, setActiveTab] = useState<ModalTab>('info')
   const [generateBarcodeEnabled, setGenerateBarcodeEnabled] = useState(false)
   const [generateSkuEnabled, setGenerateSkuEnabled] = useState(false)
 
@@ -207,6 +202,9 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
   const [pendingValues, setPendingValues] = useState<ProductFormValues | null>(null)
 
   const { data: detailData, isLoading: isLoadingDetail } = useProductDetailQuery(
+    isEdit && open ? (productId as number) : 0
+  )
+  const { data: existingUnits = [] } = useProductUnitsQuery(
     isEdit && open ? (productId as number) : 0
   )
   const { data: categories = [] } = useCategoryListQuery()
@@ -236,7 +234,6 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
 
   const { register, handleSubmit, reset, setValue, watch, control, formState: { errors } } = form
 
-  const isActiveValue = watch('is_active')
   const categoryIdValue = watch('category_id')
   const unitValue = watch('unit')
   const purchasePriceValue = watch('purchase_price')
@@ -268,12 +265,27 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
   }, [detailData, isEdit, reset])
 
   useEffect(() => {
+    if (isEdit && existingUnits.length > 0) {
+      setGrosirRows(
+        existingUnits
+          .filter((u) => !u.is_default)
+          .map((u) => ({
+            unit_name: u.unit_name,
+            conversion_qty: u.conversion_qty,
+            purchase_price: u.purchase_price,
+            selling_price: u.selling_price,
+            is_default: false,
+          }))
+      )
+    }
+  }, [isEdit, existingUnits])
+
+  useEffect(() => {
     if (!open) {
       reset({
         name: '', sku: '', barcode: '', category_id: undefined, description: '',
         purchase_price: 0, selling_price: 0, stock: 0, min_stock: 5, unit: '', is_active: true,
       })
-      setActiveTab('info')
       setGenerateBarcodeEnabled(false)
       setGenerateSkuEnabled(false)
       setGrosirRows([])
@@ -310,6 +322,9 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
         { id: productId, ...payload },
         {
           onSuccess: () => {
+            if (grosirRows.length > 0) {
+              saveGrosir({ productId: productId as number, units: grosirRows })
+            }
             toast.success('Produk berhasil diperbarui')
             setIsConfirming(false)
             onOpenChange(false)
@@ -357,39 +372,17 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
         title={isEdit ? 'Edit Produk' : 'Tambah Produk'}
         size="lg"
         isLoading={isPending}
-        onSubmit={activeTab === 'info' ? handleSubmit(onSubmit) : undefined}
-        submitLabel={activeTab === 'info' ? 'Simpan' : undefined}
+        onSubmit={handleSubmit(onSubmit)}
+        submitLabel="Simpan"
       >
-        {/* Tab bar — only in edit mode */}
-        {isEdit && (
-          <div className="flex gap-1 border-b -mt-1 mb-4">
-            {(['info', 'prices'] as ModalTab[]).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
-                  activeTab === tab
-                    ? 'border-[#2c3e50] text-[#2c3e50]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {tab === 'info' ? 'Info Dasar' : 'Satuan & Harga'}
-              </button>
+        {isLoadingContent ? (
+          <div className="space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-10 animate-pulse rounded-md bg-gray-100" />
             ))}
           </div>
-        )}
-
-        {activeTab === 'info' && (
-          <>
-            {isLoadingContent ? (
-              <div className="space-y-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-10 animate-pulse rounded-md bg-gray-100" />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-4">
+        ) : (
+          <div className="space-y-4">
                 {/* Nama Produk */}
                 <div className="space-y-1.5">
                   <Label htmlFor="name">
@@ -463,17 +456,15 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
                     <Label htmlFor="barcode">
                       Barcode <span className="text-red-500">*</span>
                     </Label>
-                    {isEdit ? (
-                      <Input id="barcode" {...register('barcode')} readOnly className="bg-gray-50 text-gray-500" />
-                    ) : (
-                      <div className="flex gap-1.5">
-                        <Input
-                          id="barcode"
-                          {...register('barcode')}
-                          readOnly
-                          placeholder="Klik Generate"
-                          className={`bg-gray-50 text-gray-700 ${errors.barcode ? 'border-red-500' : ''}`}
-                        />
+                    <div className="flex gap-1.5">
+                      <Input
+                        id="barcode"
+                        {...register('barcode')}
+                        readOnly
+                        placeholder={isEdit ? '' : 'Klik Generate'}
+                        className={`bg-gray-50 text-gray-700 ${errors.barcode ? 'border-red-500' : ''}`}
+                      />
+                      {!isEdit && (
                         <button
                           type="button"
                           disabled={generateBarcodeEnabled || isFetchingBarcode}
@@ -482,25 +473,23 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
                         >
                           {isFetchingBarcode ? '...' : 'Generate'}
                         </button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                     {errors.barcode && <p className="text-xs text-red-500">{errors.barcode.message}</p>}
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="sku">
                       SKU / Kode <span className="text-red-500">*</span>
                     </Label>
-                    {isEdit ? (
-                      <Input id="sku" {...register('sku')} readOnly className="bg-gray-50 text-gray-500" />
-                    ) : (
-                      <div className="flex gap-1.5">
-                        <Input
-                          id="sku"
-                          {...register('sku')}
-                          readOnly
-                          placeholder={categoryIdValue ? 'Klik Generate' : 'Pilih kategori dulu'}
-                          className={`bg-gray-50 text-gray-700 ${errors.sku ? 'border-red-500' : ''}`}
-                        />
+                    <div className="flex gap-1.5">
+                      <Input
+                        id="sku"
+                        {...register('sku')}
+                        readOnly
+                        placeholder={isEdit ? '' : (categoryIdValue ? 'Klik Generate' : 'Pilih kategori dulu')}
+                        className={`bg-gray-50 text-gray-700 ${errors.sku ? 'border-red-500' : ''}`}
+                      />
+                      {!isEdit && (
                         <button
                           type="button"
                           disabled={!categoryIdValue || generateSkuEnabled || isFetchingSku}
@@ -509,8 +498,8 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
                         >
                           {isFetchingSku ? '...' : 'Generate'}
                         </button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                     {errors.sku && <p className="text-xs text-red-500">{errors.sku.message}</p>}
                   </div>
                 </div>
@@ -604,44 +593,9 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
                   </div>
                 </div>
 
-                {/* Deskripsi — hanya saat edit */}
-                {isEdit && (
-                  <div className="space-y-1.5">
-                    <Label htmlFor="description">Deskripsi</Label>
-                    <Textarea
-                      id="description"
-                      {...register('description')}
-                      placeholder="Deskripsi produk (opsional)"
-                      className="resize-none"
-                      rows={2}
-                    />
-                  </div>
-                )}
 
-                {/* Status — hanya saat edit */}
-                {isEdit && (
-                  <div className="space-y-1.5">
-                    <Label>Status</Label>
-                    <RadioGroup
-                      value={isActiveValue ? 'active' : 'inactive'}
-                      onValueChange={(v) => setValue('is_active', v === 'active')}
-                      className="flex gap-4"
-                    >
-                      <div className="flex items-center gap-2">
-                        <RadioGroupItem value="active" id="status-active" />
-                        <Label htmlFor="status-active" className="cursor-pointer font-normal">Aktif</Label>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <RadioGroupItem value="inactive" id="status-inactive" />
-                        <Label htmlFor="status-inactive" className="cursor-pointer font-normal">Nonaktif</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                )}
-
-                {/* Grosiran — create mode only */}
-                {!isEdit && (
-                  <div className="space-y-2 border-t pt-4">
+                {/* Grosiran / Satuan Lain */}
+                <div className="space-y-2 border-t pt-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <Label className="text-sm font-semibold">Grosiran / Satuan Lain</Label>
@@ -734,13 +688,8 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
                       />
                     )}
                   </div>
-                )}
               </div>
             )}
-          </>
-        )}
-
-        {activeTab === 'prices' && isEdit && <PriceTierTab productId={productId as number} />}
       </FormModal>
 
       <ConfirmDialog

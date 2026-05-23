@@ -23,6 +23,7 @@ import { useProductListQuery } from '@/features/inventory/products/products.api'
 
 import { useCreateSupplierPurchaseMutation } from '../supplier-purchases.api'
 import type { PaymentStatus } from '../supplier-purchases.types'
+import type { Product } from '@/features/inventory/products/products.types'
 
 interface PurchaseFormModalProps {
   open: boolean
@@ -68,7 +69,7 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
   const { data: suppliersData } = useSupplierListQuery({ page_size: 200 })
   const { data: productsData } = useProductListQuery({ page_size: 200 })
   const suppliers = suppliersData?.data?.data ?? []
-  const products = productsData?.data?.data ?? []
+  const products: Product[] = productsData?.items ?? []
 
   const { mutate: create, isPending } = useCreateSupplierPurchaseMutation()
 
