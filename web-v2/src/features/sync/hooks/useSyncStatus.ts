@@ -6,10 +6,10 @@ import { useSyncStatusQuery } from '../sync.api'
 const CONFLICT_TOAST_KEY = 'sync_conflict_notified_count'
 
 export function useSyncStatus() {
-  const { data: status } = useSyncStatusQuery()
+  const { data } = useSyncStatusQuery()
+  const conflictCount = data?.data?.count ?? 0
 
   useEffect(() => {
-    const conflictCount = status?.conflict_count ?? 0
     if (conflictCount > 0) {
       const notified = Number(localStorage.getItem(CONFLICT_TOAST_KEY) ?? '0')
       if (conflictCount > notified) {
@@ -19,13 +19,13 @@ export function useSyncStatus() {
         localStorage.setItem(CONFLICT_TOAST_KEY, String(conflictCount))
       }
     }
-  }, [status?.conflict_count])
+  }, [conflictCount])
 
   return {
-    status,
-    hasConflicts: (status?.conflict_count ?? 0) > 0,
-    isSyncing: status?.status === 'syncing',
-    pendingCount: status?.pending_count ?? 0,
-    conflictCount: status?.conflict_count ?? 0,
+    status: null,
+    hasConflicts: conflictCount > 0,
+    isSyncing: false,
+    pendingCount: 0,
+    conflictCount,
   }
 }

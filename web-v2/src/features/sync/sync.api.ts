@@ -10,7 +10,7 @@ import type { SyncConflict, SyncFilter, SyncHistoryItem, SyncStatusData } from '
 export function useSyncStatusQuery() {
   return useQuery({
     queryKey: queryKeys.sync.status(),
-    queryFn: () => api.get<SyncStatusData>('/sync/status'),
+    queryFn: () => api.get<{ count: number }>('/sync/conflicts/count'),
     refetchInterval: 30_000,
   })
 }

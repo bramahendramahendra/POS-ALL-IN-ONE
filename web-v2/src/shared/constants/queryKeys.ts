@@ -81,4 +81,12 @@ export const queryKeys = {
     history: () => ['sync', 'history'] as const,
     conflicts: () => ['sync', 'conflicts'] as const,
   },
+
+  cashDrawer: {
+    all: () => ['cashDrawer'] as const,
+    current: () => ['cashDrawer', 'current'] as const,
+    list: (filter?: Filter) => ['cashDrawer', 'list', filter] as const,
+    detail: (id: number) => ['cashDrawer', 'detail', id] as const,
+    summary: (filter?: Filter) => ['cashDrawer', 'summary', filter] as const,
+  },
 }

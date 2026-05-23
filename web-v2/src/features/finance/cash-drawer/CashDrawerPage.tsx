@@ -3,6 +3,8 @@ import { useState } from 'react'
 import { PageHeader } from '@/shared/components'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
+import { Badge } from '@/shared/components/ui/badge'
+import { Card, CardContent } from '@/shared/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -17,8 +19,16 @@ import { useCashDrawerCurrentQuery, useCashDrawerListQuery, useCloseCashDrawerMu
 import type { CashDrawerFilter, CashDrawer } from './cash-drawer.types'
 import { CashDrawerTable } from './components/CashDrawerTable'
 import { CashDrawerDetailModal } from './components/CashDrawerDetailModal'
+import { OpenCashDrawerModal } from './components/OpenCashDrawerModal'
+import { CashDrawerSummaryTab } from './components/CashDrawerSummaryTab'
 
 const PAGE_SIZE = 10
+
+const SHIFT_LABELS: Record<string, string> = {
+  pagi: 'Pagi',
+  siang: 'Siang',
+  malam: 'Malam',
+}
 
 function todayString(): string {
   return new Date().toISOString().split('T')[0]
@@ -29,16 +39,21 @@ function monthStartString(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
 }
 
+type Tab = 'history' | 'summary'
+
 export function CashDrawerPage() {
   const today = todayString()
   const { user } = useAuthStore()
-  const canClose = user?.role === ROLES.OWNER || user?.role === ROLES.ADMIN
+  const isAdminOrOwner = user?.role === ROLES.OWNER || user?.role === ROLES.ADMIN
 
+  const [activeTab, setActiveTab] = useState<Tab>('history')
   const [dateFrom, setDateFrom] = useState(monthStartString())
   const [dateTo, setDateTo] = useState(today)
   const [page, setPage] = useState(1)
   const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [openModalOpen, setOpenModalOpen] = useState(false)
   const [closeModalOpen, setCloseModalOpen] = useState(false)
+  const [closingBalance, setClosingBalance] = useState<number>(0)
   const [closeNotes, setCloseNotes] = useState('')
 
   const filter: CashDrawerFilter = {
@@ -56,14 +71,16 @@ export function CashDrawerPage() {
   const total = data?.data?.total ?? 0
 
   const currentDrawer = currentData?.data ?? null
-  const todayIsOpen = currentDrawer?.status === 'open'
+  const isOpen = currentDrawer?.status === 'open'
 
   function handleClose() {
+    if (!currentDrawer) return
     closeMutation.mutate(
-      { notes: closeNotes },
+      { id: currentDrawer.id, closing_balance: closingBalance, notes: closeNotes || undefined },
       {
         onSuccess: () => {
           setCloseModalOpen(false)
+          setClosingBalance(0)
           setCloseNotes('')
         },
       },
@@ -75,78 +92,150 @@ export function CashDrawerPage() {
       <PageHeader
         title="Kas Harian"
         breadcrumbs={[{ label: 'Finance' }, { label: 'Kas Harian' }]}
-        action={
-          canClose && todayIsOpen ? (
-            <Button onClick={() => setCloseModalOpen(true)}>Tutup Kas</Button>
-          ) : undefined
-        }
       />
 
-      <div className="flex flex-wrap gap-3 items-end">
-        <div className="space-y-1">
-          <label className="text-xs text-gray-500">Dari</label>
-          <Input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => {
-              setDateFrom(e.target.value)
-              setPage(1)
-            }}
-            className="w-40"
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs text-gray-500">Sampai</label>
-          <Input
-            type="date"
-            value={dateTo}
-            onChange={(e) => {
-              setDateTo(e.target.value)
-              setPage(1)
-            }}
-            className="w-40"
-          />
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            setDateFrom(monthStartString())
-            setDateTo(today)
-            setPage(1)
-          }}
-        >
-          Bulan ini
-        </Button>
+      {/* Status Card */}
+      <Card>
+        <CardContent className="pt-4 pb-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-gray-500">Status Kas Hari Ini</p>
+              <div className="flex items-center gap-2">
+                {isOpen ? (
+                  <Badge variant="default" className="bg-green-600">● Buka</Badge>
+                ) : (
+                  <Badge variant="secondary">● Tutup</Badge>
+                )}
+                {isOpen && currentDrawer?.shift && (
+                  <span className="text-sm text-gray-500">
+                    Shift: {SHIFT_LABELS[currentDrawer.shift] ?? currentDrawer.shift}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div>
+              {isOpen && isAdminOrOwner ? (
+                <Button onClick={() => setCloseModalOpen(true)}>Tutup Kas</Button>
+              ) : !isOpen ? (
+                <Button onClick={() => setOpenModalOpen(true)}>Buka Kas</Button>
+              ) : null}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex gap-6">
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'history'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Riwayat Kas
+          </button>
+          {isAdminOrOwner && (
+            <button
+              onClick={() => setActiveTab('summary')}
+              className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'summary'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Rekap Kas
+            </button>
+          )}
+        </nav>
       </div>
 
-      <CashDrawerTable
-        data={items}
-        isLoading={isLoading}
-        pagination={{ page, pageSize: PAGE_SIZE, total, onPageChange: setPage }}
-        onRowClick={(row) => setSelectedId(row.id)}
-      />
+      {activeTab === 'history' && (
+        <>
+          <div className="flex flex-wrap gap-3 items-end">
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500">Dari</label>
+              <Input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => {
+                  setDateFrom(e.target.value)
+                  setPage(1)
+                }}
+                className="w-40"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500">Sampai</label>
+              <Input
+                type="date"
+                value={dateTo}
+                onChange={(e) => {
+                  setDateTo(e.target.value)
+                  setPage(1)
+                }}
+                className="w-40"
+              />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setDateFrom(monthStartString())
+                setDateTo(today)
+                setPage(1)
+              }}
+            >
+              Bulan ini
+            </Button>
+          </div>
+
+          <CashDrawerTable
+            data={items}
+            isLoading={isLoading}
+            pagination={{ page, pageSize: PAGE_SIZE, total, onPageChange: setPage }}
+            onRowClick={(row) => setSelectedId(row.id)}
+          />
+        </>
+      )}
+
+      {activeTab === 'summary' && isAdminOrOwner && <CashDrawerSummaryTab />}
 
       <CashDrawerDetailModal cashDrawerId={selectedId} onClose={() => setSelectedId(null)} />
+      <OpenCashDrawerModal open={openModalOpen} onClose={() => setOpenModalOpen(false)} />
 
       <Dialog open={closeModalOpen} onOpenChange={setCloseModalOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Tutup Kas Hari Ini</DialogTitle>
           </DialogHeader>
-          <div className="space-y-2">
-            <label className="text-sm text-gray-600">Catatan (opsional)</label>
-            <Input
-              placeholder="Masukkan catatan penutupan kas..."
-              value={closeNotes}
-              onChange={(e) => setCloseNotes(e.target.value)}
-            />
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-sm text-gray-600">Saldo Penutupan (Rp)</label>
+              <Input
+                type="number"
+                min={0}
+                placeholder="0"
+                value={closingBalance === 0 ? '' : closingBalance}
+                onChange={(e) => setClosingBalance(Number(e.target.value) || 0)}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm text-gray-600">Catatan (opsional)</label>
+              <Input
+                placeholder="Masukkan catatan penutupan kas..."
+                value={closeNotes}
+                onChange={(e) => setCloseNotes(e.target.value)}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCloseModalOpen(false)}>
               Batal
             </Button>
-            <Button onClick={handleClose} disabled={closeMutation.isPending}>
+            <Button onClick={handleClose} disabled={closeMutation.isPending || closingBalance < 0}>
               {closeMutation.isPending ? 'Memproses...' : 'Tutup Kas'}
             </Button>
           </DialogFooter>

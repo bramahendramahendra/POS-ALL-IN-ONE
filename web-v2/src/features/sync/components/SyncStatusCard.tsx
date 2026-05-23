@@ -47,7 +47,7 @@ export function SyncStatusCard() {
     },
   }
 
-  const current = statusConfig[status?.status ?? 'idle']
+  const current = statusConfig['idle']
 
   return (
     <div className={`rounded-xl border p-4 ${current.bg}`}>
@@ -70,15 +70,7 @@ export function SyncStatusCard() {
         <span className={`font-semibold ${current.color}`}>{current.text}</span>
       </div>
 
-      {status?.message && <p className="text-xs text-gray-500 mb-2">{status.message}</p>}
-
       <div className="flex gap-6 text-sm text-gray-600">
-        <span>
-          Terakhir sync: <span className="font-medium">{formatDateTime(status?.last_sync_at)}</span>
-        </span>
-        <span>
-          Pending: <span className="font-medium">{pendingCount} data</span>
-        </span>
         <span>
           Konflik:{' '}
           <span className={`font-medium ${conflictCount > 0 ? 'text-orange-600' : ''}`}>

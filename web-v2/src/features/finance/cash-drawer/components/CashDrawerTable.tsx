@@ -29,8 +29,21 @@ export function CashDrawerTable({ data, isLoading, pagination, onRowClick }: Cas
       cell: (row) => <span className="text-gray-600 text-sm">{formatDate(row.date)}</span>,
     },
     {
+      key: 'shift',
+      header: 'Shift',
+      align: 'center',
+      cell: (row) => {
+        const labels: Record<string, string> = { pagi: 'Pagi', siang: 'Siang', malam: 'Malam' }
+        return (
+          <span className="text-sm text-gray-600">
+            {row.shift ? (labels[row.shift] ?? row.shift) : '—'}
+          </span>
+        )
+      },
+    },
+    {
       key: 'opening_balance',
-      header: 'Saldo Awal',
+      header: 'Saldo Buka',
       align: 'right',
       cell: (row) => <span className="text-sm">{formatRupiah(row.opening_balance)}</span>,
     },
@@ -52,9 +65,13 @@ export function CashDrawerTable({ data, isLoading, pagination, onRowClick }: Cas
     },
     {
       key: 'closing_balance',
-      header: 'Saldo Akhir',
+      header: 'Saldo Tutup',
       align: 'right',
-      cell: (row) => <span className="font-semibold text-sm">{formatRupiah(row.closing_balance)}</span>,
+      cell: (row) => (
+        <span className="font-semibold text-sm">
+          {row.status === 'closed' ? formatRupiah(row.closing_balance) : '—'}
+        </span>
+      ),
     },
     {
       key: 'difference',

@@ -5,38 +5,65 @@ import { api } from '@/services/api.client'
 import { queryKeys } from '@/shared/constants'
 import type { PaginatedResponse } from '@/shared/types'
 
-import type { CashDrawer, CashDrawerFilter, CloseCashDrawerBody, CurrentCashDrawer } from './cash-drawer.types'
+import type {
+  CashDrawer,
+  CashDrawerFilter,
+  CashDrawerSummary,
+  CloseCashDrawerBody,
+  CurrentCashDrawer,
+  OpenCashDrawerPayload,
+} from './cash-drawer.types'
 
 export function useCashDrawerCurrentQuery() {
   return useQuery({
-    queryKey: ['cashDrawer', 'current'],
+    queryKey: queryKeys.cashDrawer.current(),
     queryFn: () => api.get<CurrentCashDrawer | null>('/cash-drawer/current'),
   })
 }
 
 export function useCashDrawerListQuery(filter?: CashDrawerFilter) {
   return useQuery({
-    queryKey: ['cashDrawer', 'list', filter],
+    queryKey: queryKeys.cashDrawer.list(filter),
     queryFn: () => api.get<PaginatedResponse<CashDrawer>>('/cash-drawer', filter),
   })
 }
 
 export function useCashDrawerDetailQuery(id: number | null) {
   return useQuery({
-    queryKey: ['cashDrawer', 'detail', id],
+    queryKey: queryKeys.cashDrawer.detail(id ?? 0),
     queryFn: () => api.get<CashDrawer>(`/cash-drawer/${id}`),
     enabled: id !== null,
   })
 }
 
-export function useCloseCashDrawerMutation() {
-  const queryClient = useQueryClient()
+export function useOpenCashDrawerMutation() {
+  const qc = useQueryClient()
   return useMutation({
-    mutationFn: (body: CloseCashDrawerBody) => api.post<CashDrawer>('/cash-drawer/close', body),
+    mutationFn: (body: OpenCashDrawerPayload) => api.post<void>('/cash-drawer/open', body),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cashDrawer'] })
-      toast.success('Kas harian berhasil ditutup')
+      qc.invalidateQueries({ queryKey: queryKeys.cashDrawer.all() })
+      toast.success('Kas berhasil dibuka')
     },
     onError: (e: Error) => toast.error(e.message),
+  })
+}
+
+export function useCloseCashDrawerMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, closing_balance, notes }: CloseCashDrawerBody & { id: number }) =>
+      api.post<void>(`/cash-drawer/${id}/close`, { closing_balance, notes }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.cashDrawer.all() })
+      toast.success('Kas berhasil ditutup')
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+}
+
+export function useCashDrawerSummaryQuery(filter?: { date_from?: string; date_to?: string }) {
+  return useQuery({
+    queryKey: queryKeys.cashDrawer.summary(filter),
+    queryFn: () => api.get<CashDrawerSummary>('/cash-drawer/summary', filter),
   })
 }
