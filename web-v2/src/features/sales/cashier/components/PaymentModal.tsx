@@ -31,7 +31,7 @@ interface PaymentModalProps {
 
 type PaymentFormValues = {
   payment_method: PaymentMethod
-  amount_paid: number
+  amount_paid?: number
 }
 
 const PAYMENT_METHODS: { key: PaymentMethod; label: string }[] = [
@@ -174,7 +174,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
   }, [isKredit, setValue])
 
   const onSubmit = (values: PaymentFormValues) => {
-    const effectiveAmountPaid = isKredit ? 0 : values.amount_paid
+    const effectiveAmountPaid = isKredit ? 0 : (values.amount_paid ?? 0)
     const snapshot = {
       cart: [...cart],
       summary: { ...summary },

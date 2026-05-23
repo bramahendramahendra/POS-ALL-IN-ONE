@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 
 import { api } from '@/services/api.client'
 import { queryKeys } from '@/shared/constants'
+import type { ApiResponse } from '@/shared/types'
 
 import type {
   AppVersion,
@@ -107,7 +108,7 @@ const PRINTER_QK = ['settings', 'printer'] as const
 export function usePrinterSettingsQuery() {
   return useQuery({
     queryKey: PRINTER_QK,
-    queryFn: () => api.get<PrinterSettings>('/settings/printer'),
+    queryFn: () => api.get<ApiResponse<PrinterSettings>>('/settings/printer'),
   })
 }
 

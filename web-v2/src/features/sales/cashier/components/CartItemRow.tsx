@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { Minus, Plus, Trash2, Tag } from 'lucide-react'
 
 import { Button } from '@/shared/components/ui/button'

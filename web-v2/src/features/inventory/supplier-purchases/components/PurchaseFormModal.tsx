@@ -30,21 +30,21 @@ interface PurchaseFormModalProps {
 }
 
 const itemSchema = z.object({
-  product_id: z.number({ invalid_type_error: 'Pilih produk' }).positive('Pilih produk'),
-  quantity: z.number({ invalid_type_error: 'Wajib diisi' }).positive('Harus lebih dari 0'),
-  price: z.number({ invalid_type_error: 'Wajib diisi' }).nonnegative(),
+  product_id: z.number({ error: 'Pilih produk' }).positive('Pilih produk'),
+  quantity: z.number({ error: 'Wajib diisi' }).positive('Harus lebih dari 0'),
+  price: z.number({ error: 'Wajib diisi' }).nonnegative(),
   unit: z.string().min(1, 'Wajib diisi'),
 })
 
 const schema = z.object({
   purchase_date: z.string().min(1, 'Tanggal wajib diisi'),
   invoice_number: z.string().min(1, 'No. faktur wajib diisi'),
-  supplier_id: z.number({ invalid_type_error: 'Pilih supplier' }).positive('Pilih supplier'),
+  supplier_id: z.number({ error: 'Pilih supplier' }).positive('Pilih supplier'),
   items: z.array(itemSchema).min(1, 'Minimal 1 item'),
-  discount_amount: z.number().nonnegative().default(0),
+  discount_amount: z.number().nonnegative(),
   notes: z.string().optional(),
   payment_status: z.enum(['lunas', 'hutang', 'partial']),
-  paid_amount: z.number().nonnegative().default(0),
+  paid_amount: z.number().nonnegative(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -103,7 +103,7 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
     setValue(`items.${index}.product_id`, id)
     const product = products.find((p) => p.id === id)
     if (product) {
-      setValue(`items.${index}.unit`, product.base_unit ?? 'pcs')
+      setValue(`items.${index}.unit`, product.unit ?? 'pcs')
     }
   }
 

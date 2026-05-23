@@ -132,7 +132,6 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
           onSuccess: () => {
             toast.success('Satuan produk berhasil diperbarui')
             closeUnitConfirm()
-            setPendingUnitValues(null)
             setEditingUnitId(null)
             unitForm.reset({ unit_id: 0, barcode: '', cost_price: 0, is_default: false })
           },
@@ -146,7 +145,6 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
           onSuccess: () => {
             toast.success('Satuan produk berhasil ditambahkan')
             closeUnitConfirm()
-            setPendingUnitValues(null)
             unitForm.reset({ unit_id: 0, barcode: '', cost_price: 0, is_default: false })
           },
           onError: (e) => toast.error(e.message),
@@ -301,7 +299,6 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
           onSuccess: () => {
             toast.success('Harga tier berhasil diperbarui')
             closePriceConfirm()
-            setPendingPriceValues(null)
             setEditingPriceId(null)
             priceForm.reset({ unit_id: 0, tier_name: '', min_qty: 1, price: 0 })
           },
@@ -313,7 +310,6 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
         onSuccess: () => {
           toast.success('Harga tier berhasil ditambahkan')
           closePriceConfirm()
-          setPendingPriceValues(null)
           priceForm.reset({ unit_id: 0, tier_name: '', min_qty: 1, price: 0 })
         },
         onError: (e) => toast.error(e.message),
@@ -445,6 +441,7 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
       <FormModal
         open={unitFormOpen}
         onOpenChange={(open) => {
+          if (!open && pendingUnitValues !== null) return
           if (!open) handleCloseUnitForm()
         }}
         title={editingUnitId !== null ? 'Edit Satuan Produk' : 'Tambah Satuan Produk'}
@@ -542,6 +539,7 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
       <FormModal
         open={priceFormOpen}
         onOpenChange={(open) => {
+          if (!open && pendingPriceValues !== null) return
           if (!open) handleClosePriceForm()
         }}
         title={editingPriceId !== null ? 'Edit Harga Tier' : 'Tambah Harga Tier'}

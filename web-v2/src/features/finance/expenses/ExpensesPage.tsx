@@ -98,7 +98,7 @@ export function ExpensesPage() {
       <PageHeader
         title="Pengeluaran"
         breadcrumbs={[{ label: 'Finance' }, { label: 'Pengeluaran' }]}
-        action={
+        actions={
           <Button onClick={() => setFormOpen(true)}>
             <Plus className="h-4 w-4 mr-1" />
             Tambah Pengeluaran

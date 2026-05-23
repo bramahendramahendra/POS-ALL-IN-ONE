@@ -2,7 +2,6 @@ import { Eye, Trash2 } from 'lucide-react'
 
 import { DataTable } from '@/shared/components'
 import { Button } from '@/shared/components/ui/button'
-import { Badge } from '@/shared/components/ui/badge'
 import { formatRupiah } from '@/shared/utils'
 import type { ColumnDef, PaginationProps } from '@/shared/components/DataTable/DataTable.types'
 

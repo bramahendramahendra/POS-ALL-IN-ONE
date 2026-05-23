@@ -105,7 +105,6 @@ export function UnitTab() {
           onSuccess: () => {
             toast.success('Satuan berhasil diperbarui')
             closeConfirm()
-            setPendingValues(null)
             setEditingId(null)
             reset({ name: '', abbreviation: '' })
           },
@@ -118,7 +117,6 @@ export function UnitTab() {
           onSuccess: () => {
             toast.success('Satuan berhasil ditambahkan')
             closeConfirm()
-            setPendingValues(null)
             reset({ name: '', abbreviation: '' })
           },
         }
@@ -248,6 +246,7 @@ export function UnitTab() {
       <FormModal
         open={formOpen}
         onOpenChange={(open) => {
+          if (!open && pendingValues !== null) return
           if (!open) handleCloseForm()
         }}
         title={editingId !== null ? 'Edit Satuan' : 'Tambah Satuan'}

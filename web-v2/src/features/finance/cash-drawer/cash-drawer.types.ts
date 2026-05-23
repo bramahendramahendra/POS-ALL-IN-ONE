@@ -21,6 +21,7 @@ export interface CashDrawerFilter {
   date_to?: string
   page?: number
   page_size?: number
+  [key: string]: unknown
 }
 
 export interface CloseCashDrawerBody {

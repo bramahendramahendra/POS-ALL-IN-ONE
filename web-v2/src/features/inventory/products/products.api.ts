@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 
 import { api } from '@/services'
 import { queryKeys } from '@/shared/constants'
-import type { PaginatedResponse } from '@/shared/types'
+import type { ApiResponse, PaginatedResponse } from '@/shared/types'
 
 import type {
   Category,
@@ -64,7 +64,7 @@ export function useImportProductsBulkMutation() {
 export function useGenerateBarcodeQuery(enabled: boolean) {
   return useQuery({
     queryKey: ['generate-barcode'],
-    queryFn: () => api.get<{ barcode: string }>('/products/generate-barcode'),
+    queryFn: () => api.get<ApiResponse<{ barcode: string }>>('/products/generate-barcode'),
     enabled,
     staleTime: Infinity,
   })
@@ -73,7 +73,7 @@ export function useGenerateBarcodeQuery(enabled: boolean) {
 export function useGenerateSkuQuery(categoryId: number, enabled: boolean) {
   return useQuery({
     queryKey: ['generate-sku', categoryId],
-    queryFn: () => api.get<{ sku: string }>('/products/generate-sku', { category_id: categoryId }),
+    queryFn: () => api.get<ApiResponse<{ sku: string }>>('/products/generate-sku', { category_id: categoryId }),
     enabled: enabled && categoryId > 0,
     staleTime: Infinity,
   })

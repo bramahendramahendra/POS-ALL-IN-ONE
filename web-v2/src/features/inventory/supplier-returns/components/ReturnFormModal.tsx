@@ -29,7 +29,7 @@ interface ReturnFormModalProps {
 }
 
 const schema = z.object({
-  purchase_id: z.number({ invalid_type_error: 'Pilih pembelian' }).positive('Pilih pembelian'),
+  purchase_id: z.number({ error: 'Pilih pembelian' }).positive('Pilih pembelian'),
   reason: z.string().min(1, 'Alasan wajib diisi'),
   notes: z.string().optional(),
 })

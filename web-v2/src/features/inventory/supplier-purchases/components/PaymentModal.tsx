@@ -19,7 +19,7 @@ interface PaymentModalProps {
 }
 
 const paymentSchema = z.object({
-  amount: z.number({ invalid_type_error: 'Jumlah wajib diisi' }).positive('Jumlah harus lebih dari 0'),
+  amount: z.number({ error: 'Jumlah wajib diisi' }).positive('Jumlah harus lebih dari 0'),
   notes: z.string().optional(),
 })
 

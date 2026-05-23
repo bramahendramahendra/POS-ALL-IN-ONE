@@ -104,7 +104,6 @@ export function CategoryTab() {
           onSuccess: () => {
             toast.success('Kategori berhasil diperbarui')
             closeConfirm()
-            setPendingValues(null)
             setEditingCategory(null)
             reset({ name: '', description: '' })
           },
@@ -117,7 +116,6 @@ export function CategoryTab() {
           onSuccess: () => {
             toast.success('Kategori berhasil ditambahkan')
             closeConfirm()
-            setPendingValues(null)
             reset({ name: '', description: '' })
           },
         }
@@ -234,6 +232,7 @@ export function CategoryTab() {
       <FormModal
         open={formOpen}
         onOpenChange={(open) => {
+          if (!open && pendingValues !== null) return
           if (!open) handleCloseForm()
         }}
         title={editingCategory !== null ? 'Edit Kategori' : 'Tambah Kategori'}

@@ -69,6 +69,30 @@ export interface StockReportFilter {
   page_size?: number
 }
 
+// ─── Legacy row types used by ReportTable ─────────────────────────────────────
+export interface SalesReportRow {
+  period: string
+  total_transactions: number
+  total_revenue: number
+  total_discount: number
+  total_tax: number
+  net_revenue: number
+}
+
+export interface ProductReportRow {
+  product_name: string
+  unit_name: string
+  qty_sold: number
+  revenue: number
+  avg_price: number
+}
+
+export interface CashierReportRow {
+  kasir_name: string
+  total_transactions: number
+  total_revenue: number
+}
+
 // ─── Tab 4: Kinerja Kasir ──────────────────────────────────────────────────────
 export interface CashierPerformance {
   user_id: number

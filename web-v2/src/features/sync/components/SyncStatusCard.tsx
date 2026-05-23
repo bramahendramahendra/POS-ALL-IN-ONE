@@ -5,19 +5,8 @@ import { Button } from '@/shared/components/ui/button'
 import { useTriggerSyncMutation } from '../sync.api'
 import { useSyncStatus } from '../hooks/useSyncStatus'
 
-function formatDateTime(str?: string): string {
-  if (!str) return '—'
-  return new Date(str).toLocaleString('id-ID', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
 export function SyncStatusCard() {
-  const { status, isSyncing, pendingCount, conflictCount } = useSyncStatus()
+  const { isSyncing, conflictCount } = useSyncStatus()
   const { mutate: triggerSync, isPending } = useTriggerSyncMutation()
 
   const statusConfig = {

@@ -18,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select'
-import { useDisclosure } from '@/shared/hooks'
 
 import {
   useCategoryListQuery,
@@ -39,7 +38,7 @@ const productSchema = z
     name: z.string().min(1, 'Nama produk wajib diisi').max(100),
     sku: z.string().min(1, 'SKU wajib digenerate'),
     barcode: z.string().min(1, 'Barcode wajib digenerate'),
-    category_id: z.number({ required_error: 'Kategori wajib dipilih' }),
+    category_id: z.number({ error: 'Kategori wajib dipilih' }).min(1, 'Kategori wajib dipilih'),
     description: z.string().optional(),
     purchase_price: z.number().min(0, 'Harga beli tidak boleh negatif'),
     selling_price: z.number().min(1, 'Harga jual harus lebih dari 0'),
@@ -73,7 +72,7 @@ function mapProductToForm(product: Product): ProductFormValues {
     name: product.name,
     sku: product.sku ?? '',
     barcode: product.barcode ?? '',
-    category_id: product.category_id ?? undefined,
+    category_id: product.category_id ?? 0,
     description: product.description ?? '',
     purchase_price: product.purchase_price,
     selling_price: product.selling_price,
@@ -249,12 +248,12 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
   )
 
   useEffect(() => {
-    const barcode = (barcodeData?.data as { barcode?: string })?.barcode
+    const barcode = barcodeData?.data?.barcode
     if (barcode) setValue('barcode', barcode)
   }, [barcodeData, setValue])
 
   useEffect(() => {
-    const sku = (skuData?.data as { sku?: string })?.sku
+    const sku = skuData?.data?.sku
     if (sku) setValue('sku', sku)
   }, [skuData, setValue])
 
@@ -347,7 +346,10 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
     <>
       <FormModal
         open={open && !isConfirming}
-        onOpenChange={onOpenChange}
+        onOpenChange={(val) => {
+          if (isConfirming) return
+          onOpenChange(val)
+        }}
         title={isEdit ? 'Edit Produk' : 'Tambah Produk'}
         size="lg"
         isLoading={isPending}

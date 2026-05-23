@@ -13,6 +13,7 @@ const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   transfer: 'Transfer',
   qris: 'QRIS',
   card: 'Kartu',
+  kredit: 'Kredit',
 }
 
 function formatDateTime(dateStr: string): string {

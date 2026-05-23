@@ -5,12 +5,13 @@ import { api } from '@/services/api.client'
 import { queryKeys } from '@/shared/constants'
 import type { PaginatedResponse } from '@/shared/types'
 
-import type { SyncConflict, SyncFilter, SyncHistoryItem, SyncStatusData } from './sync.types'
+import type { ApiResponse } from '@/shared/types'
+import type { SyncConflict, SyncFilter, SyncHistoryItem } from './sync.types'
 
 export function useSyncStatusQuery() {
   return useQuery({
     queryKey: queryKeys.sync.status(),
-    queryFn: () => api.get<{ count: number }>('/sync/conflicts/count'),
+    queryFn: () => api.get<ApiResponse<{ count: number }>>('/sync/conflicts/count'),
     refetchInterval: 30_000,
   })
 }

@@ -13,7 +13,6 @@ import {
 import { formatRupiah } from '@/shared/utils'
 import { useDebounce, usePagination } from '@/shared/hooks'
 import type { ColumnDef } from '@/shared/components/DataTable/DataTable.types'
-import { useProductListQuery } from '@/features/inventory/products/products.api'
 
 import { useStockReportQuery } from '../reports.api'
 import type { StockReport, StockReportFilter } from '../reports.types'
@@ -24,7 +23,6 @@ export function StockReportTab() {
   const debouncedSearch = useDebounce(search, 300)
   const { page, pageSize, onPageChange, onPageSizeChange } = usePagination()
 
-  const { data: productsData } = useProductListQuery({ page_size: 1 })
   // Get categories from products API categories endpoint
   const categories: { id: number; name: string }[] = []
 

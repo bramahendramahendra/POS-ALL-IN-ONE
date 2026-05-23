@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { api } from '@/services/api.client'
 import { queryKeys } from '@/shared/constants'
 import { ROUTES } from '@/shared/constants/routes'
+import type { ApiResponse } from '@/shared/types'
 import type { Product, ProductUnit } from '@/features/inventory/products'
 
 import { useCashierStore } from './cashier.store'
@@ -35,7 +36,7 @@ export function useCustomerCreditQuery(customerId: number | null) {
   return useQuery({
     queryKey: ['customers', 'credit', customerId],
     queryFn: () =>
-      api.get<{ id: number; name: string; credit_limit: number; outstanding_amount: number }>(
+      api.get<ApiResponse<{ id: number; name: string; credit_limit: number; outstanding_amount: number }>>(
         `/customers/${customerId}`
       ),
     enabled: customerId !== null && customerId > 0,

@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 
 import { api } from '@/services/api.client'
 import { queryKeys } from '@/shared/constants'
-import type { PaginatedResponse } from '@/shared/types'
+import type { ApiResponse, PaginatedResponse } from '@/shared/types'
 
 import type {
   CashDrawer,
@@ -17,7 +17,7 @@ import type {
 export function useCashDrawerCurrentQuery() {
   return useQuery({
     queryKey: queryKeys.cashDrawer.current(),
-    queryFn: () => api.get<CurrentCashDrawer | null>('/cash-drawer/current'),
+    queryFn: () => api.get<ApiResponse<CurrentCashDrawer | null>>('/cash-drawer/current'),
   })
 }
 
@@ -31,7 +31,7 @@ export function useCashDrawerListQuery(filter?: CashDrawerFilter) {
 export function useCashDrawerDetailQuery(id: number | null) {
   return useQuery({
     queryKey: queryKeys.cashDrawer.detail(id ?? 0),
-    queryFn: () => api.get<CashDrawer>(`/cash-drawer/${id}`),
+    queryFn: () => api.get<ApiResponse<CashDrawer>>(`/cash-drawer/${id}`),
     enabled: id !== null,
   })
 }
@@ -64,6 +64,6 @@ export function useCloseCashDrawerMutation() {
 export function useCashDrawerSummaryQuery(filter?: { date_from?: string; date_to?: string }) {
   return useQuery({
     queryKey: queryKeys.cashDrawer.summary(filter),
-    queryFn: () => api.get<CashDrawerSummary>('/cash-drawer/summary', filter),
+    queryFn: () => api.get<ApiResponse<CashDrawerSummary>>('/cash-drawer/summary', filter),
   })
 }

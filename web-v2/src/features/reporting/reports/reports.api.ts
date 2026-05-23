@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { api } from '@/services/api.client'
-import type { PaginatedResponse } from '@/shared/types'
+import type { ApiResponse } from '@/shared/types'
 
 import type {
   CashierPerformance,
@@ -28,27 +28,27 @@ interface StockReportResponse {
 export function useSalesReportQuery(filter?: SalesReportFilter) {
   return useQuery({
     queryKey: ['reports', 'sales', filter],
-    queryFn: () => api.get<SalesReportResponse>('/reports/sales', filter),
+    queryFn: () => api.get<ApiResponse<SalesReportResponse>>('/reports/sales', filter),
   })
 }
 
 export function useProfitLossReportQuery(filter: { date_from?: string; date_to?: string }) {
   return useQuery({
     queryKey: ['reports', 'profitLoss', filter],
-    queryFn: () => api.get<ProfitLossReport>('/reports/profit-loss', filter),
+    queryFn: () => api.get<ApiResponse<ProfitLossReport>>('/reports/profit-loss', filter),
   })
 }
 
 export function useStockReportQuery(filter?: StockReportFilter) {
   return useQuery({
     queryKey: ['reports', 'stock', filter],
-    queryFn: () => api.get<StockReportResponse>('/reports/stock', filter),
+    queryFn: () => api.get<ApiResponse<StockReportResponse>>('/reports/stock', filter),
   })
 }
 
 export function useCashierPerformanceQuery(filter: { date_from?: string; date_to?: string }) {
   return useQuery({
     queryKey: ['reports', 'cashierPerformance', filter],
-    queryFn: () => api.get<CashierPerformance[]>('/reports/cashier-performance', filter),
+    queryFn: () => api.get<ApiResponse<CashierPerformance[]>>('/reports/cashier-performance', filter),
   })
 }

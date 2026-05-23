@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import { api } from '@/services/api.client'
-import type { PaginatedResponse } from '@/shared/types'
+import type { ApiResponse, PaginatedResponse } from '@/shared/types'
 
 import type {
   CreateSupplierPurchasePayload,
@@ -27,7 +27,7 @@ export function useSupplierPurchasesQuery(filter?: SupplierPurchaseFilter) {
 export function useSupplierPurchaseDetailQuery(id: number | null) {
   return useQuery({
     queryKey: QK.detail(id ?? 0),
-    queryFn: () => api.get<SupplierPurchase>(`/supplier-purchases/${id}`),
+    queryFn: () => api.get<ApiResponse<SupplierPurchase>>(`/supplier-purchases/${id}`),
     enabled: id !== null && id > 0,
   })
 }
