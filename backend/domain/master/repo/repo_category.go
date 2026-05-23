@@ -11,15 +11,17 @@ import (
 )
 
 const (
-	getAllCategoriesQuery  = `SELECT c.id, c.name, COALESCE(c.code, '') as code, c.description, (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id) AS product_count, c.created_at FROM categories c ORDER BY c.name`
-	getCategoryByIDQuery   = `SELECT c.id, c.name, COALESCE(c.code, '') as code, c.description, (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id) AS product_count, c.created_at FROM categories c WHERE c.id = ? LIMIT 1`
-	getCategoryByNameQuery = `SELECT id, name, COALESCE(code, '') as code, description, created_at FROM categories WHERE name = ? LIMIT 1`
-	checkCategoryNameQuery = `SELECT id FROM categories WHERE name = ? AND id != ? LIMIT 1`
-	checkCategoryCodeQuery = `SELECT id FROM categories WHERE code = ? LIMIT 1`
-	checkCategoryUsedQuery = `SELECT COUNT(*) FROM products WHERE category_id = ?`
-	createCategoryQuery    = `INSERT INTO categories (name, code, description) VALUES (?, ?, ?)`
-	updateCategoryQuery    = `UPDATE categories SET name = ?, description = ?, updated_at = NOW() WHERE id = ?`
-	deleteCategoryQuery    = `DELETE FROM categories WHERE id = ?`
+	getAllCategoriesQuery              = `SELECT c.id, c.name, COALESCE(c.code, '') as code, c.description, COALESCE(c.is_active, 1) as is_active, (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id) AS product_count, (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id AND p.is_active = 1) AS active_product_count, c.created_at FROM categories c ORDER BY c.name`
+	getCategoryByIDQuery              = `SELECT c.id, c.name, COALESCE(c.code, '') as code, c.description, COALESCE(c.is_active, 1) as is_active, (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id) AS product_count, (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id AND p.is_active = 1) AS active_product_count, c.created_at FROM categories c WHERE c.id = ? LIMIT 1`
+	getCategoryByNameQuery            = `SELECT id, name, COALESCE(code, '') as code, description, COALESCE(is_active, 1) as is_active, created_at FROM categories WHERE name = ? LIMIT 1`
+	checkCategoryNameQuery            = `SELECT id FROM categories WHERE name = ? AND id != ? LIMIT 1`
+	checkCategoryCodeQuery            = `SELECT id FROM categories WHERE code = ? LIMIT 1`
+	checkCategoryUsedQuery            = `SELECT COUNT(*) FROM products WHERE category_id = ?`
+	checkCategoryActiveProductsQuery  = `SELECT COUNT(*) FROM products WHERE category_id = ? AND is_active = 1`
+	createCategoryQuery               = `INSERT INTO categories (name, code, description) VALUES (?, ?, ?)`
+	updateCategoryQuery               = `UPDATE categories SET name = ?, description = ?, updated_at = NOW() WHERE id = ?`
+	deleteCategoryQuery               = `DELETE FROM categories WHERE id = ?`
+	toggleCategoryStatusQuery         = `UPDATE categories SET is_active = NOT is_active, updated_at = NOW() WHERE id = ?`
 )
 
 type categoryRepo struct {
@@ -40,7 +42,7 @@ func (r *categoryRepo) GetAll() ([]*model_master.Category, error) {
 	categories := make([]*model_master.Category, 0)
 	for rows.Next() {
 		var c model_master.Category
-		if err := rows.Scan(&c.ID, &c.Name, &c.Code, &c.Description, &c.ProductCount, &c.CreatedAt); err != nil {
+		if err := rows.Scan(&c.ID, &c.Name, &c.Code, &c.Description, &c.IsActive, &c.ProductCount, &c.ActiveProductCount, &c.CreatedAt); err != nil {
 			return nil, err
 		}
 		categories = append(categories, &c)
@@ -52,25 +54,33 @@ func (r *categoryRepo) GetAll() ([]*model_master.Category, error) {
 }
 
 func (r *categoryRepo) GetByName(name string) (*model_master.Category, error) {
-	var c model_master.Category
-	result := r.db.Raw(getCategoryByNameQuery, name).Scan(&c)
-	if result.Error != nil {
-		return nil, result.Error
+	rows, err := r.db.Raw(getCategoryByNameQuery, name).Rows()
+	if err != nil {
+		return nil, err
 	}
-	if result.RowsAffected == 0 {
+	defer rows.Close()
+	if !rows.Next() {
 		return nil, nil
+	}
+	var c model_master.Category
+	if err := rows.Scan(&c.ID, &c.Name, &c.Code, &c.Description, &c.IsActive, &c.CreatedAt); err != nil {
+		return nil, err
 	}
 	return &c, nil
 }
 
 func (r *categoryRepo) GetByID(id int) (*model_master.Category, error) {
-	var c model_master.Category
-	result := r.db.Raw(getCategoryByIDQuery, id).Scan(&c)
-	if result.Error != nil {
-		return nil, result.Error
+	rows, err := r.db.Raw(getCategoryByIDQuery, id).Rows()
+	if err != nil {
+		return nil, err
 	}
-	if result.RowsAffected == 0 {
+	defer rows.Close()
+	if !rows.Next() {
 		return nil, nil
+	}
+	var c model_master.Category
+	if err := rows.Scan(&c.ID, &c.Name, &c.Code, &c.Description, &c.IsActive, &c.ProductCount, &c.ActiveProductCount, &c.CreatedAt); err != nil {
+		return nil, err
 	}
 	return &c, nil
 }
@@ -87,6 +97,14 @@ func (r *categoryRepo) CheckNameExists(name string, excludeID int) (bool, error)
 func (r *categoryRepo) CountProductsByCategory(categoryID int) (int, error) {
 	var count int
 	if err := r.db.Raw(checkCategoryUsedQuery, categoryID).Scan(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (r *categoryRepo) CountActiveProductsByCategory(categoryID int) (int, error) {
+	var count int
+	if err := r.db.Raw(checkCategoryActiveProductsQuery, categoryID).Scan(&count).Error; err != nil {
 		return 0, err
 	}
 	return count, nil
@@ -157,4 +175,8 @@ func (r *categoryRepo) Update(id int, name, description string) error {
 
 func (r *categoryRepo) Delete(id int) error {
 	return r.db.Exec(deleteCategoryQuery, id).Error
+}
+
+func (r *categoryRepo) ToggleStatus(id int) error {
+	return r.db.Exec(toggleCategoryStatusQuery, id).Error
 }

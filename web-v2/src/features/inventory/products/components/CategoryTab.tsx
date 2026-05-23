@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Pencil, Plus, Search, Trash2 } from 'lucide-react'
+import { Lock, LockOpen, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { ROLES } from '@/shared/constants'
@@ -19,6 +19,7 @@ import {
   useCreateCategoryMutation,
   useDeleteCategoryMutation,
   useUpdateCategoryMutation,
+  useToggleCategoryStatusMutation,
 } from '../products.api'
 import type { Category } from '../products.types'
 
@@ -42,6 +43,7 @@ export function CategoryTab() {
   const { mutate: createCategory, isPending: isCreating } = useCreateCategoryMutation()
   const { mutate: updateCategory, isPending: isUpdating } = useUpdateCategoryMutation()
   const { mutate: deleteCategory, isPending: isDeleting } = useDeleteCategoryMutation()
+  const { mutate: toggleStatus } = useToggleCategoryStatusMutation()
 
   const isPending = isCreating || isUpdating
 
@@ -134,7 +136,30 @@ export function CategoryTab() {
     })
   }
 
+  const handleToggleStatus = (row: Category) => {
+    if (row.is_active && row.active_product_count > 0) {
+      toast.error(
+        `Kategori tidak bisa dinonaktifkan karena masih memiliki ${row.active_product_count} produk aktif`
+      )
+      return
+    }
+    toggleStatus(row.id, {
+      onSuccess: () =>
+        toast.success(`Kategori berhasil ${row.is_active ? 'dinonaktifkan' : 'diaktifkan'}`),
+    })
+  }
+
   const columns: ColumnDef<Category>[] = [
+    {
+      key: 'code',
+      header: 'Kode',
+      width: '80px',
+      cell: (row) => (
+        <span className="font-mono text-xs font-semibold text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded">
+          {row.code}
+        </span>
+      ),
+    },
     {
       key: 'name',
       header: 'Nama Kategori',
@@ -162,10 +187,25 @@ export function CategoryTab() {
       ),
     },
     {
+      key: 'is_active',
+      header: 'Status',
+      align: 'center',
+      width: '100px',
+      cell: (row) => (
+        <span
+          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+            row.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+          }`}
+        >
+          {row.is_active ? 'Aktif' : 'Nonaktif'}
+        </span>
+      ),
+    },
+    {
       key: 'actions',
       header: 'Aksi',
       align: 'center',
-      width: '100px',
+      width: '120px',
       cell: (row) => (
         <div className="flex items-center justify-center gap-1">
           <RoleGuard allowedRoles={[ROLES.OWNER, ROLES.ADMIN]}>
@@ -177,6 +217,15 @@ export function CategoryTab() {
               title="Edit"
             >
               <Pencil size={14} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-7 w-7 ${row.is_active ? 'text-gray-500 hover:text-amber-600' : 'text-gray-400 hover:text-green-600'}`}
+              onClick={() => handleToggleStatus(row)}
+              title={row.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+            >
+              {row.is_active ? <Lock size={14} /> : <LockOpen size={14} />}
             </Button>
           </RoleGuard>
           <RoleGuard allowedRoles={[ROLES.OWNER]}>

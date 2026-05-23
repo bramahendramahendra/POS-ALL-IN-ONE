@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
@@ -11,6 +11,7 @@ import { Input } from '@/shared/components/ui/input'
 import { Textarea } from '@/shared/components/ui/textarea'
 import { Label } from '@/shared/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/shared/components/ui/radio-group'
+import { RupiahInput } from '@/shared/components/ui/rupiah-input'
 import {
   Select,
   SelectContent,
@@ -112,6 +113,7 @@ function GrosirRowForm({
     register,
     handleSubmit,
     watch,
+    control: grosirControl,
     formState: { errors },
   } = useForm<GrosirFormValues>({
     resolver: zodResolver(grosirSchema),
@@ -151,7 +153,7 @@ function GrosirRowForm({
 
       {convQty > 0 && (basePurchase > 0 || baseSelling > 0) && (
         <div className="rounded bg-blue-50 border border-blue-100 px-3 py-1.5 text-xs text-blue-700 flex gap-4">
-          <span>📊 Ref. Harga Beli: <strong>Rp {refPurchase.toLocaleString('id-ID')}</strong></span>
+          <span>Ref. Harga Beli: <strong>Rp {refPurchase.toLocaleString('id-ID')}</strong></span>
           <span>Ref. Harga Jual: <strong>Rp {refSelling.toLocaleString('id-ID')}</strong></span>
         </div>
       )}
@@ -159,20 +161,22 @@ function GrosirRowForm({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
           <Label className="text-xs">Harga Beli Aktual</Label>
-          <Input
-            type="number"
-            min={0}
-            {...register('purchase_price', { valueAsNumber: true })}
-            className="h-8 text-sm"
+          <Controller
+            name="purchase_price"
+            control={grosirControl}
+            render={({ field }) => (
+              <RupiahInput value={field.value} onChange={field.onChange} className="h-8 text-sm" />
+            )}
           />
         </div>
         <div className="space-y-1">
           <Label className="text-xs">Harga Jual Aktual *</Label>
-          <Input
-            type="number"
-            min={1}
-            {...register('selling_price', { valueAsNumber: true })}
-            className="h-8 text-sm"
+          <Controller
+            name="selling_price"
+            control={grosirControl}
+            render={({ field }) => (
+              <RupiahInput value={field.value} onChange={field.onChange} className="h-8 text-sm" />
+            )}
           />
           {errors.selling_price && <p className="text-xs text-red-500">{errors.selling_price.message}</p>}
         </div>
@@ -230,7 +234,7 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
     },
   })
 
-  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = form
+  const { register, handleSubmit, reset, setValue, watch, control, formState: { errors } } = form
 
   const isActiveValue = watch('is_active')
   const categoryIdValue = watch('category_id')
@@ -248,12 +252,12 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
   )
 
   useEffect(() => {
-    const barcode = barcodeData?.data?.barcode
+    const barcode = barcodeData?.barcode
     if (barcode) setValue('barcode', barcode)
   }, [barcodeData, setValue])
 
   useEffect(() => {
-    const sku = skuData?.data?.sku
+    const sku = skuData?.sku
     if (sku) setValue('sku', sku)
   }, [skuData, setValue])
 
@@ -316,7 +320,7 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
     } else {
       createProduct(payload, {
         onSuccess: (data) => {
-          const newId = (data as unknown as { data: { id: number } })?.data?.id
+          const newId = (data as unknown as { id: number })?.id
           if (newId && grosirRows.length > 0) {
             saveGrosir({ productId: newId, units: grosirRows })
           }
@@ -400,6 +404,59 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
                   {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
                 </div>
 
+                {/* Kategori + Satuan */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>
+                      Kategori <span className="text-red-500">*</span>
+                    </Label>
+                    <Select
+                      value={categoryIdValue !== undefined ? String(categoryIdValue) : ''}
+                      onValueChange={(v) => {
+                        setValue('category_id', Number(v))
+                        if (!generateSkuEnabled) return
+                        setGenerateSkuEnabled(false)
+                        setValue('sku', '')
+                      }}
+                    >
+                      <SelectTrigger className={errors.category_id ? 'border-red-500' : ''}>
+                        <SelectValue placeholder="Pilih Kategori" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((c) => (
+                          <SelectItem key={c.id} value={String(c.id)}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.category_id && (
+                      <p className="text-xs text-red-500">{errors.category_id.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>
+                      Satuan <span className="text-red-500">*</span>
+                    </Label>
+                    <Select
+                      value={unitValue || ''}
+                      onValueChange={(v) => setValue('unit', v)}
+                    >
+                      <SelectTrigger className={errors.unit ? 'border-red-500' : ''}>
+                        <SelectValue placeholder="Pilih Satuan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {units.filter((u) => u.is_active).map((u) => (
+                          <SelectItem key={u.id} value={u.name}>
+                            {u.name} ({u.abbreviation})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.unit && <p className="text-xs text-red-500">{errors.unit.message}</p>}
+                  </div>
+                </div>
+
                 {/* Barcode + SKU */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
@@ -458,69 +515,21 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
                   </div>
                 </div>
 
-                {/* Satuan + Kategori */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label>
-                      Satuan <span className="text-red-500">*</span>
-                    </Label>
-                    <Select
-                      value={unitValue || ''}
-                      onValueChange={(v) => setValue('unit', v)}
-                    >
-                      <SelectTrigger className={errors.unit ? 'border-red-500' : ''}>
-                        <SelectValue placeholder="Pilih Satuan" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {units.filter((u) => u.is_active).map((u) => (
-                          <SelectItem key={u.id} value={u.name}>
-                            {u.name} ({u.abbreviation})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.unit && <p className="text-xs text-red-500">{errors.unit.message}</p>}
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>
-                      Kategori <span className="text-red-500">*</span>
-                    </Label>
-                    <Select
-                      value={categoryIdValue !== undefined ? String(categoryIdValue) : ''}
-                      onValueChange={(v) => {
-                        setValue('category_id', Number(v))
-                        if (!generateSkuEnabled) return
-                        setGenerateSkuEnabled(false)
-                        setValue('sku', '')
-                      }}
-                    >
-                      <SelectTrigger className={errors.category_id ? 'border-red-500' : ''}>
-                        <SelectValue placeholder="Pilih Kategori" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((c) => (
-                          <SelectItem key={c.id} value={String(c.id)}>
-                            {c.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.category_id && (
-                      <p className="text-xs text-red-500">{errors.category_id.message}</p>
-                    )}
-                  </div>
-                </div>
-
                 {/* Harga Beli + Harga Jual + Margin */}
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="purchase_price">Harga Beli (Rp)</Label>
-                    <Input
-                      id="purchase_price"
-                      type="number"
-                      min={0}
-                      {...register('purchase_price', { valueAsNumber: true })}
-                      className={errors.purchase_price ? 'border-red-500' : ''}
+                    <Label htmlFor="purchase_price">Harga Beli</Label>
+                    <Controller
+                      name="purchase_price"
+                      control={control}
+                      render={({ field }) => (
+                        <RupiahInput
+                          id="purchase_price"
+                          value={field.value}
+                          onChange={field.onChange}
+                          className={errors.purchase_price ? 'border-red-500' : ''}
+                        />
+                      )}
                     />
                     {errors.purchase_price && (
                       <p className="text-xs text-red-500">{errors.purchase_price.message}</p>
@@ -528,14 +537,19 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="selling_price">
-                      Harga Jual (Rp) <span className="text-red-500">*</span>
+                      Harga Jual <span className="text-red-500">*</span>
                     </Label>
-                    <Input
-                      id="selling_price"
-                      type="number"
-                      min={0}
-                      {...register('selling_price', { valueAsNumber: true })}
-                      className={errors.selling_price ? 'border-red-500' : ''}
+                    <Controller
+                      name="selling_price"
+                      control={control}
+                      render={({ field }) => (
+                        <RupiahInput
+                          id="selling_price"
+                          value={field.value}
+                          onChange={field.onChange}
+                          className={errors.selling_price ? 'border-red-500' : ''}
+                        />
+                      )}
                     />
                     {errors.selling_price && (
                       <p className="text-xs text-red-500">{errors.selling_price.message}</p>
@@ -581,42 +595,49 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
                       {...register('min_stock', { valueAsNumber: true })}
                       className={errors.min_stock ? 'border-red-500' : ''}
                     />
+                    <p className="text-xs text-gray-500">
+                      Batas stok terendah sebelum muncul peringatan stok hampir habis.
+                    </p>
                     {errors.min_stock && (
                       <p className="text-xs text-red-500">{errors.min_stock.message}</p>
                     )}
                   </div>
                 </div>
 
-                {/* Deskripsi */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="description">Deskripsi</Label>
-                  <Textarea
-                    id="description"
-                    {...register('description')}
-                    placeholder="Deskripsi produk (opsional)"
-                    className="resize-none"
-                    rows={2}
-                  />
-                </div>
+                {/* Deskripsi — hanya saat edit */}
+                {isEdit && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="description">Deskripsi</Label>
+                    <Textarea
+                      id="description"
+                      {...register('description')}
+                      placeholder="Deskripsi produk (opsional)"
+                      className="resize-none"
+                      rows={2}
+                    />
+                  </div>
+                )}
 
-                {/* Status */}
-                <div className="space-y-1.5">
-                  <Label>Status</Label>
-                  <RadioGroup
-                    value={isActiveValue ? 'active' : 'inactive'}
-                    onValueChange={(v) => setValue('is_active', v === 'active')}
-                    className="flex gap-4"
-                  >
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="active" id="status-active" />
-                      <Label htmlFor="status-active" className="cursor-pointer font-normal">Aktif</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="inactive" id="status-inactive" />
-                      <Label htmlFor="status-inactive" className="cursor-pointer font-normal">Nonaktif</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
+                {/* Status — hanya saat edit */}
+                {isEdit && (
+                  <div className="space-y-1.5">
+                    <Label>Status</Label>
+                    <RadioGroup
+                      value={isActiveValue ? 'active' : 'inactive'}
+                      onValueChange={(v) => setValue('is_active', v === 'active')}
+                      className="flex gap-4"
+                    >
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="active" id="status-active" />
+                        <Label htmlFor="status-active" className="cursor-pointer font-normal">Aktif</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="inactive" id="status-inactive" />
+                        <Label htmlFor="status-inactive" className="cursor-pointer font-normal">Nonaktif</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                )}
 
                 {/* Grosiran — create mode only */}
                 {!isEdit && (

@@ -22,6 +22,7 @@ func CategoryRoutes(r *gin.RouterGroup) {
 		g.POST("", middleware.RoleMiddleware("owner", "admin"), categoryHand.Create)
 		g.PUT("/:id", middleware.RoleMiddleware("owner", "admin"), categoryHand.Update)
 		g.DELETE("/:id", middleware.RoleMiddleware("owner"), categoryHand.Delete)
+		g.PATCH("/:id/toggle-status", middleware.RoleMiddleware("owner", "admin"), categoryHand.ToggleStatus)
 	}
 }
 

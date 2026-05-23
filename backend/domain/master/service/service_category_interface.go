@@ -8,4 +8,5 @@ type CategoryService interface {
 	Create(req *dto_master.CreateCategoryRequest) (*dto_master.CategoryResponse, error)
 	Update(id int, req *dto_master.UpdateCategoryRequest) error
 	Delete(id int) error
+	ToggleStatus(id int) error
 }

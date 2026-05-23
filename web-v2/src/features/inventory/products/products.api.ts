@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 
 import { api } from '@/services'
 import { queryKeys } from '@/shared/constants'
-import type { ApiResponse, PaginatedResponse } from '@/shared/types'
+import type { ApiResponse } from '@/shared/types'
 
 import type {
   Category,
@@ -64,7 +64,7 @@ export function useImportProductsBulkMutation() {
 export function useGenerateBarcodeQuery(enabled: boolean) {
   return useQuery({
     queryKey: ['generate-barcode'],
-    queryFn: () => api.get<ApiResponse<{ barcode: string }>>('/products/generate-barcode'),
+    queryFn: () => api.get<{ barcode: string }>('/products/generate-barcode'),
     enabled,
     staleTime: Infinity,
   })
@@ -73,7 +73,7 @@ export function useGenerateBarcodeQuery(enabled: boolean) {
 export function useGenerateSkuQuery(categoryId: number, enabled: boolean) {
   return useQuery({
     queryKey: ['generate-sku', categoryId],
-    queryFn: () => api.get<ApiResponse<{ sku: string }>>('/products/generate-sku', { category_id: categoryId }),
+    queryFn: () => api.get<{ sku: string }>('/products/generate-sku', { category_id: categoryId }),
     enabled: enabled && categoryId > 0,
     staleTime: Infinity,
   })
@@ -81,10 +81,20 @@ export function useGenerateSkuQuery(categoryId: number, enabled: boolean) {
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
+export interface ProductListData {
+  items: Product[]
+  total: number
+  page: number
+  limit: number
+}
+
 export function useProductListQuery(filter?: ProductFilter) {
   return useQuery({
     queryKey: queryKeys.products.list(filter as Record<string, unknown>),
-    queryFn: () => api.get<PaginatedResponse<Product>>('/products', filter),
+    queryFn: () => {
+      const { page_size, ...rest } = filter ?? {}
+      return api.get<ProductListData>('/products', { ...rest, limit: page_size })
+    },
   })
 }
 
@@ -211,6 +221,17 @@ export function useDeleteCategoryMutation() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => api.delete<void>(`/categories/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.categories.all() })
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+}
+
+export function useToggleCategoryStatusMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => api.patch<void>(`/categories/${id}/toggle-status`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.categories.all() })
     },

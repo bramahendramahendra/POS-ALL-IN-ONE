@@ -116,6 +116,26 @@ func (h *CategoryHandler) Update(c *gin.Context) {
 	})
 }
 
+// PATCH /api/categories/:id/toggle-status
+func (h *CategoryHandler) ToggleStatus(c *gin.Context) {
+	id, err := parseMasterIDParam(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	if svcErr := h.service.ToggleStatus(id); svcErr != nil {
+		c.Error(svcErr)
+		return
+	}
+
+	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
+		Code:    helper.StatusOk,
+		Status:  true,
+		Message: "Status kategori berhasil diperbarui",
+	})
+}
+
 // DELETE /api/categories/:id
 func (h *CategoryHandler) Delete(c *gin.Context) {
 	id, err := parseMasterIDParam(c)

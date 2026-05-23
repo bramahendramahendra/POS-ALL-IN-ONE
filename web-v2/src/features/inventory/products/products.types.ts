@@ -3,7 +3,9 @@ export interface Category {
   name: string
   code: string
   description: string
+  is_active: boolean
   product_count: number
+  active_product_count: number
   created_at: string
 }
 

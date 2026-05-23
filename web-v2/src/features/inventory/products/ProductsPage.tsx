@@ -44,8 +44,8 @@ export function ProductsPage() {
   const hasCategories = categories.length > 0
   const hasActiveUnits = units.some((u) => u.is_active)
 
-  const products = productData?.data?.data ?? []
-  const total = productData?.data?.total ?? 0
+  const products = productData?.items ?? []
+  const total = productData?.total ?? 0
 
   const handleFilterChange = (newFilter: ProductFilter) => {
     setFilter(newFilter)

@@ -146,13 +146,38 @@ func (s *categoryService) Delete(id int) error {
 	return s.repo.Delete(id)
 }
 
+func (s *categoryService) ToggleStatus(id int) error {
+	c, err := s.repo.GetByID(id)
+	if err != nil {
+		return &errors.InternalServerError{Message: err.Error()}
+	}
+	if c == nil {
+		return &errors.NotFoundError{Message: "Kategori tidak ditemukan"}
+	}
+
+	// Cegah nonaktifkan jika masih ada produk aktif
+	if c.IsActive {
+		activeCount, err := s.repo.CountActiveProductsByCategory(id)
+		if err != nil {
+			return &errors.InternalServerError{Message: err.Error()}
+		}
+		if activeCount > 0 {
+			return &errors.BadRequestError{Message: "Kategori tidak bisa dinonaktifkan karena masih memiliki produk aktif"}
+		}
+	}
+
+	return s.repo.ToggleStatus(id)
+}
+
 func toCategoryResponse(c *model_master.Category) *dto_master.CategoryResponse {
 	return &dto_master.CategoryResponse{
-		ID:           c.ID,
-		Name:         c.Name,
-		Code:         c.Code,
-		Description:  c.Description,
-		ProductCount: c.ProductCount,
-		CreatedAt:    c.CreatedAt,
+		ID:                 c.ID,
+		Name:               c.Name,
+		Code:               c.Code,
+		Description:        c.Description,
+		IsActive:           c.IsActive,
+		ProductCount:       c.ProductCount,
+		ActiveProductCount: c.ActiveProductCount,
+		CreatedAt:          c.CreatedAt,
 	}
 }
