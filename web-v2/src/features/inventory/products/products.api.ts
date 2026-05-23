@@ -26,21 +26,34 @@ import type {
 
 // ─── Import ───────────────────────────────────────────────────────────────────
 
-interface ImportProductsResult {
-  imported: number
-  failed: number
-  errors?: string[]
+export interface ImportBulkRow {
+  nama: string
+  barcode: string
+  kategori: string
+  harga_beli: number
+  harga_jual: number
+  stok: number
+  stok_minimum: number
+  satuan: string
 }
 
-export function useImportProductsCsvMutation() {
+interface ImportBulkResult {
+  success: number
+  failed: { baris: number; data: ImportBulkRow; alasan: string }[]
+}
+
+export function useImportProductsBulkMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (payload: Record<string, unknown>[]) =>
-      api.post<ImportProductsResult>('/products/import', payload),
+    mutationFn: (rows: ImportBulkRow[]) =>
+      api.post<ImportBulkResult>('/products/import-bulk', { rows }),
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: queryKeys.products.all() })
-      const result = data as unknown as ImportProductsResult
-      toast.success(`${result.imported} produk berhasil diimport${result.failed > 0 ? `, ${result.failed} gagal` : ''}`)
+      const result = data as unknown as ImportBulkResult
+      const failedCount = result.failed?.length ?? 0
+      toast.success(
+        `${result.success} produk berhasil diimport${failedCount > 0 ? `, ${failedCount} gagal` : ''}`
+      )
     },
     onError: (e: Error) => toast.error(e.message),
   })
@@ -247,6 +260,28 @@ export function useToggleUnitStatusMutation() {
     mutationFn: (id: number) => api.patch<void>(`/units/${id}/toggle-status`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.units.all() })
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+}
+
+// ─── Save Product Units Bulk (untuk create mode) ─────────────────────────────
+
+export interface GrosirRow {
+  unit_name: string
+  conversion_qty: number
+  purchase_price: number
+  selling_price: number
+  is_default: boolean
+}
+
+export function useSaveProductUnitsBulkMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ productId, units }: { productId: number; units: GrosirRow[] }) =>
+      api.post<void>(`/products/${productId}/units`, { units }),
+    onSuccess: (_data, { productId }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.products.productUnits(productId) })
     },
     onError: (e: Error) => toast.error(e.message),
   })

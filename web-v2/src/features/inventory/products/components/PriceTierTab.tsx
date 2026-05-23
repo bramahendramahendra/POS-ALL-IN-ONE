@@ -37,7 +37,7 @@ import type { PriceTier, ProductUnit } from '../products.types'
 // ─── Price Tier Form ──────────────────────────────────────────────────────────
 
 const priceTierSchema = z.object({
-  unit_id: z.number({ error: 'Unit wajib dipilih' }),
+  unit_id: z.number({ error: 'Satuan wajib dipilih' }),
   tier_name: z.string().min(1, 'Nama tier wajib diisi'),
   min_qty: z.number().min(1, 'Minimal qty harus > 0'),
   price: z.number().min(0, 'Harga tidak boleh negatif'),
@@ -47,7 +47,7 @@ type PriceTierFormValues = z.infer<typeof priceTierSchema>
 // ─── Product Unit Form ────────────────────────────────────────────────────────
 
 const productUnitSchema = z.object({
-  unit_id: z.number({ error: 'Unit wajib dipilih' }),
+  unit_id: z.number({ error: 'Satuan wajib dipilih' }),
   barcode: z.string().optional(),
   cost_price: z.number().min(0, 'Harga pokok tidak boleh negatif'),
   is_default: z.boolean(),
@@ -111,7 +111,7 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
         { unitId: editingUnitId, ...values, barcode: values.barcode || undefined },
         {
           onSuccess: () => {
-            toast.success('Unit produk berhasil diperbarui')
+            toast.success('Satuan produk berhasil diperbarui')
             handleCloseUnitForm()
           },
           onError: (e) => toast.error(e.message),
@@ -122,7 +122,7 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
         { ...values, barcode: values.barcode || undefined },
         {
           onSuccess: () => {
-            toast.success('Unit produk berhasil ditambahkan')
+            toast.success('Satuan produk berhasil ditambahkan')
             handleCloseUnitForm()
           },
           onError: (e) => toast.error(e.message),
@@ -135,7 +135,7 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
     if (deletingUnitId === null) return
     deleteProductUnit(deletingUnitId, {
       onSuccess: () => {
-        toast.success('Unit produk berhasil dihapus')
+        toast.success('Satuan produk berhasil dihapus')
         closeUnitDelete()
         setDeletingUnitId(null)
       },
@@ -146,7 +146,7 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
   const productUnitColumns: ColumnDef<ProductUnit>[] = [
     {
       key: 'unit_name',
-      header: 'Unit',
+      header: 'Satuan',
       cell: (row) => <span className="font-medium">{row.unit_name}</span>,
     },
     {
@@ -293,7 +293,7 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
     },
     {
       key: 'unit_name',
-      header: 'Unit',
+      header: 'Satuan',
       cell: (row) => <span>{row.unit_name}</span>,
     },
     {
@@ -348,7 +348,7 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
       {/* ── Product Units ── */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-semibold text-gray-700">Unit Produk</h4>
+          <h4 className="text-sm font-semibold text-gray-700">Satuan Produk</h4>
           <RoleGuard allowedRoles={[ROLES.OWNER, ROLES.ADMIN]}>
             <Button
               size="sm"
@@ -356,7 +356,7 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
               onClick={handleOpenAddUnit}
               className="gap-1 h-7 text-xs"
             >
-              <Plus size={12} /> Tambah Unit
+              <Plus size={12} /> Tambah Satuan
             </Button>
           </RoleGuard>
         </div>
@@ -364,8 +364,8 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
           columns={productUnitColumns}
           data={productUnits as (ProductUnit & Record<string, unknown>)[]}
           isLoading={isLoadingUnits}
-          emptyMessage="Belum ada unit"
-          emptyDescription="Tambah unit produk untuk menentukan satuan dan harga pokok."
+          emptyMessage="Belum ada satuan"
+          emptyDescription="Tambah satuan produk untuk menentukan satuan dan harga pokok."
         />
       </div>
 
@@ -399,7 +399,7 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
         onOpenChange={(open) => {
           if (!open) handleCloseUnitForm()
         }}
-        title={editingUnitId !== null ? 'Edit Unit Produk' : 'Tambah Unit Produk'}
+        title={editingUnitId !== null ? 'Edit Satuan Produk' : 'Tambah Satuan Produk'}
         size="sm"
         isLoading={isAddingUnit || isUpdatingUnit}
         onSubmit={unitForm.handleSubmit(onSubmitUnit)}
@@ -407,14 +407,14 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label>
-              Unit <span className="text-red-500">*</span>
+              Satuan <span className="text-red-500">*</span>
             </Label>
             <Select
               value={unitForm.watch('unit_id') > 0 ? String(unitForm.watch('unit_id')) : ''}
               onValueChange={(v) => unitForm.setValue('unit_id', Number(v))}
             >
               <SelectTrigger className={unitForm.formState.errors.unit_id ? 'border-red-500' : ''}>
-                <SelectValue placeholder="Pilih unit" />
+                <SelectValue placeholder="Pilih satuan" />
               </SelectTrigger>
               <SelectContent>
                 {units.map((u) => (
@@ -456,7 +456,7 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
               className="h-4 w-4 rounded border-gray-300"
             />
             <Label htmlFor="pu-default" className="cursor-pointer font-normal">
-              Unit default
+              Satuan default
             </Label>
           </div>
         </div>
@@ -470,8 +470,8 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
             setDeletingUnitId(null)
           }
         }}
-        title="Hapus Unit Produk"
-        description="Unit produk yang dihapus tidak bisa dikembalikan."
+        title="Hapus Satuan Produk"
+        description="Satuan produk yang dihapus tidak bisa dikembalikan."
         confirmLabel="Ya, Hapus"
         variant="destructive"
         isLoading={isDeletingUnit}
@@ -492,14 +492,14 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label>
-              Unit <span className="text-red-500">*</span>
+              Satuan <span className="text-red-500">*</span>
             </Label>
             <Select
               value={priceForm.watch('unit_id') > 0 ? String(priceForm.watch('unit_id')) : ''}
               onValueChange={(v) => priceForm.setValue('unit_id', Number(v))}
             >
               <SelectTrigger className={priceForm.formState.errors.unit_id ? 'border-red-500' : ''}>
-                <SelectValue placeholder="Pilih unit" />
+                <SelectValue placeholder="Pilih satuan" />
               </SelectTrigger>
               <SelectContent>
                 {units.map((u) => (

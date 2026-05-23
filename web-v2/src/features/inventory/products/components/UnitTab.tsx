@@ -23,7 +23,7 @@ import {
 import type { Unit } from '../products.types'
 
 const unitSchema = z.object({
-  name: z.string().min(1, 'Nama unit wajib diisi'),
+  name: z.string().min(1, 'Nama satuan wajib diisi'),
   abbreviation: z.string().min(1, 'Singkatan wajib diisi'),
 })
 type UnitFormValues = z.infer<typeof unitSchema>
@@ -33,8 +33,10 @@ export function UnitTab() {
   const debouncedSearch = useDebounce(search, 300)
   const { isOpen: formOpen, open: openForm, close: closeForm } = useDisclosure()
   const { isOpen: deleteOpen, open: openDelete, close: closeDelete } = useDisclosure()
+  const { isOpen: confirmOpen, open: openConfirm, close: closeConfirm } = useDisclosure()
   const [editingId, setEditingId] = useState<number | null>(null)
   const [deletingUnit, setDeletingUnit] = useState<Unit | null>(null)
+  const [pendingValues, setPendingValues] = useState<UnitFormValues | null>(null)
 
   const { data: units = [], isLoading } = useUnitListQuery()
   const { mutate: createUnit, isPending: isCreating } = useCreateUnitMutation()
@@ -79,12 +81,21 @@ export function UnitTab() {
   }
 
   const onSubmit = (values: UnitFormValues) => {
+    setPendingValues(values)
+    openConfirm()
+  }
+
+  const handleConfirmSave = () => {
+    if (!pendingValues) return
+    const values = pendingValues
     if (editingId !== null) {
       updateUnit(
         { id: editingId, name: values.name, abbreviation: values.abbreviation },
         {
           onSuccess: () => {
-            toast.success('Unit berhasil diperbarui')
+            toast.success('Satuan berhasil diperbarui')
+            closeConfirm()
+            setPendingValues(null)
             handleCloseForm()
           },
         }
@@ -94,7 +105,9 @@ export function UnitTab() {
         { name: values.name, abbreviation: values.abbreviation },
         {
           onSuccess: () => {
-            toast.success('Unit berhasil ditambahkan')
+            toast.success('Satuan berhasil ditambahkan')
+            closeConfirm()
+            setPendingValues(null)
             handleCloseForm()
           },
         }
@@ -106,7 +119,7 @@ export function UnitTab() {
     if (deletingUnit === null) return
     deleteUnit(deletingUnit.id, {
       onSuccess: () => {
-        toast.success('Unit berhasil dihapus')
+        toast.success('Satuan berhasil dihapus')
         closeDelete()
         setDeletingUnit(null)
       },
@@ -116,7 +129,7 @@ export function UnitTab() {
   const columns: ColumnDef<Unit>[] = [
     {
       key: 'name',
-      header: 'Nama Unit',
+      header: 'Nama Satuan',
       sortable: true,
       cell: (row) => <span className="font-medium text-gray-800">{row.name}</span>,
     },
@@ -167,7 +180,7 @@ export function UnitTab() {
               onClick={() =>
                 toggleStatus(row.id, {
                   onSuccess: () =>
-                    toast.success(`Unit berhasil ${row.is_active ? 'dinonaktifkan' : 'diaktifkan'}`),
+                    toast.success(`Satuan berhasil ${row.is_active ? 'dinonaktifkan' : 'diaktifkan'}`),
                 })
               }
               title={row.is_active ? 'Nonaktifkan' : 'Aktifkan'}
@@ -198,7 +211,7 @@ export function UnitTab() {
         <div className="relative min-w-[220px] flex-1 max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <Input
-            placeholder="Cari unit..."
+            placeholder="Cari satuan..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-8 h-9 text-sm"
@@ -207,7 +220,7 @@ export function UnitTab() {
         <RoleGuard allowedRoles={[ROLES.OWNER, ROLES.ADMIN]}>
           <Button onClick={handleOpenAdd} className="gap-1" size="sm">
             <Plus size={14} />
-            Tambah Unit
+            Tambah Satuan
           </Button>
         </RoleGuard>
       </div>
@@ -216,8 +229,8 @@ export function UnitTab() {
         columns={columns}
         data={filtered as (Unit & Record<string, unknown>)[]}
         isLoading={isLoading}
-        emptyMessage="Belum ada unit"
-        emptyDescription="Tambah unit pertama Anda untuk memulai."
+        emptyMessage="Belum ada satuan"
+        emptyDescription="Tambah satuan pertama Anda untuk memulai."
       />
 
       {/* Form Modal */}
@@ -226,7 +239,7 @@ export function UnitTab() {
         onOpenChange={(open) => {
           if (!open) handleCloseForm()
         }}
-        title={editingId !== null ? 'Edit Unit' : 'Tambah Unit'}
+        title={editingId !== null ? 'Edit Satuan' : 'Tambah Satuan'}
         size="sm"
         isLoading={isPending}
         onSubmit={handleSubmit(onSubmit)}
@@ -234,12 +247,12 @@ export function UnitTab() {
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label htmlFor="unit-name">
-              Nama Unit <span className="text-red-500">*</span>
+              Nama Satuan <span className="text-red-500">*</span>
             </Label>
             <Input
               id="unit-name"
               {...register('name')}
-              placeholder="Nama unit (contoh: Pieces, Lusin, Kardus)"
+              placeholder="Nama satuan (contoh: Pieces, Lusin, Kardus)"
               className={errors.name ? 'border-red-500' : ''}
             />
             {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
@@ -261,6 +274,22 @@ export function UnitTab() {
         </div>
       </FormModal>
 
+      {/* Save Confirm */}
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeConfirm()
+            setPendingValues(null)
+          }
+        }}
+        title={editingId !== null ? 'Update Satuan' : 'Tambah Satuan'}
+        description={`Yakin ingin ${editingId !== null ? 'mengupdate' : 'menambahkan'} satuan "${pendingValues?.name}"?`}
+        confirmLabel="Ya, Simpan"
+        isLoading={isPending}
+        onConfirm={handleConfirmSave}
+      />
+
       {/* Delete Confirm */}
       <ConfirmDialog
         open={deleteOpen}
@@ -270,8 +299,8 @@ export function UnitTab() {
             setDeletingUnit(null)
           }
         }}
-        title="Hapus Unit"
-        description={`Yakin ingin menghapus unit "${deletingUnit?.name}"? Tindakan ini tidak bisa dibatalkan.`}
+        title="Hapus Satuan"
+        description={`Yakin ingin menghapus satuan "${deletingUnit?.name}"? Tindakan ini tidak bisa dibatalkan.`}
         confirmLabel="Ya, Hapus"
         variant="destructive"
         isLoading={isDeleting}

@@ -33,8 +33,10 @@ export function CategoryTab() {
   const debouncedSearch = useDebounce(search, 300)
   const { isOpen: formOpen, open: openForm, close: closeForm } = useDisclosure()
   const { isOpen: deleteOpen, open: openDelete, close: closeDelete } = useDisclosure()
+  const { isOpen: confirmOpen, open: openConfirm, close: closeConfirm } = useDisclosure()
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [deletingCategory, setDeletingCategory] = useState<Category | null>(null)
+  const [pendingValues, setPendingValues] = useState<CategoryFormValues | null>(null)
 
   const { data: categories = [], isLoading } = useCategoryListQuery()
   const { mutate: createCategory, isPending: isCreating } = useCreateCategoryMutation()
@@ -78,12 +80,21 @@ export function CategoryTab() {
   }
 
   const onSubmit = (values: CategoryFormValues) => {
+    setPendingValues(values)
+    openConfirm()
+  }
+
+  const handleConfirmSave = () => {
+    if (!pendingValues) return
+    const values = pendingValues
     if (editingCategory !== null) {
       updateCategory(
         { id: editingCategory.id, name: values.name, description: values.description },
         {
           onSuccess: () => {
             toast.success('Kategori berhasil diperbarui')
+            closeConfirm()
+            setPendingValues(null)
             handleCloseForm()
           },
         }
@@ -94,6 +105,8 @@ export function CategoryTab() {
         {
           onSuccess: () => {
             toast.success('Kategori berhasil ditambahkan')
+            closeConfirm()
+            setPendingValues(null)
             handleCloseForm()
           },
         }
@@ -242,6 +255,22 @@ export function CategoryTab() {
           </div>
         </div>
       </FormModal>
+
+      {/* Save Confirm */}
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeConfirm()
+            setPendingValues(null)
+          }
+        }}
+        title={editingCategory !== null ? 'Update Kategori' : 'Tambah Kategori'}
+        description={`Yakin ingin ${editingCategory !== null ? 'mengupdate' : 'menambahkan'} kategori "${pendingValues?.name}"?`}
+        confirmLabel="Ya, Simpan"
+        isLoading={isPending}
+        onConfirm={handleConfirmSave}
+      />
 
       {/* Delete Confirm */}
       <ConfirmDialog

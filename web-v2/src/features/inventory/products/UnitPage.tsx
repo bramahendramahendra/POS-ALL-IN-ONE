@@ -6,8 +6,8 @@ export function UnitPage() {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Unit Produk"
-        breadcrumbs={[{ label: 'Inventori' }, { label: 'Unit' }]}
+        title="Satuan Produk"
+        breadcrumbs={[{ label: 'Inventori' }, { label: 'Satuan' }]}
       />
       <UnitTab />
     </div>
