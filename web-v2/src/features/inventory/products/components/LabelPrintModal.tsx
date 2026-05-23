@@ -1,7 +1,10 @@
 import { useState } from 'react'
+import Barcode from 'react-barcode'
 import { Printer } from 'lucide-react'
 
+import { FormModal } from '@/shared/components'
 import { Button } from '@/shared/components/ui/button'
+import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
 import {
   Select,
@@ -23,139 +26,234 @@ interface LabelPrintModalProps {
 type LabelSize = 'small' | 'medium' | 'large'
 type ColCount = '2' | '3' | '4'
 
-const SIZE_CONFIG: Record<LabelSize, { width: string; fontSize: string; label: string }> = {
-  small: { width: '6cm', fontSize: '9px', label: 'Kecil (6cm)' },
-  medium: { width: '8cm', fontSize: '11px', label: 'Sedang (8cm)' },
-  large: { width: '10cm', fontSize: '13px', label: 'Besar (10cm)' },
+interface SizeConfig {
+  labelWidth: number
+  barcodeWidth: number
+  barcodeHeight: number
+  nameFontSize: number
+  priceFontSize: number
+  skuFontSize: number
+  label: string
 }
 
-function getDefaultPrice(product: Product): number | null {
+const SIZE_CONFIG: Record<LabelSize, SizeConfig> = {
+  small: {
+    labelWidth: 160,
+    barcodeWidth: 1,
+    barcodeHeight: 36,
+    nameFontSize: 9,
+    priceFontSize: 12,
+    skuFontSize: 7,
+    label: 'Kecil (~4×2.5 cm)',
+  },
+  medium: {
+    labelWidth: 220,
+    barcodeWidth: 1.5,
+    barcodeHeight: 48,
+    nameFontSize: 11,
+    priceFontSize: 15,
+    skuFontSize: 8,
+    label: 'Sedang (~6×3.5 cm)',
+  },
+  large: {
+    labelWidth: 300,
+    barcodeWidth: 2,
+    barcodeHeight: 60,
+    nameFontSize: 13,
+    priceFontSize: 18,
+    skuFontSize: 9,
+    label: 'Besar (~8×5 cm)',
+  },
+}
+
+function getDisplayPrice(product: Product): number {
   const defaultUnit = (product.units ?? []).find((u) => u.is_default)
-  if (!defaultUnit) return null
+  if (!defaultUnit) return product.selling_price
   const tiers = (product.prices ?? [])
     .filter((p) => p.unit_id === defaultUnit.unit_id)
     .sort((a, b) => a.min_qty - b.min_qty)
-  return tiers[0]?.price ?? null
+  return tiers[0]?.price ?? product.selling_price
+}
+
+function LabelItem({ product, cfg }: { product: Product; cfg: SizeConfig }) {
+  const price = getDisplayPrice(product)
+  const barcodeValue = product.barcode ?? product.sku ?? String(product.id)
+
+  return (
+    <div
+      className="label-item"
+      style={{
+        width: cfg.labelWidth,
+        boxSizing: 'border-box',
+        border: '1px solid #d1d5db',
+        borderRadius: 4,
+        padding: '6px 8px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 2,
+        background: '#fff',
+        pageBreakInside: 'avoid',
+        breakInside: 'avoid',
+      }}
+    >
+      <p
+        style={{
+          fontSize: cfg.nameFontSize,
+          fontWeight: 600,
+          textAlign: 'center',
+          lineHeight: 1.3,
+          margin: 0,
+          width: '100%',
+          overflow: 'hidden',
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+        }}
+      >
+        {product.name}
+      </p>
+
+      <p
+        style={{
+          fontSize: cfg.priceFontSize,
+          fontWeight: 700,
+          color: '#dc2626',
+          margin: '2px 0',
+          letterSpacing: '-0.02em',
+        }}
+      >
+        {formatRupiah(price)}
+      </p>
+
+      <Barcode
+        value={barcodeValue}
+        width={cfg.barcodeWidth}
+        height={cfg.barcodeHeight}
+        fontSize={cfg.skuFontSize}
+        margin={0}
+        displayValue
+      />
+
+      {product.sku && product.sku !== barcodeValue && (
+        <p style={{ fontSize: cfg.skuFontSize, color: '#6b7280', margin: 0, fontFamily: 'monospace' }}>
+          {product.sku}
+        </p>
+      )}
+    </div>
+  )
 }
 
 export function LabelPrintModal({ open, onOpenChange, products }: LabelPrintModalProps) {
   const [labelSize, setLabelSize] = useState<LabelSize>('medium')
   const [cols, setCols] = useState<ColCount>('3')
+  const [quantities, setQuantities] = useState<Record<number, number>>({})
 
-  if (!open) return null
+  function getQty(id: number) {
+    return quantities[id] ?? 1
+  }
 
-  const { width, fontSize } = SIZE_CONFIG[labelSize]
+  function setQty(id: number, val: number) {
+    setQuantities((prev) => ({ ...prev, [id]: Math.max(1, val || 1) }))
+  }
+
+  const cfg = SIZE_CONFIG[labelSize]
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="no-print flex items-center justify-between border-b px-5 py-3">
-          <h2 className="text-base font-semibold">Cetak Label Produk</h2>
-          <button
-            onClick={() => onOpenChange(false)}
-            className="text-gray-400 hover:text-gray-600 text-xl leading-none"
-          >
-            ×
-          </button>
+    <FormModal
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Cetak Label Harga"
+      size="xl"
+      hideFooter
+    >
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-4 pb-4 border-b">
+        <div className="flex items-center gap-2">
+          <Label className="text-sm whitespace-nowrap">Ukuran:</Label>
+          <Select value={labelSize} onValueChange={(v) => setLabelSize(v as LabelSize)}>
+            <SelectTrigger className="h-8 w-[180px] text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(SIZE_CONFIG).map(([key, c]) => (
+                <SelectItem key={key} value={key}>{c.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Settings */}
-        <div className="no-print flex items-center gap-4 border-b px-5 py-3 bg-gray-50">
-          <div className="flex items-center gap-2">
-            <Label className="text-sm whitespace-nowrap">Ukuran Label:</Label>
-            <Select value={labelSize} onValueChange={(v) => setLabelSize(v as LabelSize)}>
-              <SelectTrigger className="h-8 w-[140px] text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(SIZE_CONFIG).map(([key, cfg]) => (
-                  <SelectItem key={key} value={key}>
-                    {cfg.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center gap-2">
-            <Label className="text-sm whitespace-nowrap">Kolom:</Label>
-            <Select value={cols} onValueChange={(v) => setCols(v as ColCount)}>
-              <SelectTrigger className="h-8 w-[80px] text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="2">2</SelectItem>
-                <SelectItem value="3">3</SelectItem>
-                <SelectItem value="4">4</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Button size="sm" onClick={() => window.print()} className="ml-auto gap-1">
-            <Printer size={14} />
-            Cetak
-          </Button>
+        <div className="flex items-center gap-2">
+          <Label className="text-sm whitespace-nowrap">Kolom:</Label>
+          <Select value={cols} onValueChange={(v) => setCols(v as ColCount)}>
+            <SelectTrigger className="h-8 w-[70px] text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="2">2</SelectItem>
+              <SelectItem value="3">3</SelectItem>
+              <SelectItem value="4">4</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Preview */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <style>{`
-            @media print {
-              .no-print { display: none !important; }
-              body * { visibility: hidden; }
-              .print-root, .print-root * { visibility: visible; }
-              .print-root {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-              }
-              .label-grid {
-                display: grid !important;
-                grid-template-columns: repeat(${cols}, 1fr) !important;
-                gap: 4px !important;
-              }
-              .label-item { page-break-inside: avoid; }
-            }
-          `}</style>
+        <Button size="sm" className="ml-auto gap-1.5 no-print" onClick={() => window.print()}>
+          <Printer size={14} />
+          Cetak
+        </Button>
+      </div>
 
-          <div
-            className="label-grid print-root"
-            style={
-              {
-                display: 'grid',
-                gridTemplateColumns: `repeat(${cols}, 1fr)`,
-                gap: '8px',
-                '--cols': cols,
-              } as React.CSSProperties
-            }
-          >
-            {products.map((product) => {
-              const price = getDefaultPrice(product)
-              const defaultUnit = (product.units ?? []).find((u) => u.is_default)
-              const barcode = defaultUnit?.barcode ?? product.barcode
+      {/* Qty per produk */}
+      {products.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3 py-3 border-b">
+          <span className="text-xs text-gray-500 whitespace-nowrap">Jumlah label:</span>
+          {products.map((p) => (
+            <div key={p.id} className="flex items-center gap-1.5">
+              <span className="text-xs text-gray-700 max-w-[100px] truncate">{p.name}</span>
+              <Input
+                type="number"
+                min={1}
+                max={999}
+                value={getQty(p.id)}
+                onChange={(e) => setQty(p.id, parseInt(e.target.value))}
+                className="h-7 w-16 text-xs text-center"
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
-              return (
-                <div
-                  key={product.id}
-                  className="label-item border rounded p-2 flex flex-col gap-0.5"
-                  style={{ width, fontSize, boxSizing: 'border-box' }}
-                >
-                  <p className="font-bold leading-tight line-clamp-2">{product.name}</p>
-                  {product.sku && <p className="font-mono text-gray-500">{product.sku}</p>}
-                  <p className="font-semibold text-gray-800">
-                    {formatRupiah(price ?? product.selling_price)}
-                  </p>
-                  {barcode && <p className="font-mono text-gray-400 text-[0.7em]">{barcode}</p>}
-                </div>
-              )
-            })}
-          </div>
+      {/* Preview */}
+      <style>{`
+        @media print {
+          .no-print { display: none !important; }
+          body * { visibility: hidden; }
+          .print-root, .print-root * { visibility: visible; }
+          .print-root {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            padding: 8px;
+          }
+          .label-grid { gap: 4px !important; }
+          .label-item { page-break-inside: avoid; break-inside: avoid; }
+        }
+      `}</style>
 
-          {products.length === 0 && (
-            <p className="text-center text-gray-400 py-8 text-sm">Tidak ada produk dipilih</p>
+      {products.length === 0 ? (
+        <p className="text-center text-gray-400 py-12 text-sm">Tidak ada produk dipilih</p>
+      ) : (
+        <div
+          className="label-grid print-root pt-4"
+          style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
+        >
+          {products.flatMap((product) =>
+            Array.from({ length: getQty(product.id) }, (_, i) => (
+              <LabelItem key={`${product.id}-${i}`} product={product} cfg={cfg} />
+            ))
           )}
         </div>
-      </div>
-    </div>
+      )}
+    </FormModal>
   )
 }
