@@ -1,1 +1,0 @@
-ALTER TABLE product_units ADD COLUMN purchase_price DECIMAL(15,2) NOT NULL DEFAULT 0;

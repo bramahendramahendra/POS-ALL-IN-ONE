@@ -1,6 +1,8 @@
 package service_master
 
 import (
+	"strings"
+
 	dto_master "pos_api/domain/master/dto"
 	model_master "pos_api/domain/master/model"
 	repo_master "pos_api/domain/master/repo"
@@ -39,6 +41,7 @@ func (s *categoryService) GetByID(id int) (*dto_master.CategoryResponse, error) 
 }
 
 func (s *categoryService) Create(req *dto_master.CreateCategoryRequest) (*dto_master.CategoryResponse, error) {
+	req.Name = strings.TrimSpace(req.Name)
 	exists, err := s.repo.CheckNameExists(req.Name, 0)
 	if err != nil {
 		return nil, &errors.InternalServerError{Message: err.Error()}
@@ -60,6 +63,7 @@ func (s *categoryService) Create(req *dto_master.CreateCategoryRequest) (*dto_ma
 }
 
 func (s *categoryService) Update(id int, req *dto_master.UpdateCategoryRequest) error {
+	req.Name = strings.TrimSpace(req.Name)
 	c, err := s.repo.GetByID(id)
 	if err != nil {
 		return &errors.InternalServerError{Message: err.Error()}

@@ -9,27 +9,17 @@ import { usePagination, useDisclosure } from '@/shared/hooks'
 import { useCategoryListQuery, useDeleteProductMutation, useProductListQuery } from './products.api'
 import { useProductsStore } from './products.store'
 import type { Product, ProductFilter } from './products.types'
-import { CategoryTab } from './components/CategoryTab'
 import { ImportCsvModal } from './components/ImportCsvModal'
 import { LabelPrintModal } from './components/LabelPrintModal'
 import { ProductFilterBar } from './components/ProductFilter'
 import { ProductFormModal } from './components/ProductFormModal'
 import { ProductTable } from './components/ProductTable'
-import { UnitTab } from './components/UnitTab'
-
-const TABS = [
-  { key: 'products', label: 'Produk' },
-  { key: 'categories', label: 'Kategori' },
-  { key: 'units', label: 'Unit' },
-] as const
 
 export function ProductsPage() {
   const [filter, setFilter] = useState<ProductFilter>({})
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([])
   const { page, pageSize, onPageChange, onPageSizeChange, reset } = usePagination()
   const {
-    activeTab,
-    setActiveTab,
     openProductModal,
     productModalOpen,
     editingProductId,
@@ -90,55 +80,30 @@ export function ProductsPage() {
         }
       />
 
-      {/* Tabs */}
-      <div className="flex gap-1 border-b">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
-              activeTab === tab.key
-                ? 'border-[#2c3e50] text-[#2c3e50]'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="space-y-3">
+        <ProductFilterBar
+          filter={filter}
+          onChange={handleFilterChange}
+          onReset={handleReset}
+          categories={categories}
+        />
+        <ProductTable
+          data={products}
+          isLoading={isLoading}
+          pagination={{
+            page,
+            pageSize,
+            total,
+            onPageChange,
+            onPageSizeChange,
+            pageSizeOptions: [10, 20, 50],
+          }}
+          onSelectionChange={setSelectedProducts}
+          onPrintLabel={() => openLabel()}
+          onImportCsv={() => openImport()}
+        />
       </div>
 
-      {/* Tab content */}
-      {activeTab === 'products' && (
-        <div className="space-y-3">
-          <ProductFilterBar
-            filter={filter}
-            onChange={handleFilterChange}
-            onReset={handleReset}
-            categories={categories}
-          />
-          <ProductTable
-            data={products}
-            isLoading={isLoading}
-            pagination={{
-              page,
-              pageSize,
-              total,
-              onPageChange,
-              onPageSizeChange,
-              pageSizeOptions: [10, 20, 50],
-            }}
-            onSelectionChange={setSelectedProducts}
-            onPrintLabel={() => openLabel()}
-            onImportCsv={() => openImport()}
-          />
-        </div>
-      )}
-
-      {activeTab === 'categories' && <CategoryTab />}
-
-      {activeTab === 'units' && <UnitTab />}
-
-      {/* Product form modal */}
       <ProductFormModal
         open={productModalOpen}
         onOpenChange={(open) => {
@@ -147,7 +112,6 @@ export function ProductsPage() {
         productId={editingProductId ?? undefined}
       />
 
-      {/* Delete confirm */}
       <ConfirmDialog
         open={deleteConfirmOpen}
         onOpenChange={(open) => {
@@ -161,7 +125,6 @@ export function ProductsPage() {
         onConfirm={handleDelete}
       />
 
-      {/* Import CSV */}
       <ImportCsvModal
         open={importOpen}
         onOpenChange={(open) => {
@@ -169,7 +132,6 @@ export function ProductsPage() {
         }}
       />
 
-      {/* Label Print */}
       <LabelPrintModal
         open={labelOpen}
         onOpenChange={(open) => {

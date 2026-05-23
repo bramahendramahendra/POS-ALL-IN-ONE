@@ -1,1 +1,0 @@
-ALTER TABLE app_versions ADD COLUMN is_mandatory TINYINT(1) NOT NULL DEFAULT 0;

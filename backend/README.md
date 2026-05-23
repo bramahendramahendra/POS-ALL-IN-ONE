@@ -89,17 +89,25 @@ File migrasi berada di: `database/migrations/`
 
 ```
 database/migrations/
-├── 001_init_schema.sql        ← Tabel utama (users, products, transactions, dll)
-├── 001_seed_data.sql          ← Data awal
-├── 002_seed_data.sql          ← Data awal tambahan
-├── 003_add_user_role_to_sessions.sql
-├── 004_create_expenses.sql
-├── 005_create_supplier_returns.sql
-├── 006_update_sync_conflicts.sql
-├── 007_create_sync_history.sql
-├── 008_add_is_mandatory_to_app_versions.sql
-└── 009_create_log_requests.sql ← Tabel log request/response
+├── 001_init_schema.sql   ← Seluruh schema DB (semua tabel, kolom final, index)
+└── 002_seed_data.sql     ← Data awal (users default, satuan, pengaturan toko)
 ```
+
+**Tabel yang dibuat oleh `001_init_schema.sql`** (28 tabel):
+
+| Grup | Tabel |
+|------|-------|
+| Auth | `users`, `sessions` |
+| Master | `categories`, `units`, `settings` |
+| Produk | `products`, `product_units`, `product_prices` |
+| Supplier | `suppliers`, `purchases`, `purchase_items`, `supplier_returns`, `supplier_return_items` |
+| Pelanggan | `customers`, `receivables`, `receivable_payments` |
+| Penjualan | `shifts`, `transactions`, `transaction_items` |
+| Keuangan | `cash_drawer`, `expenses` |
+| Stok | `stock_mutations` |
+| Sistem | `app_versions` |
+| Sync | `sync_conflicts`, `sync_queue`, `sync_history` |
+| Log | `log_requests` |
 
 ### Menambahkan Perubahan Database Baru
 
@@ -133,6 +141,82 @@ go run main.go
 ```
 
 > **Catatan:** Jangan pernah mengedit file SQL yang sudah pernah dijalankan. Selalu buat file baru dengan nomor urut berikutnya.
+
+---
+
+## Reset Database (Migrasi Ulang dari Awal)
+
+Gunakan langkah ini jika ingin menghapus seluruh data dan schema, lalu menjalankan ulang semua migrasi dari awal. Biasanya dibutuhkan saat development atau saat schema berubah besar-besaran.
+
+> ⚠️ **Peringatan:** Seluruh data akan terhapus permanen. Jangan lakukan di environment production.
+
+### Langkah Reset
+
+**1. Stop aplikasi** jika sedang berjalan.
+
+**2. Login ke MySQL dan drop database:**
+
+```sql
+DROP DATABASE pos_retail_db;
+CREATE DATABASE pos_retail_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+Atau jika ingin satu perintah (reset sekaligus):
+
+```sql
+DROP DATABASE IF EXISTS pos_retail_db;
+CREATE DATABASE pos_retail_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+**3. Jalankan ulang aplikasi:**
+
+```bash
+go run main.go
+```
+
+Semua file migrasi di `database/migrations/` akan dieksekusi ulang dari awal secara berurutan.
+
+---
+
+### Reset Sebagian (Hapus Tabel Tertentu Saja)
+
+Jika hanya ingin mengulang migrasi tertentu tanpa drop seluruh database:
+
+**1. Hapus entri dari tabel `migrations_history`:**
+
+```sql
+DELETE FROM migrations_history WHERE filename = '009_create_log_requests.sql';
+```
+
+**2. Drop tabel yang ingin dibuat ulang:**
+
+```sql
+DROP TABLE IF EXISTS log_requests;
+```
+
+**3. Jalankan ulang aplikasi** — migrasi yang dihapus dari history akan dieksekusi ulang:
+
+```bash
+go run main.go
+```
+
+---
+
+### Reset Data Saja (Tanpa Ubah Schema)
+
+Jika schema sudah benar tapi ingin membersihkan data:
+
+```sql
+-- Nonaktifkan foreign key check sementara
+SET FOREIGN_KEY_CHECKS = 0;
+
+TRUNCATE TABLE transactions;
+TRUNCATE TABLE transaction_items;
+TRUNCATE TABLE expenses;
+-- tambahkan tabel lain sesuai kebutuhan
+
+SET FOREIGN_KEY_CHECKS = 1;
+```
 
 ---
 

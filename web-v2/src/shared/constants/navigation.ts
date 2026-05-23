@@ -1,17 +1,22 @@
 import {
   BarChart2,
+  BookOpen,
   Clock,
   CreditCard,
   Landmark,
   LayoutDashboard,
+  LineChart,
   Package,
+  PackageSearch,
   Receipt,
   RefreshCw,
   RotateCcw,
   Settings,
   ShoppingBag,
   ShoppingCart,
+  Tag,
   TrendingDown,
+  TrendingUp,
   Truck,
   Users,
   Wallet,
@@ -31,6 +36,15 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
+  // Beranda
+  {
+    label: 'Dashboard',
+    path: ROUTES.DASHBOARD,
+    icon: LayoutDashboard,
+    allowedRoles: [ROLES.OWNER, ROLES.ADMIN],
+    group: 'Beranda',
+  },
+
   // Penjualan
   {
     label: 'Kasir',
@@ -47,34 +61,50 @@ export const NAV_ITEMS: NavItem[] = [
     group: 'Penjualan',
   },
 
-  // Inventori
+  // Produk
   {
     label: 'Produk',
     path: ROUTES.PRODUCTS,
     icon: Package,
     allowedRoles: [ROLES.OWNER, ROLES.ADMIN],
-    group: 'Inventori',
+    group: 'Produk',
   },
+  {
+    label: 'Kategori',
+    path: ROUTES.PRODUCTS_CATEGORIES,
+    icon: Tag,
+    allowedRoles: [ROLES.OWNER, ROLES.ADMIN],
+    group: 'Produk',
+  },
+  {
+    label: 'Unit',
+    path: ROUTES.PRODUCTS_UNITS,
+    icon: PackageSearch,
+    allowedRoles: [ROLES.OWNER, ROLES.ADMIN],
+    group: 'Produk',
+  },
+
+  // Pengadaan
   {
     label: 'Supplier',
     path: ROUTES.SUPPLIERS,
     icon: Truck,
     allowedRoles: [ROLES.OWNER, ROLES.ADMIN],
-    group: 'Inventori',
+    group: 'Pengadaan',
   },
   {
     label: 'Pembelian',
     path: ROUTES.SUPPLIER_PURCHASES,
     icon: ShoppingBag,
     allowedRoles: [ROLES.OWNER, ROLES.ADMIN],
-    group: 'Inventori',
+    group: 'Pengadaan',
   },
   {
     label: 'Retur',
     path: ROUTES.SUPPLIER_RETURNS,
     icon: RotateCcw,
     allowedRoles: [ROLES.OWNER, ROLES.ADMIN],
-    group: 'Inventori',
+    group: 'Pengadaan',
   },
 
   // Pelanggan
@@ -95,7 +125,7 @@ export const NAV_ITEMS: NavItem[] = [
 
   // Keuangan
   {
-    label: 'Keuangan',
+    label: 'Dashboard Keuangan',
     path: ROUTES.FINANCE,
     icon: Wallet,
     allowedRoles: [ROLES.OWNER, ROLES.ADMIN],
@@ -105,6 +135,13 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Kas Harian',
     path: ROUTES.FINANCE_CASH_DRAWER,
     icon: Landmark,
+    allowedRoles: [ROLES.OWNER, ROLES.ADMIN],
+    group: 'Keuangan',
+  },
+  {
+    label: 'Rekap Kas',
+    path: ROUTES.FINANCE_CASH_DRAWER_REKAP,
+    icon: BookOpen,
     allowedRoles: [ROLES.OWNER, ROLES.ADMIN],
     group: 'Keuangan',
   },
@@ -122,16 +159,32 @@ export const NAV_ITEMS: NavItem[] = [
     allowedRoles: [ROLES.KASIR],
     group: 'Keuangan',
   },
+
+  // Pelaporan
   {
-    label: 'Dashboard',
-    path: ROUTES.DASHBOARD,
-    icon: LayoutDashboard,
+    label: 'Penjualan',
+    path: ROUTES.REPORTS_SALES,
+    icon: TrendingUp,
     allowedRoles: [ROLES.OWNER, ROLES.ADMIN],
     group: 'Pelaporan',
   },
   {
-    label: 'Laporan',
-    path: ROUTES.REPORTS,
+    label: 'Laba Rugi',
+    path: ROUTES.REPORTS_PROFIT_LOSS,
+    icon: LineChart,
+    allowedRoles: [ROLES.OWNER, ROLES.ADMIN],
+    group: 'Pelaporan',
+  },
+  {
+    label: 'Stok',
+    path: ROUTES.REPORTS_STOCK,
+    icon: PackageSearch,
+    allowedRoles: [ROLES.OWNER, ROLES.ADMIN],
+    group: 'Pelaporan',
+  },
+  {
+    label: 'Kinerja Kasir',
+    path: ROUTES.REPORTS_CASHIER,
     icon: BarChart2,
     allowedRoles: [ROLES.OWNER, ROLES.ADMIN],
     group: 'Pelaporan',
@@ -155,9 +208,30 @@ export const NAV_ITEMS: NavItem[] = [
 
   // Sistem
   {
-    label: 'Pengaturan',
-    path: ROUTES.SETTINGS,
+    label: 'Profil Toko',
+    path: ROUTES.SETTINGS_STORE,
     icon: Settings,
+    allowedRoles: [ROLES.OWNER],
+    group: 'Sistem',
+  },
+  {
+    label: 'Manajemen User',
+    path: ROUTES.SETTINGS_USERS,
+    icon: Users,
+    allowedRoles: [ROLES.OWNER],
+    group: 'Sistem',
+  },
+  {
+    label: 'Printer',
+    path: ROUTES.SETTINGS_PRINTER,
+    icon: Receipt,
+    allowedRoles: [ROLES.OWNER],
+    group: 'Sistem',
+  },
+  {
+    label: 'Versi Aplikasi',
+    path: ROUTES.SETTINGS_VERSIONS,
+    icon: RefreshCw,
     allowedRoles: [ROLES.OWNER],
     group: 'Sistem',
   },

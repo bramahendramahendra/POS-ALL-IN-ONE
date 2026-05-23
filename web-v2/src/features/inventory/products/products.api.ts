@@ -170,7 +170,6 @@ export function useDeleteCategoryMutation() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.categories.all() })
     },
-    onError: (e: Error) => toast.error(e.message),
   })
 }
 

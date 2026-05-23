@@ -22,7 +22,7 @@ import {
 import type { Category } from '../products.types'
 
 const categorySchema = z.object({
-  name: z.string().min(1, 'Nama wajib diisi'),
+  name: z.string().trim().min(2, 'Nama minimal 2 karakter'),
 })
 type CategoryFormValues = z.infer<typeof categorySchema>
 
@@ -32,7 +32,7 @@ export function CategoryTab() {
   const { isOpen: formOpen, open: openForm, close: closeForm } = useDisclosure()
   const { isOpen: deleteOpen, open: openDelete, close: closeDelete } = useDisclosure()
   const [editingId, setEditingId] = useState<number | null>(null)
-  const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [deletingCategory, setDeletingCategory] = useState<Category | null>(null)
 
   const { data: categories = [], isLoading } = useCategoryListQuery()
   const { mutate: createCategory, isPending: isCreating } = useCreateCategoryMutation()
@@ -64,8 +64,8 @@ export function CategoryTab() {
     openForm()
   }
 
-  const handleOpenDelete = (id: number) => {
-    setDeletingId(id)
+  const handleOpenDelete = (category: Category) => {
+    setDeletingCategory(category)
     openDelete()
   }
 
@@ -102,12 +102,12 @@ export function CategoryTab() {
   }
 
   const handleDelete = () => {
-    if (deletingId === null) return
-    deleteCategory(deletingId, {
+    if (deletingCategory === null) return
+    deleteCategory(deletingCategory.id, {
       onSuccess: () => {
         toast.success('Kategori berhasil dihapus')
         closeDelete()
-        setDeletingId(null)
+        setDeletingCategory(null)
       },
       onError: (error) => toast.error(error.message),
     })
@@ -117,7 +117,6 @@ export function CategoryTab() {
     {
       key: 'name',
       header: 'Nama Kategori',
-      sortable: true,
       cell: (row) => <span className="font-medium text-gray-800">{row.name}</span>,
     },
     {
@@ -127,21 +126,23 @@ export function CategoryTab() {
       width: '100px',
       cell: (row) => (
         <div className="flex items-center justify-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-gray-500 hover:text-blue-600"
-            onClick={() => handleOpenEdit(row)}
-            title="Edit"
-          >
-            <Pencil size={14} />
-          </Button>
+          <RoleGuard allowedRoles={[ROLES.OWNER, ROLES.ADMIN]}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-gray-500 hover:text-blue-600"
+              onClick={() => handleOpenEdit(row)}
+              title="Edit"
+            >
+              <Pencil size={14} />
+            </Button>
+          </RoleGuard>
           <RoleGuard allowedRoles={[ROLES.OWNER]}>
             <Button
               variant="ghost"
               size="icon"
               className="h-7 w-7 text-gray-500 hover:text-red-600"
-              onClick={() => handleOpenDelete(row.id)}
+              onClick={() => handleOpenDelete(row)}
               title="Hapus"
             >
               <Trash2 size={14} />
@@ -177,8 +178,12 @@ export function CategoryTab() {
         columns={columns}
         data={filtered as (Category & Record<string, unknown>)[]}
         isLoading={isLoading}
-        emptyMessage="Belum ada kategori"
-        emptyDescription="Tambah kategori pertama Anda untuk memulai."
+        emptyMessage={debouncedSearch ? 'Kategori tidak ditemukan' : 'Belum ada kategori'}
+        emptyDescription={
+          debouncedSearch
+            ? 'Coba ubah kata kunci pencarian Anda.'
+            : 'Tambah kategori pertama Anda untuk memulai.'
+        }
       />
 
       {/* Form Modal */}
@@ -212,11 +217,11 @@ export function CategoryTab() {
         onOpenChange={(open) => {
           if (!open) {
             closeDelete()
-            setDeletingId(null)
+            setDeletingCategory(null)
           }
         }}
         title="Hapus Kategori"
-        description="Kategori yang dihapus tidak bisa dikembalikan. Yakin ingin melanjutkan?"
+        description={`Yakin ingin menghapus kategori "${deletingCategory?.name}"? Tindakan ini tidak bisa dibatalkan.`}
         confirmLabel="Ya, Hapus"
         variant="destructive"
         isLoading={isDeleting}

@@ -20,7 +20,6 @@ import type { CashDrawerFilter, CashDrawer } from './cash-drawer.types'
 import { CashDrawerTable } from './components/CashDrawerTable'
 import { CashDrawerDetailModal } from './components/CashDrawerDetailModal'
 import { OpenCashDrawerModal } from './components/OpenCashDrawerModal'
-import { CashDrawerSummaryTab } from './components/CashDrawerSummaryTab'
 
 const PAGE_SIZE = 10
 
@@ -39,14 +38,11 @@ function monthStartString(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
 }
 
-type Tab = 'history' | 'summary'
-
 export function CashDrawerPage() {
   const today = todayString()
   const { user } = useAuthStore()
   const isAdminOrOwner = user?.role === ROLES.OWNER || user?.role === ROLES.ADMIN
 
-  const [activeTab, setActiveTab] = useState<Tab>('history')
   const [dateFrom, setDateFrom] = useState(monthStartString())
   const [dateTo, setDateTo] = useState(today)
   const [page, setPage] = useState(1)
@@ -91,7 +87,7 @@ export function CashDrawerPage() {
     <div className="p-6 space-y-6">
       <PageHeader
         title="Kas Harian"
-        breadcrumbs={[{ label: 'Finance' }, { label: 'Kas Harian' }]}
+        breadcrumbs={[{ label: 'Keuangan' }, { label: 'Kas Harian' }]}
       />
 
       {/* Status Card */}
@@ -124,84 +120,51 @@ export function CashDrawerPage() {
         </CardContent>
       </Card>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex gap-6">
-          <button
-            onClick={() => setActiveTab('history')}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'history'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Riwayat Kas
-          </button>
-          {isAdminOrOwner && (
-            <button
-              onClick={() => setActiveTab('summary')}
-              className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'summary'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Rekap Kas
-            </button>
-          )}
-        </nav>
+      {/* Filter */}
+      <div className="flex flex-wrap gap-3 items-end">
+        <div className="space-y-1">
+          <label className="text-xs text-gray-500">Dari</label>
+          <Input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => {
+              setDateFrom(e.target.value)
+              setPage(1)
+            }}
+            className="w-40"
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs text-gray-500">Sampai</label>
+          <Input
+            type="date"
+            value={dateTo}
+            onChange={(e) => {
+              setDateTo(e.target.value)
+              setPage(1)
+            }}
+            className="w-40"
+          />
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setDateFrom(monthStartString())
+            setDateTo(today)
+            setPage(1)
+          }}
+        >
+          Bulan ini
+        </Button>
       </div>
 
-      {activeTab === 'history' && (
-        <>
-          <div className="flex flex-wrap gap-3 items-end">
-            <div className="space-y-1">
-              <label className="text-xs text-gray-500">Dari</label>
-              <Input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => {
-                  setDateFrom(e.target.value)
-                  setPage(1)
-                }}
-                className="w-40"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs text-gray-500">Sampai</label>
-              <Input
-                type="date"
-                value={dateTo}
-                onChange={(e) => {
-                  setDateTo(e.target.value)
-                  setPage(1)
-                }}
-                className="w-40"
-              />
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setDateFrom(monthStartString())
-                setDateTo(today)
-                setPage(1)
-              }}
-            >
-              Bulan ini
-            </Button>
-          </div>
-
-          <CashDrawerTable
-            data={items}
-            isLoading={isLoading}
-            pagination={{ page, pageSize: PAGE_SIZE, total, onPageChange: setPage }}
-            onRowClick={(row) => setSelectedId(row.id)}
-          />
-        </>
-      )}
-
-      {activeTab === 'summary' && isAdminOrOwner && <CashDrawerSummaryTab />}
+      <CashDrawerTable
+        data={items}
+        isLoading={isLoading}
+        pagination={{ page, pageSize: PAGE_SIZE, total, onPageChange: setPage }}
+        onRowClick={(row) => setSelectedId(row.id)}
+      />
 
       <CashDrawerDetailModal cashDrawerId={selectedId} onClose={() => setSelectedId(null)} />
       <OpenCashDrawerModal open={openModalOpen} onClose={() => setOpenModalOpen(false)} />
