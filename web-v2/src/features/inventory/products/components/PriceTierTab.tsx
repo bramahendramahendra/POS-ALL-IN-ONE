@@ -68,8 +68,10 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
   // ── Product Unit CRUD state ──
   const { isOpen: unitFormOpen, open: openUnitForm, close: closeUnitForm } = useDisclosure()
   const { isOpen: unitDeleteOpen, open: openUnitDelete, close: closeUnitDelete } = useDisclosure()
+  const { isOpen: unitConfirmOpen, open: openUnitConfirm, close: closeUnitConfirm } = useDisclosure()
   const [editingUnitId, setEditingUnitId] = useState<number | null>(null)
   const [deletingUnitId, setDeletingUnitId] = useState<number | null>(null)
+  const [pendingUnitValues, setPendingUnitValues] = useState<ProductUnitFormValues | null>(null)
 
   const { mutate: addProductUnit, isPending: isAddingUnit } = useAddProductUnitMutation(productId)
   const { mutate: updateProductUnit, isPending: isUpdatingUnit } =
@@ -106,13 +108,33 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
   }
 
   const onSubmitUnit = (values: ProductUnitFormValues) => {
+    setPendingUnitValues(values)
+    closeUnitForm()
+    openUnitConfirm()
+  }
+
+  const handleUnitConfirmCancel = () => {
+    closeUnitConfirm()
+    if (pendingUnitValues) {
+      unitForm.reset(pendingUnitValues)
+      openUnitForm()
+    }
+    setPendingUnitValues(null)
+  }
+
+  const handleConfirmSaveUnit = () => {
+    if (!pendingUnitValues) return
+    const values = pendingUnitValues
     if (editingUnitId !== null) {
       updateProductUnit(
         { unitId: editingUnitId, ...values, barcode: values.barcode || undefined },
         {
           onSuccess: () => {
             toast.success('Satuan produk berhasil diperbarui')
-            handleCloseUnitForm()
+            closeUnitConfirm()
+            setPendingUnitValues(null)
+            setEditingUnitId(null)
+            unitForm.reset({ unit_id: 0, barcode: '', cost_price: 0, is_default: false })
           },
           onError: (e) => toast.error(e.message),
         }
@@ -123,7 +145,9 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
         {
           onSuccess: () => {
             toast.success('Satuan produk berhasil ditambahkan')
-            handleCloseUnitForm()
+            closeUnitConfirm()
+            setPendingUnitValues(null)
+            unitForm.reset({ unit_id: 0, barcode: '', cost_price: 0, is_default: false })
           },
           onError: (e) => toast.error(e.message),
         }
@@ -213,8 +237,10 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
     open: openPriceDelete,
     close: closePriceDelete,
   } = useDisclosure()
+  const { isOpen: priceConfirmOpen, open: openPriceConfirm, close: closePriceConfirm } = useDisclosure()
   const [editingPriceId, setEditingPriceId] = useState<number | null>(null)
   const [deletingPriceId, setDeletingPriceId] = useState<number | null>(null)
+  const [pendingPriceValues, setPendingPriceValues] = useState<PriceTierFormValues | null>(null)
 
   const { mutate: addPriceTier, isPending: isAddingPrice } = useAddPriceTierMutation(productId)
   const { mutate: updatePriceTier, isPending: isUpdatingPrice } =
@@ -251,13 +277,33 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
   }
 
   const onSubmitPrice = (values: PriceTierFormValues) => {
+    setPendingPriceValues(values)
+    closePriceForm()
+    openPriceConfirm()
+  }
+
+  const handlePriceConfirmCancel = () => {
+    closePriceConfirm()
+    if (pendingPriceValues) {
+      priceForm.reset(pendingPriceValues)
+      openPriceForm()
+    }
+    setPendingPriceValues(null)
+  }
+
+  const handleConfirmSavePrice = () => {
+    if (!pendingPriceValues) return
+    const values = pendingPriceValues
     if (editingPriceId !== null) {
       updatePriceTier(
         { priceId: editingPriceId, ...values },
         {
           onSuccess: () => {
             toast.success('Harga tier berhasil diperbarui')
-            handleClosePriceForm()
+            closePriceConfirm()
+            setPendingPriceValues(null)
+            setEditingPriceId(null)
+            priceForm.reset({ unit_id: 0, tier_name: '', min_qty: 1, price: 0 })
           },
           onError: (e) => toast.error(e.message),
         }
@@ -266,7 +312,9 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
       addPriceTier(values, {
         onSuccess: () => {
           toast.success('Harga tier berhasil ditambahkan')
-          handleClosePriceForm()
+          closePriceConfirm()
+          setPendingPriceValues(null)
+          priceForm.reset({ unit_id: 0, tier_name: '', min_qty: 1, price: 0 })
         },
         onError: (e) => toast.error(e.message),
       })
@@ -463,6 +511,18 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
       </FormModal>
 
       <ConfirmDialog
+        open={unitConfirmOpen}
+        onOpenChange={(open) => {
+          if (!open) handleUnitConfirmCancel()
+        }}
+        title={editingUnitId !== null ? 'Update Satuan Produk' : 'Tambah Satuan Produk'}
+        description={`Yakin ingin ${editingUnitId !== null ? 'mengupdate' : 'menambahkan'} satuan produk ini?`}
+        confirmLabel="Ya, Simpan"
+        isLoading={isAddingUnit || isUpdatingUnit}
+        onConfirm={handleConfirmSaveUnit}
+      />
+
+      <ConfirmDialog
         open={unitDeleteOpen}
         onOpenChange={(open) => {
           if (!open) {
@@ -561,6 +621,18 @@ export function PriceTierTab({ productId }: PriceTierTabProps) {
           </div>
         </div>
       </FormModal>
+
+      <ConfirmDialog
+        open={priceConfirmOpen}
+        onOpenChange={(open) => {
+          if (!open) handlePriceConfirmCancel()
+        }}
+        title={editingPriceId !== null ? 'Update Harga Tier' : 'Tambah Harga Tier'}
+        description={`Yakin ingin ${editingPriceId !== null ? 'mengupdate' : 'menambahkan'} harga tier ini?`}
+        confirmLabel="Ya, Simpan"
+        isLoading={isAddingPrice || isUpdatingPrice}
+        onConfirm={handleConfirmSavePrice}
+      />
 
       <ConfirmDialog
         open={priceDeleteOpen}

@@ -81,7 +81,17 @@ export function CategoryTab() {
 
   const onSubmit = (values: CategoryFormValues) => {
     setPendingValues(values)
+    closeForm()
     openConfirm()
+  }
+
+  const handleConfirmCancel = () => {
+    closeConfirm()
+    if (pendingValues) {
+      reset(pendingValues)
+      openForm()
+    }
+    setPendingValues(null)
   }
 
   const handleConfirmSave = () => {
@@ -95,7 +105,8 @@ export function CategoryTab() {
             toast.success('Kategori berhasil diperbarui')
             closeConfirm()
             setPendingValues(null)
-            handleCloseForm()
+            setEditingCategory(null)
+            reset({ name: '', description: '' })
           },
         }
       )
@@ -107,7 +118,7 @@ export function CategoryTab() {
             toast.success('Kategori berhasil ditambahkan')
             closeConfirm()
             setPendingValues(null)
-            handleCloseForm()
+            reset({ name: '', description: '' })
           },
         }
       )
@@ -260,10 +271,7 @@ export function CategoryTab() {
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={(open) => {
-          if (!open) {
-            closeConfirm()
-            setPendingValues(null)
-          }
+          if (!open) handleConfirmCancel()
         }}
         title={editingCategory !== null ? 'Update Kategori' : 'Tambah Kategori'}
         description={`Yakin ingin ${editingCategory !== null ? 'mengupdate' : 'menambahkan'} kategori "${pendingValues?.name}"?`}

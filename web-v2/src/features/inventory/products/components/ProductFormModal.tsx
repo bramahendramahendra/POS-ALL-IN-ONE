@@ -200,8 +200,7 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
   const [showGrosirForm, setShowGrosirForm] = useState(false)
   const [editingGrosirIdx, setEditingGrosirIdx] = useState<number | null>(null)
 
-  // Confirm save dialog
-  const { isOpen: confirmOpen, open: openConfirm, close: closeConfirm } = useDisclosure()
+  const [isConfirming, setIsConfirming] = useState(false)
   const [pendingValues, setPendingValues] = useState<ProductFormValues | null>(null)
 
   const { data: detailData, isLoading: isLoadingDetail } = useProductDetailQuery(
@@ -278,13 +277,13 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
       setShowGrosirForm(false)
       setEditingGrosirIdx(null)
       setPendingValues(null)
+      setIsConfirming(false)
     }
   }, [open, reset])
 
-  // Intercept submit — tampilkan confirm dialog
   const onSubmit = (values: ProductFormValues) => {
     setPendingValues(values)
-    openConfirm()
+    setIsConfirming(true)
   }
 
   const handleConfirmedSave = () => {
@@ -309,7 +308,7 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
         {
           onSuccess: () => {
             toast.success('Produk berhasil diperbarui')
-            closeConfirm()
+            setIsConfirming(false)
             onOpenChange(false)
           },
           onError: (error) => toast.error(error.message),
@@ -323,7 +322,7 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
             saveGrosir({ productId: newId, units: grosirRows })
           }
           toast.success('Produk berhasil ditambahkan')
-          closeConfirm()
+          setIsConfirming(false)
           onOpenChange(false)
         },
         onError: (error) => toast.error(error.message),
@@ -347,7 +346,7 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
   return (
     <>
       <FormModal
-        open={open}
+        open={open && !isConfirming}
         onOpenChange={onOpenChange}
         title={isEdit ? 'Edit Produk' : 'Tambah Produk'}
         size="lg"
@@ -722,10 +721,10 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
       </FormModal>
 
       <ConfirmDialog
-        open={confirmOpen}
+        open={isConfirming}
         onOpenChange={(open) => {
           if (!open) {
-            closeConfirm()
+            setIsConfirming(false)
             setPendingValues(null)
           }
         }}

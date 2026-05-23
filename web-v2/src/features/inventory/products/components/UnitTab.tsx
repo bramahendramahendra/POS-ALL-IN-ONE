@@ -82,7 +82,17 @@ export function UnitTab() {
 
   const onSubmit = (values: UnitFormValues) => {
     setPendingValues(values)
+    closeForm()
     openConfirm()
+  }
+
+  const handleConfirmCancel = () => {
+    closeConfirm()
+    if (pendingValues) {
+      reset(pendingValues)
+      openForm()
+    }
+    setPendingValues(null)
   }
 
   const handleConfirmSave = () => {
@@ -96,7 +106,8 @@ export function UnitTab() {
             toast.success('Satuan berhasil diperbarui')
             closeConfirm()
             setPendingValues(null)
-            handleCloseForm()
+            setEditingId(null)
+            reset({ name: '', abbreviation: '' })
           },
         }
       )
@@ -108,7 +119,7 @@ export function UnitTab() {
             toast.success('Satuan berhasil ditambahkan')
             closeConfirm()
             setPendingValues(null)
-            handleCloseForm()
+            reset({ name: '', abbreviation: '' })
           },
         }
       )
@@ -278,10 +289,7 @@ export function UnitTab() {
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={(open) => {
-          if (!open) {
-            closeConfirm()
-            setPendingValues(null)
-          }
+          if (!open) handleConfirmCancel()
         }}
         title={editingId !== null ? 'Update Satuan' : 'Tambah Satuan'}
         description={`Yakin ingin ${editingId !== null ? 'mengupdate' : 'menambahkan'} satuan "${pendingValues?.name}"?`}
