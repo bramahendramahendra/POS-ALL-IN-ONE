@@ -3,6 +3,7 @@ import { create } from 'zustand'
 interface DeleteTarget {
   type: 'product' | 'category' | 'unit'
   id: number
+  name: string
 }
 
 interface ProductsState {

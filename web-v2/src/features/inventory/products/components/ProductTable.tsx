@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Lock, LockOpen, Pencil, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { ROLES } from '@/shared/constants'
 import { DataTable, RoleGuard, StatusBadge } from '@/shared/components'
@@ -8,6 +9,7 @@ import { useTableSelection } from '@/shared/hooks'
 import { formatRupiah } from '@/shared/utils'
 import type { ColumnDef, PaginationProps } from '@/shared/components/DataTable/DataTable.types'
 
+import { useToggleProductStatusMutation } from '../products.api'
 import { useProductsStore } from '../products.store'
 import type { Product } from '../products.types'
 
@@ -20,13 +22,10 @@ interface ProductTableProps {
   onImportCsv?: () => void
 }
 
-function getDefaultPrice(product: Product): number | null {
-  const defaultUnit = product.units.find((u) => u.is_default)
-  if (!defaultUnit) return null
-  const tiers = product.prices
-    .filter((p) => p.unit_id === defaultUnit.unit_id)
-    .sort((a, b) => a.min_qty - b.min_qty)
-  return tiers[0]?.price ?? null
+
+function calcMargin(purchasePrice: number, sellingPrice: number): number {
+  if (purchasePrice <= 0 || sellingPrice <= 0) return 0
+  return Math.round(((sellingPrice - purchasePrice) / sellingPrice) * 100)
 }
 
 export function ProductTable({
@@ -38,6 +37,7 @@ export function ProductTable({
   onImportCsv,
 }: ProductTableProps) {
   const { openProductModal, openDeleteConfirm } = useProductsStore()
+  const { mutate: toggleStatus } = useToggleProductStatusMutation()
   const { selectedKeys, selectedItems, toggle, selectAll, clearSelection, hasSelection, count } =
     useTableSelection<Product & { id: number }>()
 
@@ -54,13 +54,13 @@ export function ProductTable({
       cell: (row) => <span className="font-medium text-gray-800">{row.name}</span>,
     },
     {
-      key: 'sku',
-      header: 'SKU',
+      key: 'barcode',
+      header: 'Barcode',
       cell: (row) =>
-        row.sku ? (
-          <span className="font-mono text-sm">{row.sku}</span>
+        row.barcode ? (
+          <code className="text-xs">{row.barcode}</code>
         ) : (
-          <span className="text-gray-400 text-sm italic">—</span>
+          <span className="text-gray-400 text-sm">—</span>
         ),
     },
     {
@@ -76,46 +76,116 @@ export function ProductTable({
         ),
     },
     {
+      key: 'purchase_price',
+      header: 'Harga Beli',
+      align: 'right',
+      cell: (row) => <span className="text-sm">{formatRupiah(row.purchase_price)}</span>,
+    },
+    {
+      key: 'selling_price',
+      header: 'Harga Jual',
+      align: 'right',
+      cell: (row) => <span className="font-medium">{formatRupiah(row.selling_price)}</span>,
+    },
+    {
+      key: 'margin',
+      header: 'Margin',
+      align: 'center',
+      width: '80px',
+      cell: (row) => {
+        const m = calcMargin(row.purchase_price, row.selling_price)
+        return (
+          <span
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+              m >= 30
+                ? 'bg-green-100 text-green-700'
+                : m >= 15
+                  ? 'bg-amber-100 text-amber-700'
+                  : 'bg-red-100 text-red-600'
+            }`}
+          >
+            {m}%
+          </span>
+        )
+      },
+    },
+    {
+      key: 'stock',
+      header: 'Stok',
+      align: 'right',
+      width: '80px',
+      cell: (row) => (
+        <span
+          className={`font-medium ${
+            row.stock === 0
+              ? 'text-red-600'
+              : row.stock < row.min_stock
+                ? 'text-amber-600'
+                : 'text-gray-800'
+          }`}
+        >
+          {row.stock}
+        </span>
+      ),
+    },
+    {
+      key: 'unit',
+      header: 'Satuan',
+      width: '80px',
+      cell: (row) =>
+        row.unit ? (
+          <span className="text-sm text-gray-600">{row.unit}</span>
+        ) : (
+          <span className="text-gray-400 text-sm">—</span>
+        ),
+    },
+    {
       key: 'is_active',
       header: 'Status',
       align: 'center',
+      width: '90px',
       cell: (row) => <StatusBadge status={row.is_active ? 'active' : 'inactive'} />,
-    },
-    {
-      key: 'price',
-      header: 'Harga Default',
-      align: 'right',
-      cell: (row) => {
-        const price = getDefaultPrice(row)
-        return price !== null ? (
-          <span className="font-medium">{formatRupiah(price)}</span>
-        ) : (
-          <span className="text-gray-400 text-sm">—</span>
-        )
-      },
     },
     {
       key: 'actions',
       header: 'Aksi',
       align: 'center',
-      width: '100px',
+      width: '120px',
       cell: (row) => (
         <div className="flex items-center justify-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-gray-500 hover:text-blue-600"
-            onClick={() => openProductModal(row.id)}
-            title="Edit"
-          >
-            <Pencil size={14} />
-          </Button>
+          <RoleGuard allowedRoles={[ROLES.OWNER, ROLES.ADMIN]}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-gray-500 hover:text-blue-600"
+              onClick={() => openProductModal(row.id)}
+              title="Edit"
+            >
+              <Pencil size={14} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-7 w-7 ${row.is_active ? 'text-gray-500 hover:text-amber-600' : 'text-gray-400 hover:text-green-600'}`}
+              onClick={() =>
+                toggleStatus(row.id, {
+                  onSuccess: () =>
+                    toast.success(
+                      `Produk berhasil ${row.is_active ? 'dinonaktifkan' : 'diaktifkan'}`
+                    ),
+                })
+              }
+              title={row.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+            >
+              {row.is_active ? <Lock size={14} /> : <LockOpen size={14} />}
+            </Button>
+          </RoleGuard>
           <RoleGuard allowedRoles={[ROLES.OWNER]}>
             <Button
               variant="ghost"
               size="icon"
               className="h-7 w-7 text-gray-500 hover:text-red-600"
-              onClick={() => openDeleteConfirm({ type: 'product', id: row.id })}
+              onClick={() => openDeleteConfirm({ type: 'product', id: row.id, name: row.name })}
               title="Hapus"
             >
               <Trash2 size={14} />

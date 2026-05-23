@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Pencil, Plus, Search, Trash2 } from 'lucide-react'
+import { Lock, LockOpen, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { ROLES } from '@/shared/constants'
@@ -16,6 +16,7 @@ import type { ColumnDef } from '@/shared/components/DataTable/DataTable.types'
 import {
   useCreateUnitMutation,
   useDeleteUnitMutation,
+  useToggleUnitStatusMutation,
   useUnitListQuery,
   useUpdateUnitMutation,
 } from '../products.api'
@@ -23,6 +24,7 @@ import type { Unit } from '../products.types'
 
 const unitSchema = z.object({
   name: z.string().min(1, 'Nama unit wajib diisi'),
+  abbreviation: z.string().min(1, 'Singkatan wajib diisi'),
 })
 type UnitFormValues = z.infer<typeof unitSchema>
 
@@ -32,12 +34,13 @@ export function UnitTab() {
   const { isOpen: formOpen, open: openForm, close: closeForm } = useDisclosure()
   const { isOpen: deleteOpen, open: openDelete, close: closeDelete } = useDisclosure()
   const [editingId, setEditingId] = useState<number | null>(null)
-  const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [deletingUnit, setDeletingUnit] = useState<Unit | null>(null)
 
   const { data: units = [], isLoading } = useUnitListQuery()
   const { mutate: createUnit, isPending: isCreating } = useCreateUnitMutation()
   const { mutate: updateUnit, isPending: isUpdating } = useUpdateUnitMutation()
   const { mutate: deleteUnit, isPending: isDeleting } = useDeleteUnitMutation()
+  const { mutate: toggleStatus } = useToggleUnitStatusMutation()
 
   const isPending = isCreating || isUpdating
 
@@ -54,62 +57,59 @@ export function UnitTab() {
 
   const handleOpenAdd = () => {
     setEditingId(null)
-    reset({ name: '' })
+    reset({ name: '', abbreviation: '' })
     openForm()
   }
 
   const handleOpenEdit = (unit: Unit) => {
     setEditingId(unit.id)
-    reset({ name: unit.name })
+    reset({ name: unit.name, abbreviation: unit.abbreviation })
     openForm()
   }
 
-  const handleOpenDelete = (id: number) => {
-    setDeletingId(id)
+  const handleOpenDelete = (unit: Unit) => {
+    setDeletingUnit(unit)
     openDelete()
   }
 
   const handleCloseForm = () => {
     closeForm()
     setEditingId(null)
-    reset({ name: '' })
+    reset({ name: '', abbreviation: '' })
   }
 
   const onSubmit = (values: UnitFormValues) => {
     if (editingId !== null) {
       updateUnit(
-        { id: editingId, name: values.name },
+        { id: editingId, name: values.name, abbreviation: values.abbreviation },
         {
           onSuccess: () => {
             toast.success('Unit berhasil diperbarui')
             handleCloseForm()
           },
-          onError: (error) => toast.error(error.message),
         }
       )
     } else {
       createUnit(
-        { name: values.name },
+        { name: values.name, abbreviation: values.abbreviation },
         {
           onSuccess: () => {
             toast.success('Unit berhasil ditambahkan')
             handleCloseForm()
           },
-          onError: (error) => toast.error(error.message),
         }
       )
     }
   }
 
   const handleDelete = () => {
-    if (deletingId === null) return
-    deleteUnit(deletingId, {
+    if (deletingUnit === null) return
+    deleteUnit(deletingUnit.id, {
       onSuccess: () => {
         toast.success('Unit berhasil dihapus')
         closeDelete()
-        setDeletingId(null)
+        setDeletingUnit(null)
       },
-      onError: (error) => toast.error(error.message),
     })
   }
 
@@ -121,27 +121,66 @@ export function UnitTab() {
       cell: (row) => <span className="font-medium text-gray-800">{row.name}</span>,
     },
     {
-      key: 'actions',
-      header: 'Aksi',
+      key: 'abbreviation',
+      header: 'Singkatan',
+      width: '100px',
+      cell: (row) => <code className="text-sm">{row.abbreviation}</code>,
+    },
+    {
+      key: 'is_active',
+      header: 'Status',
       align: 'center',
       width: '100px',
       cell: (row) => (
+        <span
+          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+            row.is_active
+              ? 'bg-green-100 text-green-700'
+              : 'bg-red-100 text-red-600'
+          }`}
+        >
+          {row.is_active ? 'Aktif' : 'Nonaktif'}
+        </span>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Aksi',
+      align: 'center',
+      width: '120px',
+      cell: (row) => (
         <div className="flex items-center justify-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-gray-500 hover:text-blue-600"
-            onClick={() => handleOpenEdit(row)}
-            title="Edit"
-          >
-            <Pencil size={14} />
-          </Button>
+          <RoleGuard allowedRoles={[ROLES.OWNER, ROLES.ADMIN]}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-gray-500 hover:text-blue-600"
+              onClick={() => handleOpenEdit(row)}
+              title="Edit"
+            >
+              <Pencil size={14} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-7 w-7 ${row.is_active ? 'text-gray-500 hover:text-amber-600' : 'text-gray-400 hover:text-green-600'}`}
+              onClick={() =>
+                toggleStatus(row.id, {
+                  onSuccess: () =>
+                    toast.success(`Unit berhasil ${row.is_active ? 'dinonaktifkan' : 'diaktifkan'}`),
+                })
+              }
+              title={row.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+            >
+              {row.is_active ? <Lock size={14} /> : <LockOpen size={14} />}
+            </Button>
+          </RoleGuard>
           <RoleGuard allowedRoles={[ROLES.OWNER]}>
             <Button
               variant="ghost"
               size="icon"
               className="h-7 w-7 text-gray-500 hover:text-red-600"
-              onClick={() => handleOpenDelete(row.id)}
+              onClick={() => handleOpenDelete(row)}
               title="Hapus"
             >
               <Trash2 size={14} />
@@ -192,17 +231,33 @@ export function UnitTab() {
         isLoading={isPending}
         onSubmit={handleSubmit(onSubmit)}
       >
-        <div className="space-y-1.5">
-          <Label htmlFor="unit-name">
-            Nama Unit <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            id="unit-name"
-            {...register('name')}
-            placeholder="Nama unit (contoh: Pcs, Lusin, Kardus)"
-            className={errors.name ? 'border-red-500' : ''}
-          />
-          {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="unit-name">
+              Nama Unit <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="unit-name"
+              {...register('name')}
+              placeholder="Nama unit (contoh: Pieces, Lusin, Kardus)"
+              className={errors.name ? 'border-red-500' : ''}
+            />
+            {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="unit-abbreviation">
+              Singkatan <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="unit-abbreviation"
+              {...register('abbreviation')}
+              placeholder="Singkatan (contoh: Pcs, Lsn, Kds)"
+              className={errors.abbreviation ? 'border-red-500' : ''}
+            />
+            {errors.abbreviation && (
+              <p className="text-xs text-red-500">{errors.abbreviation.message}</p>
+            )}
+          </div>
         </div>
       </FormModal>
 
@@ -212,11 +267,11 @@ export function UnitTab() {
         onOpenChange={(open) => {
           if (!open) {
             closeDelete()
-            setDeletingId(null)
+            setDeletingUnit(null)
           }
         }}
         title="Hapus Unit"
-        description="Unit yang dihapus tidak bisa dikembalikan. Yakin ingin melanjutkan?"
+        description={`Yakin ingin menghapus unit "${deletingUnit?.name}"? Tindakan ini tidak bisa dibatalkan.`}
         confirmLabel="Ya, Hapus"
         variant="destructive"
         isLoading={isDeleting}

@@ -1,6 +1,8 @@
 package service_master
 
 import (
+	"strings"
+
 	dto_master "pos_api/domain/master/dto"
 	model_master "pos_api/domain/master/model"
 	repo_master "pos_api/domain/master/repo"
@@ -51,6 +53,16 @@ func (s *unitService) GetByID(id int) (*dto_master.UnitResponse, error) {
 }
 
 func (s *unitService) Create(req *dto_master.CreateUnitRequest) (*dto_master.UnitResponse, error) {
+	req.Name = strings.TrimSpace(req.Name)
+	req.Abbreviation = strings.TrimSpace(req.Abbreviation)
+	exists, err := s.repo.CheckNameExists(req.Name, 0)
+	if err != nil {
+		return nil, &errors.InternalServerError{Message: err.Error()}
+	}
+	if exists {
+		return nil, &errors.BadRequestError{Message: "Nama satuan sudah digunakan"}
+	}
+
 	newID, err := s.repo.Create(req.Name, req.Abbreviation)
 	if err != nil {
 		return nil, &errors.InternalServerError{Message: err.Error()}
@@ -64,6 +76,8 @@ func (s *unitService) Create(req *dto_master.CreateUnitRequest) (*dto_master.Uni
 }
 
 func (s *unitService) Update(id int, req *dto_master.UpdateUnitRequest) error {
+	req.Name = strings.TrimSpace(req.Name)
+	req.Abbreviation = strings.TrimSpace(req.Abbreviation)
 	u, err := s.repo.GetByID(id)
 	if err != nil {
 		return &errors.InternalServerError{Message: err.Error()}
@@ -71,6 +85,15 @@ func (s *unitService) Update(id int, req *dto_master.UpdateUnitRequest) error {
 	if u == nil {
 		return &errors.NotFoundError{Message: "Satuan tidak ditemukan"}
 	}
+
+	exists, err := s.repo.CheckNameExists(req.Name, id)
+	if err != nil {
+		return &errors.InternalServerError{Message: err.Error()}
+	}
+	if exists {
+		return &errors.BadRequestError{Message: "Nama satuan sudah digunakan"}
+	}
+
 	return s.repo.Update(id, req.Name, req.Abbreviation)
 }
 

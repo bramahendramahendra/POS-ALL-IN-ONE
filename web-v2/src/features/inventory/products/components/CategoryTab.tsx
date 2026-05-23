@@ -10,6 +10,7 @@ import { ConfirmDialog, DataTable, FormModal, RoleGuard } from '@/shared/compone
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
+import { Textarea } from '@/shared/components/ui/textarea'
 import { useDebounce, useDisclosure } from '@/shared/hooks'
 import type { ColumnDef } from '@/shared/components/DataTable/DataTable.types'
 
@@ -23,6 +24,7 @@ import type { Category } from '../products.types'
 
 const categorySchema = z.object({
   name: z.string().trim().min(2, 'Nama minimal 2 karakter'),
+  description: z.string().optional(),
 })
 type CategoryFormValues = z.infer<typeof categorySchema>
 
@@ -31,7 +33,7 @@ export function CategoryTab() {
   const debouncedSearch = useDebounce(search, 300)
   const { isOpen: formOpen, open: openForm, close: closeForm } = useDisclosure()
   const { isOpen: deleteOpen, open: openDelete, close: closeDelete } = useDisclosure()
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [deletingCategory, setDeletingCategory] = useState<Category | null>(null)
 
   const { data: categories = [], isLoading } = useCategoryListQuery()
@@ -53,14 +55,14 @@ export function CategoryTab() {
   } = useForm<CategoryFormValues>({ resolver: zodResolver(categorySchema) })
 
   const handleOpenAdd = () => {
-    setEditingId(null)
-    reset({ name: '' })
+    setEditingCategory(null)
+    reset({ name: '', description: '' })
     openForm()
   }
 
   const handleOpenEdit = (category: Category) => {
-    setEditingId(category.id)
-    reset({ name: category.name })
+    setEditingCategory(category)
+    reset({ name: category.name, description: category.description ?? '' })
     openForm()
   }
 
@@ -71,31 +73,29 @@ export function CategoryTab() {
 
   const handleCloseForm = () => {
     closeForm()
-    setEditingId(null)
-    reset({ name: '' })
+    setEditingCategory(null)
+    reset({ name: '', description: '' })
   }
 
   const onSubmit = (values: CategoryFormValues) => {
-    if (editingId !== null) {
+    if (editingCategory !== null) {
       updateCategory(
-        { id: editingId, name: values.name },
+        { id: editingCategory.id, name: values.name, description: values.description },
         {
           onSuccess: () => {
             toast.success('Kategori berhasil diperbarui')
             handleCloseForm()
           },
-          onError: (error) => toast.error(error.message),
         }
       )
     } else {
       createCategory(
-        { name: values.name },
+        { name: values.name, description: values.description },
         {
           onSuccess: () => {
             toast.success('Kategori berhasil ditambahkan')
             handleCloseForm()
           },
-          onError: (error) => toast.error(error.message),
         }
       )
     }
@@ -109,7 +109,6 @@ export function CategoryTab() {
         closeDelete()
         setDeletingCategory(null)
       },
-      onError: (error) => toast.error(error.message),
     })
   }
 
@@ -118,6 +117,27 @@ export function CategoryTab() {
       key: 'name',
       header: 'Nama Kategori',
       cell: (row) => <span className="font-medium text-gray-800">{row.name}</span>,
+    },
+    {
+      key: 'description',
+      header: 'Deskripsi',
+      cell: (row) =>
+        row.description ? (
+          <span className="text-sm text-gray-600">{row.description}</span>
+        ) : (
+          <span className="text-gray-400 text-sm">—</span>
+        ),
+    },
+    {
+      key: 'product_count',
+      header: 'Jumlah Produk',
+      align: 'center',
+      width: '120px',
+      cell: (row) => (
+        <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-600">
+          {row.product_count} produk
+        </span>
+      ),
     },
     {
       key: 'actions',
@@ -192,22 +212,34 @@ export function CategoryTab() {
         onOpenChange={(open) => {
           if (!open) handleCloseForm()
         }}
-        title={editingId !== null ? 'Edit Kategori' : 'Tambah Kategori'}
+        title={editingCategory !== null ? 'Edit Kategori' : 'Tambah Kategori'}
         size="sm"
         isLoading={isPending}
         onSubmit={handleSubmit(onSubmit)}
       >
-        <div className="space-y-1.5">
-          <Label htmlFor="category-name">
-            Nama Kategori <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            id="category-name"
-            {...register('name')}
-            placeholder="Nama kategori"
-            className={errors.name ? 'border-red-500' : ''}
-          />
-          {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="category-name">
+              Nama Kategori <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="category-name"
+              {...register('name')}
+              placeholder="Nama kategori"
+              className={errors.name ? 'border-red-500' : ''}
+            />
+            {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="category-description">Deskripsi</Label>
+            <Textarea
+              id="category-description"
+              {...register('description')}
+              placeholder="Deskripsi kategori (opsional)"
+              className="resize-none"
+              rows={3}
+            />
+          </div>
         </div>
       </FormModal>
 

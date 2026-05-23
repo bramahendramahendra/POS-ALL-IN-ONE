@@ -15,6 +15,7 @@ type UpdateCategoryRequest struct {
 type CategoryResponse struct {
 	ID           int       `json:"id"`
 	Name         string    `json:"name"`
+	Code         string    `json:"code"`
 	Description  string    `json:"description"`
 	ProductCount int       `json:"product_count"`
 	CreatedAt    time.Time `json:"created_at"`

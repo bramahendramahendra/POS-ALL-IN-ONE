@@ -36,7 +36,7 @@ export function ProductFilterBar({ filter, onChange, onReset, categories }: Prod
       <div className="relative min-w-[220px] flex-1">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <Input
-          placeholder="Cari produk..."
+          placeholder="Cari nama atau barcode..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-8 h-9 text-sm"
@@ -65,21 +65,35 @@ export function ProductFilterBar({ filter, onChange, onReset, categories }: Prod
 
       {/* Status */}
       <Select
-        value={filter.is_active === undefined ? 'all' : filter.is_active ? 'active' : 'inactive'}
-        onValueChange={(v) =>
-          onChange({
-            ...filter,
-            is_active: v === 'all' ? undefined : v === 'active',
-          })
+        value={
+          filter.low_stock
+            ? 'low_stock'
+            : filter.is_active === undefined
+              ? 'all'
+              : filter.is_active
+                ? 'active'
+                : 'inactive'
         }
+        onValueChange={(v) => {
+          if (v === 'low_stock') {
+            onChange({ ...filter, is_active: undefined, low_stock: true })
+          } else {
+            onChange({
+              ...filter,
+              is_active: v === 'all' ? undefined : v === 'active',
+              low_stock: undefined,
+            })
+          }
+        }}
       >
-        <SelectTrigger className="h-9 w-[140px] text-sm">
+        <SelectTrigger className="h-9 w-[160px] text-sm">
           <SelectValue placeholder="Semua Status" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Semua Status</SelectItem>
           <SelectItem value="active">Aktif</SelectItem>
           <SelectItem value="inactive">Nonaktif</SelectItem>
+          <SelectItem value="low_stock">Stok Menipis</SelectItem>
         </SelectContent>
       </Select>
 

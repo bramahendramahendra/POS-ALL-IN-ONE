@@ -1,9 +1,10 @@
 package dto_product
 
 type ProductRequest struct {
-	Barcode       string  `json:"barcode"`
+	Barcode       string  `json:"barcode" validate:"required"`
+	SKU           string  `json:"sku" validate:"required"`
 	Name          string  `json:"name" validate:"required"`
-	CategoryID    *int    `json:"category_id"`
+	CategoryID    *int    `json:"category_id" validate:"required"`
 	PurchasePrice float64 `json:"purchase_price" validate:"min=0"`
 	SellingPrice  float64 `json:"selling_price" validate:"required,min=0"`
 	Stock         float64 `json:"stock" validate:"min=0"`
@@ -14,6 +15,7 @@ type ProductRequest struct {
 type ProductResponse struct {
 	ID              int     `json:"id"`
 	Barcode         string  `json:"barcode"`
+	SKU             string  `json:"sku"`
 	Name            string  `json:"name"`
 	CategoryID      *int    `json:"category_id"`
 	CategoryName    string  `json:"category_name"`
@@ -25,6 +27,14 @@ type ProductResponse struct {
 	IsActive        bool    `json:"is_active"`
 	ExtraUnitsCount int     `json:"extra_units_count"`
 	PriceTiersCount int     `json:"price_tiers_count"`
+}
+
+type GenerateBarcodeResponse struct {
+	Barcode string `json:"barcode"`
+}
+
+type GenerateSkuResponse struct {
+	SKU string `json:"sku"`
 }
 
 type ProductSearchResult struct {

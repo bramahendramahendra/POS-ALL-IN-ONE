@@ -12,6 +12,8 @@ type ProductService interface {
 	GetByBarcode(barcode string) (*dto_product.ProductResponse, error)
 	Search(keyword string, limit int) ([]*dto_product.ProductSearchResult, error)
 	GetLowStock() ([]*dto_product.LowStockProduct, error)
+	GenerateBarcode() (*dto_product.GenerateBarcodeResponse, error)
+	GenerateSku(categoryID int) (*dto_product.GenerateSkuResponse, error)
 	Create(req *dto_product.ProductRequest) (*dto_product.ProductResponse, error)
 	Update(id int, req *dto_product.ProductRequest) error
 	Delete(id int) error

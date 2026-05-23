@@ -1,7 +1,9 @@
 package service_product
 
 import (
+	"crypto/rand"
 	"fmt"
+	"math/big"
 	"mime/multipart"
 	"strconv"
 	"strings"
@@ -73,15 +75,70 @@ func (s *productService) GetLowStock() ([]*dto_product.LowStockProduct, error) {
 	return results, nil
 }
 
-func (s *productService) Create(req *dto_product.ProductRequest) (*dto_product.ProductResponse, error) {
-	if req.Barcode != "" {
-		exists, err := s.repo.CheckBarcodeExists(req.Barcode, 0)
+func (s *productService) GenerateBarcode() (*dto_product.GenerateBarcodeResponse, error) {
+	// EAN-13 dengan prefix 899 (Indonesia)
+	digits := make([]int, 12)
+	digits[0], digits[1], digits[2] = 8, 9, 9
+	for i := 3; i < 12; i++ {
+		n, err := rand.Int(rand.Reader, big.NewInt(10))
 		if err != nil {
-			return nil, &errors.InternalServerError{Message: err.Error()}
+			return nil, &errors.InternalServerError{Message: "Gagal generate barcode"}
 		}
-		if exists {
-			return nil, &errors.BadRequestError{Message: "Barcode sudah digunakan"}
+		digits[i] = int(n.Int64())
+	}
+	// Hitung checksum EAN-13
+	sum := 0
+	for i, d := range digits {
+		if i%2 == 0 {
+			sum += d
+		} else {
+			sum += d * 3
 		}
+	}
+	checksum := (10 - (sum % 10)) % 10
+
+	barcode := ""
+	for _, d := range digits {
+		barcode += strconv.Itoa(d)
+	}
+	barcode += strconv.Itoa(checksum)
+
+	return &dto_product.GenerateBarcodeResponse{Barcode: barcode}, nil
+}
+
+func (s *productService) GenerateSku(categoryID int) (*dto_product.GenerateSkuResponse, error) {
+	cat, err := s.catRepo.GetByID(categoryID)
+	if err != nil {
+		return nil, &errors.InternalServerError{Message: err.Error()}
+	}
+	if cat == nil {
+		return nil, &errors.NotFoundError{Message: "Kategori tidak ditemukan"}
+	}
+
+	count, err := s.repo.CountSkuByCategory(categoryID)
+	if err != nil {
+		return nil, &errors.InternalServerError{Message: err.Error()}
+	}
+
+	sku := fmt.Sprintf("%s-%04d", cat.Code, count+1)
+	return &dto_product.GenerateSkuResponse{SKU: sku}, nil
+}
+
+func (s *productService) Create(req *dto_product.ProductRequest) (*dto_product.ProductResponse, error) {
+	exists, err := s.repo.CheckBarcodeExists(req.Barcode, 0)
+	if err != nil {
+		return nil, &errors.InternalServerError{Message: err.Error()}
+	}
+	if exists {
+		return nil, &errors.BadRequestError{Message: "Barcode sudah digunakan"}
+	}
+
+	skuExists, err := s.repo.CheckSkuExists(req.SKU, 0)
+	if err != nil {
+		return nil, &errors.InternalServerError{Message: err.Error()}
+	}
+	if skuExists {
+		return nil, &errors.BadRequestError{Message: "SKU sudah digunakan"}
 	}
 
 	newID, err := s.repo.Create(req)
@@ -105,14 +162,20 @@ func (s *productService) Update(id int, req *dto_product.ProductRequest) error {
 		return &errors.NotFoundError{Message: "Produk tidak ditemukan"}
 	}
 
-	if req.Barcode != "" {
-		exists, err := s.repo.CheckBarcodeExists(req.Barcode, id)
-		if err != nil {
-			return &errors.InternalServerError{Message: err.Error()}
-		}
-		if exists {
-			return &errors.BadRequestError{Message: "Barcode sudah digunakan"}
-		}
+	exists, err := s.repo.CheckBarcodeExists(req.Barcode, id)
+	if err != nil {
+		return &errors.InternalServerError{Message: err.Error()}
+	}
+	if exists {
+		return &errors.BadRequestError{Message: "Barcode sudah digunakan"}
+	}
+
+	skuExists, err := s.repo.CheckSkuExists(req.SKU, id)
+	if err != nil {
+		return &errors.InternalServerError{Message: err.Error()}
+	}
+	if skuExists {
+		return &errors.BadRequestError{Message: "SKU sudah digunakan"}
 	}
 
 	return s.repo.Update(id, req)
@@ -244,7 +307,7 @@ func (s *productService) ImportFromFile(file *multipart.FileHeader) (*dto_produc
 				continue
 			}
 			if cat == nil {
-				newID, err := s.catRepo.Create(categoryName, "")
+				newID, err := s.catRepo.CreateWithGeneratedCode(categoryName, "")
 				if err != nil {
 					result.Failed++
 					result.Errors = append(result.Errors, dto_product.ImportErrorDetail{
@@ -338,7 +401,7 @@ func (s *productService) ImportBulk(rows []dto_product.BulkImportRow) (*dto_prod
 				continue
 			}
 			if cat == nil {
-				newID, err := s.catRepo.Create(kategori, "")
+				newID, err := s.catRepo.CreateWithGeneratedCode(kategori, "")
 				if err != nil {
 					addFailed(fmt.Sprintf("Gagal membuat kategori: %s", kategori))
 					continue

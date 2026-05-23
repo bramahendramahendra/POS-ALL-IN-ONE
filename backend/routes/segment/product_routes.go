@@ -30,6 +30,8 @@ func ProductRoutes(r *gin.RouterGroup) {
 	{
 		g.GET("", productHand.GetAll)
 		g.GET("/search", productHand.Search)
+		g.GET("/generate-barcode", middleware.RoleMiddleware("owner", "admin"), productHand.GenerateBarcode)
+		g.GET("/generate-sku", middleware.RoleMiddleware("owner", "admin"), productHand.GenerateSku)
 		g.GET("/barcode/:barcode", productHand.GetByBarcode)
 		g.GET("/:id", productHand.GetByID)
 		g.POST("", middleware.RoleMiddleware("owner", "admin"), productHand.Create)

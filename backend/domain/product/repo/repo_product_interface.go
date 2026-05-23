@@ -12,6 +12,8 @@ type ProductRepo interface {
 	Search(keyword string, limit int) ([]*dto_product.ProductSearchResult, error)
 	GetLowStock() ([]*dto_product.LowStockProduct, error)
 	CheckBarcodeExists(barcode string, excludeID int) (bool, error)
+	CheckSkuExists(sku string, excludeID int) (bool, error)
+	CountSkuByCategory(categoryID int) (int, error)
 	CountTransactionItems(productID int) (int, error)
 	Create(req *dto_product.ProductRequest) (int64, error)
 	Update(id int, req *dto_product.ProductRequest) error

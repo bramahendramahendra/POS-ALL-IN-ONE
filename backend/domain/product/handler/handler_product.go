@@ -40,7 +40,7 @@ func (h *ProductHandler) GetAll(c *gin.Context) {
 		filter.IsActive = &active
 	}
 
-	if c.Query("low_stock") == "1" {
+	if ls := c.Query("low_stock"); ls == "1" || ls == "true" {
 		filter.LowStock = true
 	}
 
@@ -65,6 +65,47 @@ func (h *ProductHandler) GetAll(c *gin.Context) {
 			"page":  filter.Page,
 			"limit": filter.Limit,
 		},
+	})
+}
+
+// GET /api/products/generate-barcode
+func (h *ProductHandler) GenerateBarcode(c *gin.Context) {
+	result, err := h.service.GenerateBarcode()
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
+		Code:    helper.StatusOk,
+		Status:  true,
+		Message: "Barcode berhasil digenerate",
+		Data:    result,
+	})
+}
+
+// GET /api/products/generate-sku
+func (h *ProductHandler) GenerateSku(c *gin.Context) {
+	categoryIDStr := c.Query("category_id")
+	if categoryIDStr == "" {
+		c.Error(&errors.BadRequestError{Message: "Parameter category_id diperlukan"})
+		return
+	}
+	categoryID, err := strconv.Atoi(categoryIDStr)
+	if err != nil || categoryID <= 0 {
+		c.Error(&errors.BadRequestError{Message: "category_id tidak valid"})
+		return
+	}
+
+	result, svcErr := h.service.GenerateSku(categoryID)
+	if svcErr != nil {
+		c.Error(svcErr)
+		return
+	}
+	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
+		Code:    helper.StatusOk,
+		Status:  true,
+		Message: "SKU berhasil digenerate",
+		Data:    result,
 	})
 }
 

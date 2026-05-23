@@ -20,7 +20,10 @@ import {
 import {
   useCategoryListQuery,
   useCreateProductMutation,
+  useGenerateBarcodeQuery,
+  useGenerateSkuQuery,
   useProductDetailQuery,
+  useUnitListQuery,
   useUpdateProductMutation,
 } from '../products.api'
 import type { Product } from '../products.types'
@@ -28,9 +31,15 @@ import { PriceTierTab } from './PriceTierTab'
 
 const productSchema = z.object({
   name: z.string().min(1, 'Nama produk wajib diisi').max(100),
-  sku: z.string().optional(),
-  category_id: z.number().optional(),
+  sku: z.string().min(1, 'SKU wajib digenerate'),
+  barcode: z.string().min(1, 'Barcode wajib digenerate'),
+  category_id: z.number({ required_error: 'Kategori wajib dipilih' }),
   description: z.string().optional(),
+  purchase_price: z.number().min(0, 'Harga beli tidak boleh negatif'),
+  selling_price: z.number().min(1, 'Harga jual harus lebih dari 0'),
+  stock: z.number().min(0, 'Stok tidak boleh negatif'),
+  min_stock: z.number().min(0, 'Stok minimum tidak boleh negatif'),
+  unit: z.string().min(1, 'Satuan wajib dipilih'),
   is_active: z.boolean(),
 })
 
@@ -44,12 +53,23 @@ interface ProductFormModalProps {
 
 type ModalTab = 'info' | 'prices'
 
+function calcMargin(purchasePrice: number, sellingPrice: number): number {
+  if (purchasePrice <= 0 || sellingPrice <= 0) return 0
+  return Math.round(((sellingPrice - purchasePrice) / sellingPrice) * 100)
+}
+
 function mapProductToForm(product: Product): ProductFormValues {
   return {
     name: product.name,
     sku: product.sku ?? '',
+    barcode: product.barcode ?? '',
     category_id: product.category_id ?? undefined,
     description: product.description ?? '',
+    purchase_price: product.purchase_price,
+    selling_price: product.selling_price,
+    stock: product.stock,
+    min_stock: product.min_stock,
+    unit: product.unit ?? '',
     is_active: product.is_active,
   }
 }
@@ -57,11 +77,15 @@ function mapProductToForm(product: Product): ProductFormValues {
 export function ProductFormModal({ open, onOpenChange, productId }: ProductFormModalProps) {
   const isEdit = productId !== undefined
   const [activeTab, setActiveTab] = useState<ModalTab>('info')
+  const [generateBarcodeEnabled, setGenerateBarcodeEnabled] = useState(false)
+  const [generateSkuEnabled, setGenerateSkuEnabled] = useState(false)
 
   const { data: detailData, isLoading: isLoadingDetail } = useProductDetailQuery(
     isEdit && open ? (productId as number) : 0
   )
   const { data: categories = [] } = useCategoryListQuery()
+  const { data: units = [] } = useUnitListQuery()
+
 
   const { mutate: createProduct, isPending: isCreating } = useCreateProductMutation()
   const { mutate: updateProduct, isPending: isUpdating } = useUpdateProductMutation()
@@ -72,8 +96,14 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
     defaultValues: {
       name: '',
       sku: '',
+      barcode: '',
       category_id: undefined,
       description: '',
+      purchase_price: 0,
+      selling_price: 0,
+      stock: 0,
+      min_stock: 5,
+      unit: '',
       is_active: true,
     },
   })
@@ -89,7 +119,32 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
 
   const isActiveValue = watch('is_active')
   const categoryIdValue = watch('category_id')
+  const unitValue = watch('unit')
+  const purchasePriceValue = watch('purchase_price')
+  const sellingPriceValue = watch('selling_price')
+  const margin = calcMargin(purchasePriceValue, sellingPriceValue)
 
+  const { data: barcodeData, isFetching: isFetchingBarcode } = useGenerateBarcodeQuery(
+    !isEdit && generateBarcodeEnabled
+  )
+  const { data: skuData, isFetching: isFetchingSku } = useGenerateSkuQuery(
+    categoryIdValue ?? 0,
+    !isEdit && generateSkuEnabled
+  )
+
+  // Isi field barcode saat data dari API kembali
+  useEffect(() => {
+    const barcode = (barcodeData?.data as { barcode?: string })?.barcode
+    if (barcode) setValue('barcode', barcode)
+  }, [barcodeData, setValue])
+
+  // Isi field SKU saat data dari API kembali
+  useEffect(() => {
+    const sku = (skuData?.data as { sku?: string })?.sku
+    if (sku) setValue('sku', sku)
+  }, [skuData, setValue])
+
+  // Reset generate state saat modal ditutup
   // Prefill form on edit
   useEffect(() => {
     if (isEdit && detailData) {
@@ -100,17 +155,37 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
   // Reset form and tab on close
   useEffect(() => {
     if (!open) {
-      reset({ name: '', sku: '', category_id: undefined, description: '', is_active: true })
+      reset({
+        name: '',
+        sku: '',
+        barcode: '',
+        category_id: undefined,
+        description: '',
+        purchase_price: 0,
+        selling_price: 0,
+        stock: 0,
+        min_stock: 5,
+        unit: '',
+        is_active: true,
+      })
       setActiveTab('info')
+      setGenerateBarcodeEnabled(false)
+      setGenerateSkuEnabled(false)
     }
   }, [open, reset])
 
   const onSubmit = (values: ProductFormValues) => {
     const payload = {
       name: values.name,
-      sku: values.sku || undefined,
+      sku: values.sku,
+      barcode: values.barcode,
       category_id: values.category_id,
       description: values.description || undefined,
+      purchase_price: values.purchase_price,
+      selling_price: values.selling_price,
+      stock: values.stock,
+      min_stock: values.min_stock,
+      unit: values.unit,
       is_active: values.is_active,
     }
 
@@ -136,14 +211,14 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
     }
   }
 
-  const isLoadingContent = isEdit && isLoadingDetail
+  const isLoadingContent = isEdit && (isLoadingDetail || !detailData)
 
   return (
     <FormModal
       open={open}
       onOpenChange={onOpenChange}
       title={isEdit ? 'Edit Produk' : 'Tambah Produk'}
-      size={isEdit ? 'lg' : 'md'}
+      size="lg"
       isLoading={isPending}
       onSubmit={activeTab === 'info' ? handleSubmit(onSubmit) : undefined}
       submitLabel={activeTab === 'info' ? 'Simpan' : undefined}
@@ -192,29 +267,105 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
                 {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
               </div>
 
-              {/* SKU + Kategori */}
+              {/* Barcode + SKU */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="sku">SKU / Kode</Label>
-                  <Input
-                    id="sku"
-                    {...register('sku')}
-                    placeholder="Generate otomatis jika kosong"
-                  />
+                  <Label htmlFor="barcode">
+                    Barcode <span className="text-red-500">*</span>
+                  </Label>
+                  {isEdit ? (
+                    <Input id="barcode" {...register('barcode')} readOnly className="bg-gray-50 text-gray-500" />
+                  ) : (
+                    <div className="flex gap-1.5">
+                      <Input
+                        id="barcode"
+                        {...register('barcode')}
+                        readOnly
+                        placeholder="Klik Generate"
+                        className={`bg-gray-50 text-gray-700 ${errors.barcode ? 'border-red-500' : ''}`}
+                      />
+                      <button
+                        type="button"
+                        disabled={generateBarcodeEnabled || isFetchingBarcode}
+                        onClick={() => setGenerateBarcodeEnabled(true)}
+                        className="shrink-0 rounded-md border border-gray-300 px-2.5 text-xs text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        {isFetchingBarcode ? '...' : 'Generate'}
+                      </button>
+                    </div>
+                  )}
+                  {errors.barcode && <p className="text-xs text-red-500">{errors.barcode.message}</p>}
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Kategori</Label>
+                  <Label htmlFor="sku">
+                    SKU / Kode <span className="text-red-500">*</span>
+                  </Label>
+                  {isEdit ? (
+                    <Input id="sku" {...register('sku')} readOnly className="bg-gray-50 text-gray-500" />
+                  ) : (
+                    <div className="flex gap-1.5">
+                      <Input
+                        id="sku"
+                        {...register('sku')}
+                        readOnly
+                        placeholder={categoryIdValue ? 'Klik Generate' : 'Pilih kategori dulu'}
+                        className={`bg-gray-50 text-gray-700 ${errors.sku ? 'border-red-500' : ''}`}
+                      />
+                      <button
+                        type="button"
+                        disabled={!categoryIdValue || generateSkuEnabled || isFetchingSku}
+                        onClick={() => setGenerateSkuEnabled(true)}
+                        className="shrink-0 rounded-md border border-gray-300 px-2.5 text-xs text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        {isFetchingSku ? '...' : 'Generate'}
+                      </button>
+                    </div>
+                  )}
+                  {errors.sku && <p className="text-xs text-red-500">{errors.sku.message}</p>}
+                </div>
+              </div>
+
+              {/* Satuan + Kategori */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>
+                    Satuan <span className="text-red-500">*</span>
+                  </Label>
                   <Select
-                    value={categoryIdValue !== undefined ? String(categoryIdValue) : 'none'}
-                    onValueChange={(v) =>
-                      setValue('category_id', v === 'none' ? undefined : Number(v))
-                    }
+                    value={unitValue || ''}
+                    onValueChange={(v) => setValue('unit', v)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className={errors.unit ? 'border-red-500' : ''}>
+                      <SelectValue placeholder="Pilih Satuan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {units.filter((u) => u.is_active).map((u) => (
+                        <SelectItem key={u.id} value={u.name}>
+                          {u.name} ({u.abbreviation})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.unit && <p className="text-xs text-red-500">{errors.unit.message}</p>}
+                </div>
+                <div className="space-y-1.5">
+                  <Label>
+                    Kategori <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    value={categoryIdValue !== undefined ? String(categoryIdValue) : ''}
+                    onValueChange={(v) => {
+                      setValue('category_id', Number(v))
+                      // Reset SKU jika kategori berubah sebelum generate
+                      if (!generateSkuEnabled) return
+                      setGenerateSkuEnabled(false)
+                      setValue('sku', '')
+                    }}
+                  >
+                    <SelectTrigger className={errors.category_id ? 'border-red-500' : ''}>
                       <SelectValue placeholder="Pilih Kategori" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Tanpa Kategori</SelectItem>
                       {categories.map((c) => (
                         <SelectItem key={c.id} value={String(c.id)}>
                           {c.name}
@@ -222,6 +373,85 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.category_id && (
+                    <p className="text-xs text-red-500">{errors.category_id.message}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Harga Beli + Harga Jual + Margin */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="purchase_price">Harga Beli (Rp)</Label>
+                  <Input
+                    id="purchase_price"
+                    type="number"
+                    min={0}
+                    {...register('purchase_price', { valueAsNumber: true })}
+                    className={errors.purchase_price ? 'border-red-500' : ''}
+                  />
+                  {errors.purchase_price && (
+                    <p className="text-xs text-red-500">{errors.purchase_price.message}</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="selling_price">
+                    Harga Jual (Rp) <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="selling_price"
+                    type="number"
+                    min={0}
+                    {...register('selling_price', { valueAsNumber: true })}
+                    className={errors.selling_price ? 'border-red-500' : ''}
+                  />
+                  {errors.selling_price && (
+                    <p className="text-xs text-red-500">{errors.selling_price.message}</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Margin</Label>
+                  <div
+                    className={`flex h-9 items-center rounded-md border px-3 text-sm font-medium ${
+                      margin >= 30
+                        ? 'border-green-200 bg-green-50 text-green-700'
+                        : margin >= 15
+                          ? 'border-amber-200 bg-amber-50 text-amber-700'
+                          : margin > 0
+                            ? 'border-red-200 bg-red-50 text-red-600'
+                            : 'border-gray-200 bg-gray-50 text-gray-400'
+                    }`}
+                  >
+                    {margin}%
+                  </div>
+                </div>
+              </div>
+
+              {/* Stok + Stok Minimum */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="stock">Stok</Label>
+                  <Input
+                    id="stock"
+                    type="number"
+                    min={0}
+                    {...register('stock', { valueAsNumber: true })}
+                    className={errors.stock ? 'border-red-500' : ''}
+                  />
+                  {errors.stock && <p className="text-xs text-red-500">{errors.stock.message}</p>}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="min_stock">Stok Minimum</Label>
+                  <Input
+                    id="min_stock"
+                    type="number"
+                    min={0}
+                    {...register('min_stock', { valueAsNumber: true })}
+                    className={errors.min_stock ? 'border-red-500' : ''}
+                  />
+                  {errors.min_stock && (
+                    <p className="text-xs text-red-500">{errors.min_stock.message}</p>
+                  )}
                 </div>
               </div>
 
@@ -233,7 +463,7 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
                   {...register('description')}
                   placeholder="Deskripsi produk (opsional)"
                   className="resize-none"
-                  rows={3}
+                  rows={2}
                 />
               </div>
 

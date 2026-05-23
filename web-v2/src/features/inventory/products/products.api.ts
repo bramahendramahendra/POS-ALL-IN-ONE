@@ -46,6 +46,26 @@ export function useImportProductsCsvMutation() {
   })
 }
 
+// ─── Generate ─────────────────────────────────────────────────────────────────
+
+export function useGenerateBarcodeQuery(enabled: boolean) {
+  return useQuery({
+    queryKey: ['generate-barcode'],
+    queryFn: () => api.get<{ barcode: string }>('/products/generate-barcode'),
+    enabled,
+    staleTime: Infinity,
+  })
+}
+
+export function useGenerateSkuQuery(categoryId: number, enabled: boolean) {
+  return useQuery({
+    queryKey: ['generate-sku', categoryId],
+    queryFn: () => api.get<{ sku: string }>('/products/generate-sku', { category_id: categoryId }),
+    enabled: enabled && categoryId > 0,
+    staleTime: Infinity,
+  })
+}
+
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
 export function useProductListQuery(filter?: ProductFilter) {
@@ -138,6 +158,17 @@ export function useDeleteProductMutation() {
   })
 }
 
+export function useToggleProductStatusMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => api.patch<void>(`/products/${id}/toggle-status`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.products.all() })
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+}
+
 // ─── Category Mutations ───────────────────────────────────────────────────────
 
 export function useCreateCategoryMutation() {
@@ -170,6 +201,7 @@ export function useDeleteCategoryMutation() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.categories.all() })
     },
+    onError: (e: Error) => toast.error(e.message),
   })
 }
 
@@ -202,6 +234,17 @@ export function useDeleteUnitMutation() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => api.delete<void>(`/units/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.units.all() })
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+}
+
+export function useToggleUnitStatusMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => api.patch<void>(`/units/${id}/toggle-status`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.units.all() })
     },

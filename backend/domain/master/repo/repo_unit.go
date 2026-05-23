@@ -10,6 +10,7 @@ const (
 	getAllUnitsQuery      = `SELECT id, name, abbreviation, is_active FROM units ORDER BY name`
 	getActiveUnitsQuery   = `SELECT id, name, abbreviation, is_active FROM units WHERE is_active = 1 ORDER BY name`
 	getUnitByIDQuery      = `SELECT id, name, abbreviation, is_active FROM units WHERE id = ? LIMIT 1`
+	checkUnitNameQuery    = `SELECT id FROM units WHERE name = ? AND id != ? LIMIT 1`
 	checkUnitUsedQuery    = `SELECT COUNT(*) FROM product_units WHERE unit_id = ?`
 	createUnitQuery       = `INSERT INTO units (name, abbreviation) VALUES (?, ?)`
 	updateUnitQuery       = `UPDATE units SET name = ?, abbreviation = ?, updated_at = NOW() WHERE id = ?`
@@ -32,13 +33,16 @@ func (r *unitRepo) GetAll() ([]*model_master.Unit, error) {
 	}
 	defer rows.Close()
 
-	var units []*model_master.Unit
+	units := make([]*model_master.Unit, 0)
 	for rows.Next() {
 		var u model_master.Unit
 		if err := rows.Scan(&u.ID, &u.Name, &u.Abbreviation, &u.IsActive); err != nil {
 			return nil, err
 		}
 		units = append(units, &u)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return units, nil
 }
@@ -50,13 +54,16 @@ func (r *unitRepo) GetActive() ([]*model_master.Unit, error) {
 	}
 	defer rows.Close()
 
-	var units []*model_master.Unit
+	units := make([]*model_master.Unit, 0)
 	for rows.Next() {
 		var u model_master.Unit
 		if err := rows.Scan(&u.ID, &u.Name, &u.Abbreviation, &u.IsActive); err != nil {
 			return nil, err
 		}
 		units = append(units, &u)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return units, nil
 }
@@ -73,6 +80,15 @@ func (r *unitRepo) GetByID(id int) (*model_master.Unit, error) {
 	return &u, nil
 }
 
+func (r *unitRepo) CheckNameExists(name string, excludeID int) (bool, error) {
+	var id int
+	result := r.db.Raw(checkUnitNameQuery, name, excludeID).Scan(&id)
+	if result.Error != nil {
+		return false, result.Error
+	}
+	return result.RowsAffected > 0, nil
+}
+
 func (r *unitRepo) CountProductUnitsByUnit(unitID int) (int, error) {
 	var count int
 	if err := r.db.Raw(checkUnitUsedQuery, unitID).Scan(&count).Error; err != nil {
@@ -82,11 +98,14 @@ func (r *unitRepo) CountProductUnitsByUnit(unitID int) (int, error) {
 }
 
 func (r *unitRepo) Create(name, abbreviation string) (int64, error) {
-	if err := r.db.Exec(createUnitQuery, name, abbreviation).Error; err != nil {
-		return 0, err
-	}
 	var id int64
-	if err := r.db.Raw(`SELECT LAST_INSERT_ID()`).Scan(&id).Error; err != nil {
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec(createUnitQuery, name, abbreviation).Error; err != nil {
+			return err
+		}
+		return tx.Raw(`SELECT LAST_INSERT_ID()`).Scan(&id).Error
+	})
+	if err != nil {
 		return 0, err
 	}
 	return id, nil

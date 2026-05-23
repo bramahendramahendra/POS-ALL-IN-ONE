@@ -12,7 +12,7 @@ import (
 
 const (
 	getAllProductsBase = `
-		SELECT p.id, p.barcode, p.name, p.category_id, COALESCE(c.name, '') as category_name,
+		SELECT p.id, p.barcode, COALESCE(p.sku, '') as sku, p.name, p.category_id, COALESCE(c.name, '') as category_name,
 		       p.purchase_price, p.selling_price, p.stock, p.min_stock, p.unit, p.is_active,
 		       (SELECT COUNT(*) FROM product_units pu WHERE pu.product_id = p.id AND pu.is_default = 0) AS extra_units_count,
 		       (SELECT COUNT(*) FROM product_prices pp WHERE pp.product_id = p.id) AS price_tiers_count
@@ -40,9 +40,11 @@ const (
 		FROM products WHERE stock <= min_stock AND is_active = 1`
 
 	checkBarcodeExistsQuery  = `SELECT id FROM products WHERE barcode = ? AND id != ? LIMIT 1`
+	checkSkuExistsQuery      = `SELECT id FROM products WHERE sku = ? AND id != ? LIMIT 1`
+	countSkuByCategoryQuery  = `SELECT COUNT(*) FROM products WHERE category_id = ?`
 	checkProductUsedQuery    = `SELECT COUNT(*) FROM transaction_items WHERE product_id = ?`
-	createProductQuery       = `INSERT INTO products (barcode, name, category_id, purchase_price, selling_price, stock, min_stock, unit) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-	updateProductQuery       = `UPDATE products SET barcode=?, name=?, category_id=?, purchase_price=?, selling_price=?, stock=?, min_stock=?, unit=?, updated_at=NOW() WHERE id=?`
+	createProductQuery       = `INSERT INTO products (barcode, sku, name, category_id, purchase_price, selling_price, stock, min_stock, unit) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	updateProductQuery       = `UPDATE products SET barcode=?, sku=?, name=?, category_id=?, purchase_price=?, selling_price=?, stock=?, min_stock=?, unit=?, updated_at=NOW() WHERE id=?`
 	deleteProductQuery       = `DELETE FROM products WHERE id = ?`
 	toggleProductStatusQuery = `UPDATE products SET is_active = NOT is_active, updated_at = NOW() WHERE id = ?`
 	updateProductStockQuery  = `UPDATE products SET stock = stock + ?, updated_at = NOW() WHERE id = ?`
@@ -119,7 +121,7 @@ func (r *productRepo) GetAll(filter *dto_product.ProductFilter) ([]*dto_product.
 	var products []*dto_product.ProductResponse
 	for rows.Next() {
 		var p dto_product.ProductResponse
-		if err := rows.Scan(&p.ID, &p.Barcode, &p.Name, &p.CategoryID, &p.CategoryName,
+		if err := rows.Scan(&p.ID, &p.Barcode, &p.SKU, &p.Name, &p.CategoryID, &p.CategoryName,
 			&p.PurchasePrice, &p.SellingPrice, &p.Stock, &p.MinStock, &p.Unit, &p.IsActive,
 			&p.ExtraUnitsCount, &p.PriceTiersCount); err != nil {
 			return nil, 0, err
@@ -219,9 +221,29 @@ func (r *productRepo) CountTransactionItems(productID int) (int, error) {
 	return count, nil
 }
 
+func (r *productRepo) CheckSkuExists(sku string, excludeID int) (bool, error) {
+	if strings.TrimSpace(sku) == "" {
+		return false, nil
+	}
+	var id int
+	result := r.db.Raw(checkSkuExistsQuery, sku, excludeID).Scan(&id)
+	if result.Error != nil {
+		return false, result.Error
+	}
+	return result.RowsAffected > 0, nil
+}
+
+func (r *productRepo) CountSkuByCategory(categoryID int) (int, error) {
+	var count int
+	if err := r.db.Raw(countSkuByCategoryQuery, categoryID).Scan(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (r *productRepo) Create(req *dto_product.ProductRequest) (int64, error) {
 	if err := r.db.Exec(createProductQuery,
-		req.Barcode, req.Name, req.CategoryID, req.PurchasePrice,
+		req.Barcode, req.SKU, req.Name, req.CategoryID, req.PurchasePrice,
 		req.SellingPrice, req.Stock, req.MinStock, req.Unit,
 	).Error; err != nil {
 		return 0, err
@@ -235,7 +257,7 @@ func (r *productRepo) Create(req *dto_product.ProductRequest) (int64, error) {
 
 func (r *productRepo) Update(id int, req *dto_product.ProductRequest) error {
 	return r.db.Exec(updateProductQuery,
-		req.Barcode, req.Name, req.CategoryID, req.PurchasePrice,
+		req.Barcode, req.SKU, req.Name, req.CategoryID, req.PurchasePrice,
 		req.SellingPrice, req.Stock, req.MinStock, req.Unit, id,
 	).Error
 }

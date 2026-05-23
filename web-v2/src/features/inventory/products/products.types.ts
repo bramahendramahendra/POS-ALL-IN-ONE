@@ -1,13 +1,17 @@
 export interface Category {
   id: number
   name: string
+  code: string
+  description: string
+  product_count: number
   created_at: string
 }
 
 export interface Unit {
   id: number
   name: string
-  created_at: string
+  abbreviation: string
+  is_active: boolean
 }
 
 export interface ProductUnit {
@@ -34,9 +38,15 @@ export interface Product {
   id: number
   name: string
   sku?: string
+  barcode?: string
   category_id?: number
   category_name?: string
   description?: string
+  purchase_price: number
+  selling_price: number
+  stock: number
+  min_stock: number
+  unit?: string
   is_active: boolean
   created_at: string
   units: ProductUnit[]
@@ -47,15 +57,22 @@ export interface ProductFilter {
   search?: string
   category_id?: number
   is_active?: boolean
+  low_stock?: boolean
   page?: number
   page_size?: number
 }
 
 export interface CreateProductPayload {
   name: string
-  sku?: string
-  category_id?: number
+  sku: string
+  barcode: string
+  category_id: number
   description?: string
+  purchase_price: number
+  selling_price: number
+  stock: number
+  min_stock: number
+  unit: string
   is_active: boolean
 }
 
@@ -63,11 +80,17 @@ export type UpdateProductPayload = Partial<CreateProductPayload>
 
 export interface CreateCategoryPayload {
   name: string
+  description?: string
 }
-export type UpdateCategoryPayload = Partial<CreateCategoryPayload>
+
+export interface UpdateCategoryPayload {
+  name: string
+  description?: string
+}
 
 export interface CreateUnitPayload {
   name: string
+  abbreviation: string
 }
 export type UpdateUnitPayload = Partial<CreateUnitPayload>
 
