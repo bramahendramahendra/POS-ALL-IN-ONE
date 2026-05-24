@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Clock } from 'lucide-react'
+import { Clock, Plus } from 'lucide-react'
 
 import { PageHeader } from '@/shared/components'
 import { Button } from '@/shared/components/ui/button'
@@ -11,14 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select'
+import { usePagination } from '@/shared/hooks'
 
 import { useActiveShiftQuery, useShiftListQuery } from './shifts.api'
 import type { Shift, ShiftFilter, ShiftStatus } from './shifts.types'
 import { CloseShiftModal } from './components/CloseShiftModal'
 import { OpenShiftModal } from './components/OpenShiftModal'
 import { ShiftTable } from './components/ShiftTable'
-
-const PAGE_SIZE = 10
 
 function formatDateTime(str: string): string {
   return new Date(str).toLocaleString('id-ID', {
@@ -34,10 +33,10 @@ export function ShiftsPage() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [status, setStatus] = useState<ShiftStatus | 'all'>('all')
-  const [page, setPage] = useState(1)
   const [openShiftOpen, setOpenShiftOpen] = useState(false)
   const [closeTarget, setCloseTarget] = useState<Shift | null>(null)
 
+  const { page, pageSize, onPageChange, onPageSizeChange, reset } = usePagination()
   const { data: activeShift } = useActiveShiftQuery()
 
   const filter: ShiftFilter = {
@@ -45,7 +44,7 @@ export function ShiftsPage() {
     date_to: dateTo || undefined,
     status: status === 'all' ? undefined : status,
     page,
-    page_size: PAGE_SIZE,
+    page_size: pageSize,
   }
 
   const { data, isLoading } = useShiftListQuery(filter)
@@ -53,10 +52,20 @@ export function ShiftsPage() {
   const total = data?.data?.total ?? 0
 
   return (
-    <div className="p-6 space-y-6">
-      <PageHeader title="Manajemen Shift" breadcrumbs={[{ label: 'Shifts' }]} />
+    <div className="space-y-4">
+      <PageHeader
+        title="Manajemen Shift"
+        breadcrumbs={[{ label: 'Shifts' }]}
+        actions={
+          !activeShift ? (
+            <Button onClick={() => setOpenShiftOpen(true)} className="gap-1">
+              <Plus size={16} />
+              Buka Shift
+            </Button>
+          ) : undefined
+        }
+      />
 
-      {/* Active shift banner */}
       {activeShift && (
         <div className="flex items-center justify-between rounded-xl border border-green-200 bg-green-50 px-4 py-3">
           <div className="flex items-center gap-2 text-green-700 text-sm">
@@ -78,18 +87,14 @@ export function ShiftsPage() {
         </div>
       )}
 
-      {/* Filters + open shift button */}
-      <div className="flex flex-wrap gap-3 items-end">
+      <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-white p-3">
         <div className="space-y-1">
           <span className="text-xs text-gray-500">Dari</span>
           <Input
             type="date"
             value={dateFrom}
-            onChange={(e) => {
-              setDateFrom(e.target.value)
-              setPage(1)
-            }}
-            className="w-40"
+            onChange={(e) => { setDateFrom(e.target.value); reset() }}
+            className="w-40 h-9"
           />
         </div>
         <div className="space-y-1">
@@ -97,21 +102,15 @@ export function ShiftsPage() {
           <Input
             type="date"
             value={dateTo}
-            onChange={(e) => {
-              setDateTo(e.target.value)
-              setPage(1)
-            }}
-            className="w-40"
+            onChange={(e) => { setDateTo(e.target.value); reset() }}
+            className="w-40 h-9"
           />
         </div>
         <Select
           value={status}
-          onValueChange={(v) => {
-            setStatus(v as ShiftStatus | 'all')
-            setPage(1)
-          }}
+          onValueChange={(v) => { setStatus(v as ShiftStatus | 'all'); reset() }}
         >
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-40 h-9">
             <SelectValue placeholder="Semua Status" />
           </SelectTrigger>
           <SelectContent>
@@ -120,27 +119,19 @@ export function ShiftsPage() {
             <SelectItem value="closed">Selesai</SelectItem>
           </SelectContent>
         </Select>
-
-        {!activeShift && (
-          <Button className="ml-auto" onClick={() => setOpenShiftOpen(true)}>
-            + Buka Shift
-          </Button>
-        )}
       </div>
 
       <ShiftTable
         data={shifts}
         isLoading={isLoading}
-        pagination={{ page, pageSize: PAGE_SIZE, total, onPageChange: setPage }}
+        pagination={{ page, pageSize, total, onPageChange, onPageSizeChange, pageSizeOptions: [10, 20, 50] }}
         onClose={(shift) => setCloseTarget(shift)}
       />
 
       <OpenShiftModal open={openShiftOpen} onOpenChange={setOpenShiftOpen} />
       <CloseShiftModal
         open={!!closeTarget}
-        onOpenChange={(open) => {
-          if (!open) setCloseTarget(null)
-        }}
+        onOpenChange={(open) => { if (!open) setCloseTarget(null) }}
         shift={closeTarget}
       />
     </div>

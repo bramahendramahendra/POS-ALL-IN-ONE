@@ -42,7 +42,7 @@ export function ProductTable({
   const { openProductModal, openDeleteConfirm } = useProductsStore()
   const { mutate: toggleStatus } = useToggleProductStatusMutation()
   const { mutate: bulkToggleStatus, isPending: isBulkToggling } = useBulkToggleProductStatusMutation()
-  const { selectedKeys, selectedItems, toggle, selectAll, clearSelection, hasSelection, count } =
+  const { selectedKeys, toggle, selectAll, clearSelection, hasSelection, count } =
     useTableSelection<Product & { id: number }>()
 
   // Derive selected products from selectedKeys + current page data

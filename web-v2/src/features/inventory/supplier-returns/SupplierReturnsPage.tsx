@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Truck } from 'lucide-react'
 
-import { ConfirmDialog, PageHeader } from '@/shared/components'
+import { ROLES } from '@/shared/constants'
+import { ConfirmDialog, PageHeader, RoleGuard } from '@/shared/components'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import {
@@ -40,8 +41,9 @@ export function SupplierReturnsPage() {
 
   const [deletingId, setDeletingId] = useState<number | null>(null)
 
-  const { data: suppliersData } = useSupplierListQuery({ page_size: 200 })
+  const { data: suppliersData, isLoading: isSuppliersLoading } = useSupplierListQuery({ page_size: 200 })
   const suppliers = suppliersData?.data?.data ?? []
+  const hasSuppliers = suppliers.length > 0
 
   const filter: SupplierReturnFilter = {
     date_from: dateFrom || undefined,
@@ -72,16 +74,64 @@ export function SupplierReturnsPage() {
     })
   }
 
+  if (isSuppliersLoading) {
+    return (
+      <div className="space-y-4">
+        <PageHeader
+          title="Retur Pembelian"
+          breadcrumbs={[{ label: 'Inventori' }, { label: 'Retur' }]}
+        />
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-12 animate-pulse rounded-md bg-gray-100" />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (!hasSuppliers) {
+    return (
+      <div className="space-y-4">
+        <PageHeader
+          title="Retur Pembelian"
+          breadcrumbs={[{ label: 'Inventori' }, { label: 'Retur' }]}
+        />
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-white px-6 py-16 text-center">
+          <div className="mb-4 flex gap-3">
+            <div className="rounded-full p-3 bg-amber-50">
+              <Truck size={24} className="text-amber-500" />
+            </div>
+          </div>
+          <h3 className="mb-1 text-base font-semibold text-gray-800">
+            Belum bisa menambah retur
+          </h3>
+          <p className="mb-1 text-sm text-gray-500">
+            Sebelum menambah retur, pastikan data berikut sudah tersedia:
+          </p>
+          <ul className="mb-6 text-sm">
+            <li className="flex items-center gap-2 text-amber-600">
+              <span>!</span>
+              Belum ada supplier — tambahkan di menu Supplier
+            </li>
+          </ul>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
       <PageHeader
         title="Retur Pembelian"
         breadcrumbs={[{ label: 'Inventori' }, { label: 'Retur' }]}
         actions={
-          <Button onClick={openForm} className="gap-1">
-            <Plus size={16} />
-            Tambah Retur
-          </Button>
+          <RoleGuard allowedRoles={[ROLES.OWNER, ROLES.ADMIN]}>
+            <Button onClick={openForm} className="gap-1">
+              <Plus size={16} />
+              Tambah Retur
+            </Button>
+          </RoleGuard>
         }
       />
 

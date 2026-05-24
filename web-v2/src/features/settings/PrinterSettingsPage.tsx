@@ -4,7 +4,7 @@ import { PrinterSettingsTab } from './components/PrinterSettingsTab'
 
 export function PrinterSettingsPage() {
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title="Pengaturan Printer"
         breadcrumbs={[{ label: 'Sistem' }, { label: 'Printer' }]}

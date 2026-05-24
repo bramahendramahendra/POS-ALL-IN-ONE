@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 
-import { PageHeader } from '@/shared/components'
+import { ROLES } from '@/shared/constants'
+import { ConfirmDialog, PageHeader, RoleGuard } from '@/shared/components'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import {
@@ -11,23 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/shared/components/ui/alert-dialog'
+import { useDisclosure, usePagination } from '@/shared/hooks'
 
 import { useExpensesQuery, useDeleteExpenseMutation } from './expenses.api'
 import type { Expense, ExpenseCategory, ExpenseFilter } from './expenses.types'
 import { ExpenseTable } from './components/ExpenseTable'
 import { ExpenseFormModal } from './components/ExpenseFormModal'
-
-const PAGE_SIZE = 10
 
 function todayString(): string {
   return new Date().toISOString().split('T')[0]
@@ -52,9 +42,11 @@ export function ExpensesPage() {
   const [dateFrom, setDateFrom] = useState(monthStartString())
   const [dateTo, setDateTo] = useState(today)
   const [category, setCategory] = useState<ExpenseCategory | 'all'>('all')
-  const [page, setPage] = useState(1)
 
-  const [formOpen, setFormOpen] = useState(false)
+  const { page, pageSize, onPageChange, onPageSizeChange, reset } = usePagination()
+  const { isOpen: formOpen, open: openForm, close: closeForm } = useDisclosure()
+  const { isOpen: deleteOpen, open: openDelete, close: closeDelete } = useDisclosure()
+
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null)
 
@@ -63,60 +55,63 @@ export function ExpensesPage() {
     date_to: dateTo || undefined,
     category: category === 'all' ? undefined : category,
     page,
-    page_size: PAGE_SIZE,
+    page_size: pageSize,
   }
 
   const { data, isLoading } = useExpensesQuery(filter)
-  const deleteMutation = useDeleteExpenseMutation()
+  const { mutate: deleteExpense, isPending: isDeleting } = useDeleteExpenseMutation()
 
   const items: Expense[] = data?.data?.data ?? []
   const total = data?.data?.total ?? 0
 
   function handleEdit(expense: Expense) {
     setEditingExpense(expense)
-    setFormOpen(true)
+    openForm()
   }
 
   function handleDelete(expense: Expense) {
     setDeletingExpense(expense)
+    openDelete()
+  }
+
+  function handleFormClose() {
+    closeForm()
+    setEditingExpense(null)
   }
 
   function confirmDelete() {
     if (!deletingExpense) return
-    deleteMutation.mutate(deletingExpense.id, {
-      onSuccess: () => setDeletingExpense(null),
+    deleteExpense(deletingExpense.id, {
+      onSuccess: () => {
+        closeDelete()
+        setDeletingExpense(null)
+      },
     })
   }
 
-  function handleFormClose() {
-    setFormOpen(false)
-    setEditingExpense(null)
-  }
-
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title="Pengeluaran"
         breadcrumbs={[{ label: 'Finance' }, { label: 'Pengeluaran' }]}
         actions={
-          <Button onClick={() => setFormOpen(true)}>
-            <Plus className="h-4 w-4 mr-1" />
-            Tambah Pengeluaran
-          </Button>
+          <RoleGuard allowedRoles={[ROLES.OWNER, ROLES.ADMIN]}>
+            <Button onClick={openForm} className="gap-1">
+              <Plus size={16} />
+              Tambah Pengeluaran
+            </Button>
+          </RoleGuard>
         }
       />
 
-      <div className="flex flex-wrap gap-3 items-end">
+      <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-white p-3">
         <div className="space-y-1">
           <label className="text-xs text-gray-500">Dari</label>
           <Input
             type="date"
             value={dateFrom}
-            onChange={(e) => {
-              setDateFrom(e.target.value)
-              setPage(1)
-            }}
-            className="w-40"
+            onChange={(e) => { setDateFrom(e.target.value); reset() }}
+            className="w-40 h-9"
           />
         </div>
         <div className="space-y-1">
@@ -124,23 +119,17 @@ export function ExpensesPage() {
           <Input
             type="date"
             value={dateTo}
-            onChange={(e) => {
-              setDateTo(e.target.value)
-              setPage(1)
-            }}
-            className="w-40"
+            onChange={(e) => { setDateTo(e.target.value); reset() }}
+            className="w-40 h-9"
           />
         </div>
         <div className="space-y-1">
           <label className="text-xs text-gray-500">Kategori</label>
           <Select
             value={category}
-            onValueChange={(v) => {
-              setCategory(v as ExpenseCategory | 'all')
-              setPage(1)
-            }}
+            onValueChange={(v) => { setCategory(v as ExpenseCategory | 'all'); reset() }}
           >
-            <SelectTrigger className="w-44">
+            <SelectTrigger className="w-44 h-9">
               <SelectValue placeholder="Semua Kategori" />
             </SelectTrigger>
             <SelectContent>
@@ -152,47 +141,33 @@ export function ExpensesPage() {
             </SelectContent>
           </Select>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            setDateFrom(monthStartString())
-            setDateTo(today)
-            setCategory('all')
-            setPage(1)
-          }}
-        >
-          Bulan ini
-        </Button>
       </div>
 
       <ExpenseTable
         data={items}
         isLoading={isLoading}
-        pagination={{ page, pageSize: PAGE_SIZE, total, onPageChange: setPage }}
+        pagination={{ page, pageSize, total, onPageChange, onPageSizeChange, pageSizeOptions: [10, 20, 50] }}
         onEdit={handleEdit}
         onDelete={handleDelete}
       />
 
       <ExpenseFormModal open={formOpen} expense={editingExpense} onClose={handleFormClose} />
 
-      <AlertDialog open={deletingExpense !== null} onOpenChange={(o) => !o && setDeletingExpense(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Hapus Pengeluaran</AlertDialogTitle>
-            <AlertDialogDescription>
-              Yakin ingin menghapus pengeluaran &quot;{deletingExpense?.description}&quot;? Tindakan
-              ini tidak dapat dibatalkan.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} disabled={deleteMutation.isPending}>
-              {deleteMutation.isPending ? 'Menghapus...' : 'Hapus'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeDelete()
+            setDeletingExpense(null)
+          }
+        }}
+        title="Hapus Pengeluaran"
+        description={`Yakin ingin menghapus pengeluaran "${deletingExpense?.description}"? Tindakan ini tidak dapat dibatalkan.`}
+        confirmLabel="Ya, Hapus"
+        variant="destructive"
+        isLoading={isDeleting}
+        onConfirm={confirmDelete}
+      />
     </div>
   )
 }

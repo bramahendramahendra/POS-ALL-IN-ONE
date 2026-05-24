@@ -26,7 +26,7 @@ export function DashboardPage() {
   const topProducts = topData ?? []
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <PageHeader title="Dashboard" />
         <div className="flex gap-1 rounded-lg border p-1 bg-gray-50">

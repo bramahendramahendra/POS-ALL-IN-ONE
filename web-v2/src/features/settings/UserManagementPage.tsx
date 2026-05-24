@@ -4,7 +4,7 @@ import { UserManagementTab } from './components/UserManagementTab'
 
 export function UserManagementPage() {
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title="Manajemen User"
         breadcrumbs={[{ label: 'Sistem' }, { label: 'Manajemen User' }]}

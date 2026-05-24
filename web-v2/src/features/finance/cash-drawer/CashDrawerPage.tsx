@@ -14,14 +14,13 @@ import {
 } from '@/shared/components/ui/dialog'
 import { useAuthStore } from '@/features/auth'
 import { ROLES } from '@/shared/constants/roles'
+import { usePagination } from '@/shared/hooks'
 
 import { useCashDrawerCurrentQuery, useCashDrawerListQuery, useCloseCashDrawerMutation } from './cash-drawer.api'
 import type { CashDrawerFilter, CashDrawer } from './cash-drawer.types'
 import { CashDrawerTable } from './components/CashDrawerTable'
 import { CashDrawerDetailModal } from './components/CashDrawerDetailModal'
 import { OpenCashDrawerModal } from './components/OpenCashDrawerModal'
-
-const PAGE_SIZE = 10
 
 const SHIFT_LABELS: Record<string, string> = {
   pagi: 'Pagi',
@@ -45,18 +44,19 @@ export function CashDrawerPage() {
 
   const [dateFrom, setDateFrom] = useState(monthStartString())
   const [dateTo, setDateTo] = useState(today)
-  const [page, setPage] = useState(1)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [openModalOpen, setOpenModalOpen] = useState(false)
   const [closeModalOpen, setCloseModalOpen] = useState(false)
   const [closingBalance, setClosingBalance] = useState<number>(0)
   const [closeNotes, setCloseNotes] = useState('')
 
+  const { page, pageSize, onPageChange, onPageSizeChange, reset } = usePagination()
+
   const filter: CashDrawerFilter = {
     date_from: dateFrom || undefined,
     date_to: dateTo || undefined,
     page,
-    page_size: PAGE_SIZE,
+    page_size: pageSize,
   }
 
   const { data, isLoading } = useCashDrawerListQuery(filter)
@@ -84,13 +84,12 @@ export function CashDrawerPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title="Kas Harian"
         breadcrumbs={[{ label: 'Keuangan' }, { label: 'Kas Harian' }]}
       />
 
-      {/* Status Card */}
       <Card>
         <CardContent className="pt-4 pb-4">
           <div className="flex items-center justify-between">
@@ -120,18 +119,14 @@ export function CashDrawerPage() {
         </CardContent>
       </Card>
 
-      {/* Filter */}
-      <div className="flex flex-wrap gap-3 items-end">
+      <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-white p-3">
         <div className="space-y-1">
           <label className="text-xs text-gray-500">Dari</label>
           <Input
             type="date"
             value={dateFrom}
-            onChange={(e) => {
-              setDateFrom(e.target.value)
-              setPage(1)
-            }}
-            className="w-40"
+            onChange={(e) => { setDateFrom(e.target.value); reset() }}
+            className="w-40 h-9"
           />
         </div>
         <div className="space-y-1">
@@ -139,21 +134,14 @@ export function CashDrawerPage() {
           <Input
             type="date"
             value={dateTo}
-            onChange={(e) => {
-              setDateTo(e.target.value)
-              setPage(1)
-            }}
-            className="w-40"
+            onChange={(e) => { setDateTo(e.target.value); reset() }}
+            className="w-40 h-9"
           />
         </div>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => {
-            setDateFrom(monthStartString())
-            setDateTo(today)
-            setPage(1)
-          }}
+          onClick={() => { setDateFrom(monthStartString()); setDateTo(today); reset() }}
         >
           Bulan ini
         </Button>
@@ -162,7 +150,7 @@ export function CashDrawerPage() {
       <CashDrawerTable
         data={items}
         isLoading={isLoading}
-        pagination={{ page, pageSize: PAGE_SIZE, total, onPageChange: setPage }}
+        pagination={{ page, pageSize, total, onPageChange, onPageSizeChange, pageSizeOptions: [10, 20, 50] }}
         onRowClick={(row) => setSelectedId(row.id)}
       />
 

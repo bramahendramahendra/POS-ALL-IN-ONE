@@ -1,12 +1,13 @@
 import { useState } from 'react'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Lock, LockOpen, Pencil, Plus, Search, Trash2 } from 'lucide-react'
+import { Lock, LockOpen, Pencil, RotateCcw, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { ROLES } from '@/shared/constants'
-import { ConfirmDialog, DataTable, FormModal, RoleGuard } from '@/shared/components'
+import { ConfirmDialog, DataTable, FormModal, RoleGuard, StatusBadge } from '@/shared/components'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
@@ -29,7 +30,12 @@ const categorySchema = z.object({
 })
 type CategoryFormValues = z.infer<typeof categorySchema>
 
-export function CategoryTab() {
+interface CategoryTabProps {
+  openAdd?: boolean
+  onOpenAddChange?: (open: boolean) => void
+}
+
+export function CategoryTab({ openAdd, onOpenAddChange }: CategoryTabProps) {
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebounce(search, 300)
   const { isOpen: formOpen, open: openForm, close: closeForm } = useDisclosure()
@@ -48,6 +54,13 @@ export function CategoryTab() {
   const { mutate: toggleStatus } = useToggleCategoryStatusMutation()
 
   const isPending = isCreating || isUpdating
+
+  useEffect(() => {
+    if (openAdd) {
+      handleOpenAdd()
+      onOpenAddChange?.(false)
+    }
+  }, [openAdd])
 
   const filtered = debouncedSearch
     ? categories.filter((c) => c.name.toLowerCase().includes(debouncedSearch.toLowerCase()))
@@ -195,15 +208,7 @@ export function CategoryTab() {
       header: 'Status',
       align: 'center',
       width: '100px',
-      cell: (row) => (
-        <span
-          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-            row.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
-          }`}
-        >
-          {row.is_active ? 'Aktif' : 'Nonaktif'}
-        </span>
-      ),
+      cell: (row) => <StatusBadge status={row.is_active ? 'active' : 'inactive'} />,
     },
     {
       key: 'actions',
@@ -249,10 +254,10 @@ export function CategoryTab() {
   ]
 
   return (
-    <div className="space-y-3">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="relative min-w-[220px] flex-1 max-w-sm">
+    <div className="space-y-4">
+      {/* Filter */}
+      <div className="flex items-center gap-2 rounded-lg border bg-white p-3">
+        <div className="relative min-w-[220px] flex-1">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <Input
             placeholder="Cari kategori..."
@@ -261,12 +266,17 @@ export function CategoryTab() {
             className="pl-8 h-9 text-sm"
           />
         </div>
-        <RoleGuard allowedRoles={[ROLES.OWNER, ROLES.ADMIN]}>
-          <Button onClick={handleOpenAdd} className="gap-1" size="sm">
-            <Plus size={14} />
-            Tambah Kategori
+        {search && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => { setSearch(''); resetPage() }}
+            className="h-9 gap-1"
+          >
+            <RotateCcw size={13} />
+            Reset
           </Button>
-        </RoleGuard>
+        )}
       </div>
 
       <DataTable<Category & Record<string, unknown>>
@@ -278,6 +288,7 @@ export function CategoryTab() {
           total: filtered.length,
           onPageChange,
           onPageSizeChange,
+          pageSizeOptions: [10, 20, 50],
         }}
         isLoading={isLoading}
         emptyMessage={debouncedSearch ? 'Kategori tidak ditemukan' : 'Belum ada kategori'}

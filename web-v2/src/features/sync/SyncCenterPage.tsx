@@ -9,7 +9,7 @@ export function SyncCenterPage() {
   const { hasConflicts, conflictCount } = useSyncStatus()
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title="Sync Center"
         breadcrumbs={[{ label: 'Operasional' }, { label: 'Sync Center' }]}

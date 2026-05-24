@@ -3,13 +3,12 @@ import { useState } from 'react'
 import { PageHeader } from '@/shared/components'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
+import { usePagination } from '@/shared/hooks'
 
 import { useCashflowQuery, useFinanceSummaryQuery } from './finance.api'
 import type { FinanceFilter } from './finance.types'
 import { FinanceSummaryCard } from './components/FinanceSummaryCard'
 import { FinanceTable } from './components/FinanceTable'
-
-const PAGE_SIZE = 10
 
 function todayString(): string {
   return new Date().toISOString().split('T')[0]
@@ -31,13 +30,14 @@ export function FinancePage() {
 
   const [dateFrom, setDateFrom] = useState(monthStartString())
   const [dateTo, setDateTo] = useState(today)
-  const [page, setPage] = useState(1)
+
+  const { page, pageSize, onPageChange, onPageSizeChange, reset } = usePagination()
 
   const filter: FinanceFilter = {
     date_from: dateFrom || undefined,
     date_to: dateTo || undefined,
     page,
-    page_size: PAGE_SIZE,
+    page_size: pageSize,
   }
 
   const { data: summaryData, isLoading: summaryLoading } = useFinanceSummaryQuery({
@@ -52,25 +52,21 @@ export function FinancePage() {
   const applyPreset = (from: string, to: string) => {
     setDateFrom(from)
     setDateTo(to)
-    setPage(1)
+    reset()
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4">
       <PageHeader title="Keuangan" breadcrumbs={[{ label: 'Finance' }, { label: 'Keuangan' }]} />
 
-      {/* Period filter */}
-      <div className="flex flex-wrap gap-3 items-end">
+      <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-white p-3">
         <div className="space-y-1">
           <label className="text-xs text-gray-500">Dari</label>
           <Input
             type="date"
             value={dateFrom}
-            onChange={(e) => {
-              setDateFrom(e.target.value)
-              setPage(1)
-            }}
-            className="w-40"
+            onChange={(e) => { setDateFrom(e.target.value); reset() }}
+            className="w-40 h-9"
           />
         </div>
         <div className="space-y-1">
@@ -78,11 +74,8 @@ export function FinancePage() {
           <Input
             type="date"
             value={dateTo}
-            onChange={(e) => {
-              setDateTo(e.target.value)
-              setPage(1)
-            }}
-            className="w-40"
+            onChange={(e) => { setDateTo(e.target.value); reset() }}
+            className="w-40 h-9"
           />
         </div>
         <div className="flex gap-2">
@@ -92,26 +85,20 @@ export function FinancePage() {
           <Button variant="outline" size="sm" onClick={() => applyPreset(weekStartString(), today)}>
             Minggu ini
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => applyPreset(monthStartString(), today)}
-          >
+          <Button variant="outline" size="sm" onClick={() => applyPreset(monthStartString(), today)}>
             Bulan ini
           </Button>
         </div>
       </div>
 
-      {/* Summary cards */}
       <FinanceSummaryCard summary={summaryData} isLoading={summaryLoading} />
 
-      {/* Cashflow table */}
       <div className="space-y-3">
         <h2 className="font-semibold text-gray-700">Arus Kas</h2>
         <FinanceTable
           data={cashflows}
           isLoading={cashflowLoading}
-          pagination={{ page, pageSize: PAGE_SIZE, total, onPageChange: setPage }}
+          pagination={{ page, pageSize, total, onPageChange, onPageSizeChange, pageSizeOptions: [10, 20, 50] }}
         />
       </div>
     </div>
