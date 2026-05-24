@@ -68,7 +68,7 @@ const defaultValues: FormValues = {
 export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps) {
   const { data: suppliersData } = useSupplierListQuery({ page_size: 200 })
   const { data: productsData } = useProductListQuery({ page_size: 200 })
-  const suppliers = suppliersData?.data?.data ?? []
+  const suppliers = suppliersData?.items ?? []
   const products: Product[] = productsData?.items ?? []
 
   const { mutate: create, isPending } = useCreateSupplierPurchaseMutation()

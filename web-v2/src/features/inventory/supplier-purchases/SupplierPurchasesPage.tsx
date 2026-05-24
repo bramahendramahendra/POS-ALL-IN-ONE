@@ -49,7 +49,7 @@ export function SupplierPurchasesPage() {
   const [deletingId, setDeletingId] = useState<number | null>(null)
 
   const { data: suppliersData, isLoading: isSuppliersLoading } = useSupplierListQuery({ page_size: 200 })
-  const suppliers = suppliersData?.data?.data ?? []
+  const suppliers = suppliersData?.items ?? []
   const hasSuppliers = suppliers.length > 0
 
   const filter: SupplierPurchaseFilter = {
@@ -64,8 +64,8 @@ export function SupplierPurchasesPage() {
   const { data, isLoading } = useSupplierPurchasesQuery(filter)
   const { mutate: deletePurchase, isPending: isDeleting } = useDeleteSupplierPurchaseMutation()
 
-  const purchases = data?.data?.data ?? []
-  const total = data?.data?.total ?? 0
+  const purchases = data?.items ?? []
+  const total = data?.total ?? 0
 
   function handlePay(purchase: SupplierPurchase) {
     setPayingPurchase(purchase)

@@ -2,13 +2,19 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import { api } from '@/services/api.client'
-import type { PaginatedResponse } from '@/shared/types'
 
 import type {
   CreateSupplierReturnPayload,
   SupplierReturn,
   SupplierReturnFilter,
 } from './supplier-returns.types'
+
+interface SupplierReturnListData {
+  items: SupplierReturn[]
+  total: number
+  page: number
+  limit: number
+}
 
 const QK = {
   all: () => ['supplierReturns'] as const,
@@ -18,7 +24,10 @@ const QK = {
 export function useSupplierReturnsQuery(filter?: SupplierReturnFilter) {
   return useQuery({
     queryKey: QK.list(filter),
-    queryFn: () => api.get<PaginatedResponse<SupplierReturn>>('/supplier-returns', filter),
+    queryFn: () => {
+      const { page_size, ...rest } = filter ?? {}
+      return api.get<SupplierReturnListData>('/supplier-returns', { ...rest, limit: page_size })
+    },
   })
 }
 

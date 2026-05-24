@@ -48,7 +48,7 @@ export function ReturnFormModal({ open, onOpenChange }: ReturnFormModalProps) {
   >({})
 
   const { data: purchasesData } = useSupplierPurchasesQuery({ page_size: 200 })
-  const purchases = purchasesData?.data?.data ?? []
+  const purchases = purchasesData?.items ?? []
 
   const { mutate: create, isPending } = useCreateSupplierReturnMutation()
 
@@ -66,7 +66,7 @@ export function ReturnFormModal({ open, onOpenChange }: ReturnFormModalProps) {
   const { data: purchaseDetailData } = useSupplierPurchaseDetailQuery(
     purchaseId > 0 ? purchaseId : null,
   )
-  const purchaseDetail = purchaseDetailData?.data
+  const purchaseDetail = purchaseDetailData
 
   useEffect(() => {
     if (!open) {
