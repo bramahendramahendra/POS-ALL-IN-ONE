@@ -285,6 +285,20 @@ export function useToggleUnitStatusMutation() {
   })
 }
 
+// ─── Bulk Toggle Status ───────────────────────────────────────────────────────
+
+export function useBulkToggleProductStatusMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (ids: number[]) =>
+      Promise.all(ids.map((id) => api.patch<void>(`/products/${id}/toggle-status`))),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.products.all() })
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+}
+
 // ─── Save Product Units Bulk (untuk create mode) ─────────────────────────────
 
 export interface GrosirRow {

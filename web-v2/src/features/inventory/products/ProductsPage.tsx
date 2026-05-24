@@ -43,8 +43,8 @@ export function ProductsPage() {
     page,
     page_size: pageSize,
   })
-  const { data: categories = [] } = useCategoryListQuery()
-  const { data: units = [] } = useUnitListQuery()
+  const { data: categories = [], isLoading: isCatLoading } = useCategoryListQuery()
+  const { data: units = [], isLoading: isUnitLoading } = useUnitListQuery()
   const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProductMutation()
 
   const hasCategories = categories.length > 0
@@ -67,6 +67,22 @@ export function ProductsPage() {
     if (deleteTarget?.type === 'product') {
       deleteProduct(deleteTarget.id, { onSuccess: () => closeDeleteConfirm() })
     }
+  }
+
+  if (isCatLoading || isUnitLoading) {
+    return (
+      <div className="space-y-4">
+        <PageHeader
+          title="Produk"
+          breadcrumbs={[{ label: 'Inventori' }, { label: 'Produk' }]}
+        />
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-12 animate-pulse rounded-md bg-gray-100" />
+          ))}
+        </div>
+      </div>
+    )
   }
 
   if (!hasCategories || !hasActiveUnits) {
@@ -147,7 +163,6 @@ export function ProductsPage() {
           }}
           onSelectionChange={setSelectedProducts}
           onPrintLabel={() => openLabel()}
-          onImportCsv={() => openImport()}
           onDetailProduct={(product) => openDetailModal(product.id)}
           onPrintSingleLabel={(product) => { setSingleLabelProduct(product); openLabel() }}
         />

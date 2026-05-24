@@ -162,7 +162,7 @@ export function LabelPrintModal({ open, onOpenChange, products }: LabelPrintModa
   return (
     <FormModal
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={(val) => { if (!val) setQuantities({}); onOpenChange(val) }}
       title="Cetak Label Harga"
       size="xl"
       hideFooter

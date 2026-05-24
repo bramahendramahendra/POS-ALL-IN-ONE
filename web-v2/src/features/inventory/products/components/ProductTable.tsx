@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
-import { Eye, Lock, LockOpen, Pencil, Printer, Trash2 } from 'lucide-react'
+import { Eye, Lock, LockOpen, Pencil, Printer, Trash2, FileDown } from 'lucide-react'
 import { toast } from 'sonner'
+import * as XLSX from 'xlsx'
 
 import { ROLES } from '@/shared/constants'
 import { DataTable, RoleGuard, StatusBadge } from '@/shared/components'
@@ -9,7 +10,7 @@ import { useTableSelection } from '@/shared/hooks'
 import { formatRupiah } from '@/shared/utils'
 import type { ColumnDef, PaginationProps } from '@/shared/components/DataTable/DataTable.types'
 
-import { useToggleProductStatusMutation } from '../products.api'
+import { useBulkToggleProductStatusMutation, useToggleProductStatusMutation } from '../products.api'
 import { useProductsStore } from '../products.store'
 import type { Product } from '../products.types'
 
@@ -19,7 +20,6 @@ interface ProductTableProps {
   pagination: PaginationProps
   onSelectionChange?: (products: Product[]) => void
   onPrintLabel?: () => void
-  onImportCsv?: () => void
   onDetailProduct?: (product: Product) => void
   onPrintSingleLabel?: (product: Product) => void
 }
@@ -36,19 +36,55 @@ export function ProductTable({
   pagination,
   onSelectionChange,
   onPrintLabel,
-  onImportCsv,
   onDetailProduct,
   onPrintSingleLabel,
 }: ProductTableProps) {
   const { openProductModal, openDeleteConfirm } = useProductsStore()
   const { mutate: toggleStatus } = useToggleProductStatusMutation()
+  const { mutate: bulkToggleStatus, isPending: isBulkToggling } = useBulkToggleProductStatusMutation()
   const { selectedKeys, selectedItems, toggle, selectAll, clearSelection, hasSelection, count } =
     useTableSelection<Product & { id: number }>()
 
-  // Notify parent when selection changes
+  // Derive selected products from selectedKeys + current page data
   useEffect(() => {
-    onSelectionChange?.(selectedItems as Product[])
-  }, [selectedItems, onSelectionChange])
+    const selected = data.filter((p) => selectedKeys.has(p.id))
+    onSelectionChange?.(selected)
+  }, [selectedKeys, data, onSelectionChange])
+
+  const selectedProducts = data.filter((p) => selectedKeys.has(p.id))
+  const allActive = selectedProducts.length > 0 && selectedProducts.every((p) => p.is_active)
+  const allInactive = selectedProducts.length > 0 && selectedProducts.every((p) => !p.is_active)
+  const showBulkStatus = allActive || allInactive
+
+  function handleExportExcel() {
+    const rows = selectedProducts.map((p) => ({
+      'Nama Produk': p.name,
+      'Barcode': p.barcode ?? '',
+      'SKU': p.sku ?? '',
+      'Kategori': p.category_name ?? '',
+      'Harga Beli': p.purchase_price,
+      'Harga Jual': p.selling_price,
+      'Stok': p.stock,
+      'Stok Minimum': p.min_stock,
+      'Satuan': p.unit ?? '',
+      'Status': p.is_active ? 'Aktif' : 'Nonaktif',
+    }))
+    const ws = XLSX.utils.json_to_sheet(rows)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Produk')
+    XLSX.writeFile(wb, `produk-export-${Date.now()}.xlsx`)
+  }
+
+  function handleBulkToggleStatus() {
+    const ids = selectedProducts.map((p) => p.id)
+    const label = allActive ? 'dinonaktifkan' : 'diaktifkan'
+    bulkToggleStatus(ids, {
+      onSuccess: () => {
+        toast.success(`${ids.length} produk berhasil ${label}`)
+        clearSelection()
+      },
+    })
+  }
 
   const columns: ColumnDef<Product>[] = [
     {
@@ -233,8 +269,20 @@ export function ProductTable({
         <div className="flex items-center gap-3 rounded-lg border bg-blue-50 px-4 py-2 text-sm">
           <span className="font-medium text-blue-700">{count} produk dipilih</span>
           <div className="ml-auto flex gap-2">
-            <Button variant="outline" size="sm" onClick={onImportCsv}>
-              Import CSV
+            {showBulkStatus && (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isBulkToggling}
+                onClick={handleBulkToggleStatus}
+                className={allActive ? 'text-amber-600 hover:text-amber-700' : 'text-green-600 hover:text-green-700'}
+              >
+                {isBulkToggling ? 'Memproses...' : allActive ? 'Nonaktifkan' : 'Aktifkan'}
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={handleExportExcel} className="gap-1">
+              <FileDown size={14} />
+              Export Excel
             </Button>
             <Button variant="outline" size="sm" onClick={onPrintLabel}>
               Cetak Label
@@ -258,12 +306,16 @@ export function ProductTable({
           rowKey: 'id',
           selectedKeys,
           onSelectionChange: (keys) => {
-            const added = [...keys].find((k) => !selectedKeys.has(k))
-            const removed = [...selectedKeys].find((k) => !keys.has(k))
-            if (added !== undefined) toggle(added)
-            else if (removed !== undefined) toggle(removed)
-            else if (keys.size === 0) clearSelection()
-            else selectAll(data as (Product & { id: number })[])
+            if (keys.size === 0) {
+              clearSelection()
+            } else if (keys.size >= data.length) {
+              selectAll(data as (Product & { id: number })[])
+            } else {
+              const added = [...keys].find((k) => !selectedKeys.has(k))
+              const removed = [...selectedKeys].find((k) => !keys.has(k))
+              if (added !== undefined) toggle(added)
+              else if (removed !== undefined) toggle(removed)
+            }
           },
         }}
       />
