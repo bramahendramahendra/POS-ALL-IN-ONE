@@ -40,7 +40,7 @@ function monthStartString(): string {
 export function CashDrawerPage() {
   const today = todayString()
   const { user } = useAuthStore()
-  const isAdminOrOwner = user?.role === ROLES.OWNER || user?.role === ROLES.ADMIN
+  const isAdminOrOwner = user?.roleName === ROLES.OWNER || user?.roleName === ROLES.ADMIN
 
   const [dateFrom, setDateFrom] = useState(monthStartString())
   const [dateTo, setDateTo] = useState(today)

@@ -19,7 +19,8 @@ type UserData struct {
 	ID       int    `json:"id"`
 	Username string `json:"username"`
 	FullName string `json:"full_name"`
-	Role     string `json:"role"`
+	RoleID   int    `json:"role_id"`
+	RoleName string `json:"role_name"`
 }
 
 type RefreshRequest struct {

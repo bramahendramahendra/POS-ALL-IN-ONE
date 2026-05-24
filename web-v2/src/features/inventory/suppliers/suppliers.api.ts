@@ -3,26 +3,36 @@ import { toast } from 'sonner'
 
 import { api } from '@/services/api.client'
 import { queryKeys } from '@/shared/constants'
-import type { PaginatedResponse } from '@/shared/types'
 
 import type {
   CreateSupplierPayload,
   Supplier,
+  SupplierDetail,
   SupplierFilter,
   UpdateSupplierPayload,
 } from './suppliers.types'
 
+export interface SupplierListData {
+  items: Supplier[]
+  total: number
+  page: number
+  limit: number
+}
+
 export function useSupplierListQuery(filter?: SupplierFilter) {
   return useQuery({
     queryKey: queryKeys.suppliers.list(filter as Record<string, unknown>),
-    queryFn: () => api.get<PaginatedResponse<Supplier>>('/suppliers', filter),
+    queryFn: () => {
+      const { page_size, ...rest } = filter ?? {}
+      return api.get<SupplierListData>('/suppliers', { ...rest, limit: page_size })
+    },
   })
 }
 
 export function useSupplierDetailQuery(id: number) {
   return useQuery({
     queryKey: queryKeys.suppliers.detail(id),
-    queryFn: () => api.get<Supplier>(`/suppliers/${id}`),
+    queryFn: () => api.get<SupplierDetail>(`/suppliers/${id}`),
     enabled: id > 0,
   })
 }

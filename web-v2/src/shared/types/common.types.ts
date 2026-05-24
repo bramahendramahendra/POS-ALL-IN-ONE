@@ -12,4 +12,7 @@ export type SortOrder = 'asc' | 'desc'
 
 export type Platform = 'web' | 'desktop' | 'android'
 
-export type Role = 'owner' | 'admin' | 'kasir'
+// Role adalah nama role sebagai string — tidak lagi hardcoded enum
+// karena role bisa ditambah secara dinamis dari UI admin.
+// Gunakan ROLES constant untuk nilai bawaan (owner/admin/kasir).
+export type Role = string

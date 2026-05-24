@@ -11,7 +11,7 @@ export function RootRedirect() {
     return <Navigate to={ROUTES.LOGIN} replace />
   }
 
-  if (user?.role === ROLES.KASIR) {
+  if (user?.roleName === ROLES.KASIR) {
     return <Navigate to={ROUTES.KASIR} replace />
   }
 

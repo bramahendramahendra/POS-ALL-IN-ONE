@@ -1,6 +1,7 @@
 package handler_user
 
 import (
+	"fmt"
 	"strconv"
 
 	dto_user "pos_api/domain/user/dto"
@@ -26,9 +27,13 @@ func NewUserHandler(service service_user.UserService) *UserHandler {
 func (h *UserHandler) GetAll(c *gin.Context) {
 	filter := &dto_user.UserListFilter{
 		Search: c.Query("search"),
-		Role:   c.Query("role"),
 	}
-
+	if raw := c.Query("role_id"); raw != "" {
+		var rid int
+		if _, err := fmt.Sscan(raw, &rid); err == nil && rid > 0 {
+			filter.RoleID = &rid
+		}
+	}
 	if raw := c.Query("is_active"); raw != "" {
 		v := raw == "true" || raw == "1"
 		filter.IsActive = &v

@@ -82,6 +82,20 @@ export const queryKeys = {
     conflicts: () => ['sync', 'conflicts'] as const,
   },
 
+  roles: {
+    all: () => ['roles'] as const,
+    list: (filter?: Filter) => ['roles', 'list', filter] as const,
+    detail: (id: number) => ['roles', 'detail', id] as const,
+    menus: (id: number) => ['roles', 'menus', id] as const,
+  },
+
+  menus: {
+    all: () => ['menus'] as const,
+    list: (filter?: Filter) => ['menus', 'list', filter] as const,
+    detail: (id: number) => ['menus', 'detail', id] as const,
+    my: () => ['menus', 'my'] as const,
+  },
+
   cashDrawer: {
     all: () => ['cashDrawer'] as const,
     current: () => ['cashDrawer', 'current'] as const,

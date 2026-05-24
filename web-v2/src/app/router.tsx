@@ -49,6 +49,9 @@ const StoreProfilePage     = lazy(() => import('@/features/settings/StoreProfile
 const UserManagementPage   = lazy(() => import('@/features/settings/UserManagementPage').then(m => ({ default: m.UserManagementPage })))
 const PrinterSettingsPage  = lazy(() => import('@/features/settings/PrinterSettingsPage').then(m => ({ default: m.PrinterSettingsPage })))
 const AppVersionPage       = lazy(() => import('@/features/settings/AppVersionPage').then(m => ({ default: m.AppVersionPage })))
+const RolesPage            = lazy(() => import('@/features/settings/roles/RolesPage').then(m => ({ default: m.RolesPage })))
+const RoleAccessPage       = lazy(() => import('@/features/settings/roles/RoleAccessPage').then(m => ({ default: m.RoleAccessPage })))
+const MenusPage            = lazy(() => import('@/features/settings/menus/MenusPage').then(m => ({ default: m.MenusPage })))
 
 const ALL_ROLES        = [ROLES.OWNER, ROLES.ADMIN, ROLES.KASIR] as const
 const MANAGEMENT_ROLES = [ROLES.OWNER, ROLES.ADMIN] as const
@@ -112,11 +115,14 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute allowedRoles={[...OWNER_ONLY]} />,
     children: [
-      { path: ROUTES.SETTINGS,          element: <LazyRoute><SettingsPage /></LazyRoute> },
-      { path: ROUTES.SETTINGS_STORE,    element: <LazyRoute><StoreProfilePage /></LazyRoute> },
-      { path: ROUTES.SETTINGS_USERS,    element: <LazyRoute><UserManagementPage /></LazyRoute> },
-      { path: ROUTES.SETTINGS_PRINTER,  element: <LazyRoute><PrinterSettingsPage /></LazyRoute> },
-      { path: ROUTES.SETTINGS_VERSIONS, element: <LazyRoute><AppVersionPage /></LazyRoute> },
+      { path: ROUTES.SETTINGS,               element: <LazyRoute><SettingsPage /></LazyRoute> },
+      { path: ROUTES.SETTINGS_STORE,         element: <LazyRoute><StoreProfilePage /></LazyRoute> },
+      { path: ROUTES.SETTINGS_USERS,         element: <LazyRoute><UserManagementPage /></LazyRoute> },
+      { path: ROUTES.SETTINGS_PRINTER,       element: <LazyRoute><PrinterSettingsPage /></LazyRoute> },
+      { path: ROUTES.SETTINGS_VERSIONS,      element: <LazyRoute><AppVersionPage /></LazyRoute> },
+      { path: ROUTES.SETTINGS_ROLES,         element: <LazyRoute><RolesPage /></LazyRoute> },
+      { path: ROUTES.SETTINGS_ROLES_ACCESS,  element: <LazyRoute><RoleAccessPage /></LazyRoute> },
+      { path: ROUTES.SETTINGS_MENUS,         element: <LazyRoute><MenusPage /></LazyRoute> },
     ],
   },
 

@@ -57,7 +57,7 @@ func (s *userService) Create(req *dto_user.CreateUserRequest) (*dto_user.UserRes
 		Username: req.Username,
 		Password: hashed,
 		FullName: req.FullName,
-		Role:     req.Role,
+		RoleID:   req.RoleID,
 	}
 
 	newID, err := s.repo.Create(user)
@@ -140,7 +140,8 @@ func toUserResponse(u *model_user.User) *dto_user.UserResponse {
 		ID:        u.ID,
 		Username:  u.Username,
 		FullName:  u.FullName,
-		Role:      u.Role,
+		RoleID:    u.RoleID,
+		RoleName:  u.RoleName,
 		IsActive:  u.IsActive,
 		CreatedAt: u.CreatedAt,
 	}

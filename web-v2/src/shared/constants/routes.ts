@@ -42,4 +42,7 @@ export const ROUTES = {
   SETTINGS_USERS: '/settings/users',
   SETTINGS_PRINTER: '/settings/printer',
   SETTINGS_VERSIONS: '/settings/versions',
+  SETTINGS_ROLES: '/settings/roles',
+  SETTINGS_ROLES_ACCESS: '/settings/roles/:id/access',
+  SETTINGS_MENUS: '/settings/menus',
 } as const

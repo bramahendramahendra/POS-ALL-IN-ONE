@@ -1,12 +1,35 @@
 export interface Supplier {
   id: number
+  supplier_code: string
   name: string
-  contact_name?: string
+  contact_person?: string
   phone?: string
   email?: string
   address?: string
   notes?: string
-  created_at: string
+  is_active: boolean
+}
+
+export interface SupplierPurchaseItem {
+  id: number
+  purchase_code: string
+  purchase_date: string
+  total_amount: number
+  payment_status: string
+  remaining_amount: number
+}
+
+export interface SupplierDetail {
+  id: number
+  supplier_code: string
+  name: string
+  contact_person: string
+  phone: string
+  email: string
+  address: string
+  notes: string
+  is_active: boolean
+  purchase_history: SupplierPurchaseItem[]
 }
 
 export interface SupplierFilter {
@@ -17,7 +40,7 @@ export interface SupplierFilter {
 
 export interface CreateSupplierPayload {
   name: string
-  contact_name?: string
+  contact_person?: string
   phone?: string
   email?: string
   address?: string

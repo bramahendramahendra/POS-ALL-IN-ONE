@@ -4,7 +4,8 @@ export interface AuthUser {
   id: number
   username: string
   fullName: string
-  role: Role
+  roleId: number
+  roleName: Role
   apps: Platform
 }
 
@@ -40,6 +41,7 @@ export interface LoginResponse {
     id: number
     username: string
     full_name: string
-    role: Role
+    role_id: number
+    role_name: Role
   }
 }

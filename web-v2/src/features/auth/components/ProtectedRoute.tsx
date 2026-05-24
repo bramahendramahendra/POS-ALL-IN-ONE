@@ -22,7 +22,7 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
     return <Navigate to={ROUTES.LOGIN} replace />
   }
 
-  if (!allowedRoles.includes(user.role)) {
+  if (!allowedRoles.includes(user.roleName)) {
     return <Navigate to={ROUTES.DASHBOARD} replace />
   }
 

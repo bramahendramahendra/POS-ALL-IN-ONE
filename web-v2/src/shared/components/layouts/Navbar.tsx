@@ -69,8 +69,8 @@ export function Navbar() {
               </Avatar>
               <div className="hidden sm:flex flex-col leading-none">
                 <span className="text-white text-sm font-medium">{user.fullName}</span>
-                <Badge className={`mt-0.5 text-[10px] px-1.5 py-0 ${getRoleBadgeClass(user.role)}`}>
-                  {user.role}
+                <Badge className={`mt-0.5 text-[10px] px-1.5 py-0 ${getRoleBadgeClass(user.roleName)}`}>
+                  {user.roleName}
                 </Badge>
               </div>
             </div>

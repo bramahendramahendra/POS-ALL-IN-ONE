@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/shared/components/ui/select'
 import { useAuth } from '@/features/auth'
-import type { Role } from '@/shared/types'
+import { useRoleListQuery } from '@/features/settings/roles/roles.api'
 
 import {
   useChangePasswordMutation,
@@ -32,12 +32,12 @@ const createSchema = z.object({
   username: z.string().min(3, 'Username minimal 3 karakter'),
   password: z.string().min(6, 'Password minimal 6 karakter'),
   full_name: z.string().min(1, 'Nama wajib diisi'),
-  role: z.enum(['owner', 'admin', 'kasir']),
+  role_id: z.number({ required_error: 'Role wajib dipilih' }).int().positive('Role wajib dipilih'),
 })
 
 const editSchema = z.object({
   full_name: z.string().min(1, 'Nama wajib diisi'),
-  role: z.enum(['owner', 'admin', 'kasir']),
+  role_id: z.number({ required_error: 'Role wajib dipilih' }).int().positive('Role wajib dipilih'),
   is_active: z.boolean(),
 })
 
@@ -57,18 +57,49 @@ type ChangePassForm = z.infer<typeof changePasswordSchema>
 
 // ─── Role badge ───────────────────────────────────────────────────────────────
 
-function RoleBadge({ role }: { role: Role }) {
-  const styles: Record<Role, string> = {
-    owner: 'bg-purple-100 text-purple-700',
-    admin: 'bg-blue-100 text-blue-700',
-    kasir: 'bg-green-100 text-green-700',
-  }
+const ROLE_BADGE_COLORS: Record<string, string> = {
+  owner: 'bg-purple-100 text-purple-700',
+  admin: 'bg-blue-100 text-blue-700',
+  kasir: 'bg-green-100 text-green-700',
+}
+
+function RoleBadge({ roleName }: { roleName: string }) {
+  const cls = ROLE_BADGE_COLORS[roleName] ?? 'bg-gray-100 text-gray-700'
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${styles[role]}`}
-    >
-      {role}
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>
+      {roleName}
     </span>
+  )
+}
+
+// ─── Role Select ──────────────────────────────────────────────────────────────
+
+function RoleSelect({
+  value,
+  onChange,
+}: {
+  value: number | undefined
+  onChange: (v: number) => void
+}) {
+  const { data: roles } = useRoleListQuery({ is_active: true })
+  const list = roles ?? []
+
+  return (
+    <Select
+      value={value ? String(value) : ''}
+      onValueChange={(v) => onChange(Number(v))}
+    >
+      <SelectTrigger>
+        <SelectValue placeholder="Pilih role..." />
+      </SelectTrigger>
+      <SelectContent>
+        {list.map((r) => (
+          <SelectItem key={r.id} value={String(r.id)}>
+            {r.display_name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }
 
@@ -91,7 +122,7 @@ function CreateUserModal({
     formState: { errors },
   } = useForm<CreateForm>({
     resolver: zodResolver(createSchema),
-    defaultValues: { username: '', password: '', full_name: '', role: 'kasir' },
+    defaultValues: { username: '', password: '', full_name: '', role_id: undefined },
   })
 
   const onSubmit = (values: CreateForm) => {
@@ -143,16 +174,8 @@ function CreateUserModal({
           <Label>
             Role <span className="text-red-500">*</span>
           </Label>
-          <Select value={watch('role')} onValueChange={(v) => setValue('role', v as Role)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="kasir">Kasir</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="owner">Owner</SelectItem>
-            </SelectContent>
-          </Select>
+          <RoleSelect value={watch('role_id')} onChange={(v) => setValue('role_id', v)} />
+          {errors.role_id && <p className="text-xs text-red-500">{errors.role_id.message}</p>}
         </div>
       </div>
     </FormModal>
@@ -180,7 +203,7 @@ function EditUserModal({
   } = useForm<EditForm>({
     resolver: zodResolver(editSchema),
     values: user
-      ? { full_name: user.full_name, role: user.role, is_active: user.is_active }
+      ? { full_name: user.full_name, role_id: user.role_id, is_active: user.is_active }
       : undefined,
   })
 
@@ -209,16 +232,8 @@ function EditUserModal({
         </div>
         <div className="space-y-1.5">
           <Label>Role</Label>
-          <Select value={watch('role')} onValueChange={(v) => setValue('role', v as Role)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="kasir">Kasir</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="owner">Owner</SelectItem>
-            </SelectContent>
-          </Select>
+          <RoleSelect value={watch('role_id')} onChange={(v) => setValue('role_id', v)} />
+          {errors.role_id && <p className="text-xs text-red-500">{errors.role_id.message}</p>}
         </div>
         <div className="flex items-center gap-2">
           <input type="checkbox" id="is-active" {...register('is_active')} className="rounded" />
@@ -352,7 +367,7 @@ export function UserManagementTab() {
                   <td className="px-4 py-3 font-mono text-gray-700">{u.username}</td>
                   <td className="px-4 py-3 font-medium">{u.full_name}</td>
                   <td className="px-4 py-3">
-                    <RoleBadge role={u.role} />
+                    <RoleBadge roleName={u.role_name} />
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span

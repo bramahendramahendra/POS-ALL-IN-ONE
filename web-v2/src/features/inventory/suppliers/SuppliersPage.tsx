@@ -9,6 +9,7 @@ import { useDebounce, useDisclosure, usePagination } from '@/shared/hooks'
 
 import { useDeleteSupplierMutation, useSupplierListQuery } from './suppliers.api'
 import type { Supplier } from './suppliers.types'
+import { SupplierDetailModal } from './components/SupplierDetailModal'
 import { SupplierFormModal } from './components/SupplierFormModal'
 import { SupplierTable } from './components/SupplierTable'
 
@@ -16,8 +17,10 @@ export function SuppliersPage() {
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebounce(search, 300)
   const { page, pageSize, onPageChange, onPageSizeChange, reset } = usePagination()
+  const { isOpen: detailOpen, open: openDetail, close: closeDetail } = useDisclosure()
   const { isOpen: formOpen, open: openForm, close: closeForm } = useDisclosure()
   const { isOpen: deleteOpen, open: openDelete, close: closeDelete } = useDisclosure()
+  const [detailId, setDetailId] = useState<number | null>(null)
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
 
@@ -25,12 +28,17 @@ export function SuppliersPage() {
   const { data: supplierData, isLoading } = useSupplierListQuery(filter)
   const { mutate: deleteSupplier, isPending: isDeleting } = useDeleteSupplierMutation()
 
-  const suppliers = supplierData?.data?.data ?? []
-  const total = supplierData?.data?.total ?? 0
+  const suppliers = supplierData?.items ?? []
+  const total = supplierData?.total ?? 0
 
   const handleSearchChange = (value: string) => {
     setSearch(value)
     reset()
+  }
+
+  const handleOpenDetail = (id: number) => {
+    setDetailId(id)
+    openDetail()
   }
 
   const handleOpenAdd = () => {
@@ -113,8 +121,20 @@ export function SuppliersPage() {
           onPageSizeChange,
           pageSizeOptions: [10, 20, 50],
         }}
+        onDetail={handleOpenDetail}
         onEdit={handleOpenEdit}
         onDelete={handleOpenDelete}
+      />
+
+      <SupplierDetailModal
+        open={detailOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeDetail()
+            setDetailId(null)
+          }
+        }}
+        supplierId={detailId ?? undefined}
       />
 
       <SupplierFormModal

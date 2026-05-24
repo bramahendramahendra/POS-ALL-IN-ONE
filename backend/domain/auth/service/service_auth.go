@@ -44,7 +44,7 @@ func (s *authService) Login(req *dto_auth.LoginRequest, ip string) (*dto_auth.Lo
 		"user_id":   user.ID,
 		"username":  user.Username,
 		"full_name": user.FullName,
-		"role":      user.Role,
+		"role":      user.RoleName,
 		"apps":      req.DeviceInfo,
 	}
 	jwt.CreateClaims(claims)
@@ -65,7 +65,7 @@ func (s *authService) Login(req *dto_auth.LoginRequest, ip string) (*dto_auth.Lo
 
 	session := &model_auth.Session{
 		UserID:       user.ID,
-		UserRole:     user.Role,
+		UserRole:     user.RoleName,
 		Token:        token,
 		RefreshToken: refreshToken,
 		DeviceInfo:   req.DeviceInfo,
@@ -84,7 +84,8 @@ func (s *authService) Login(req *dto_auth.LoginRequest, ip string) (*dto_auth.Lo
 			ID:       user.ID,
 			Username: user.Username,
 			FullName: user.FullName,
-			Role:     user.Role,
+			RoleID:   user.RoleID,
+			RoleName: user.RoleName,
 		},
 	}, nil
 }
@@ -122,18 +123,18 @@ func (s *authService) RefreshToken(refreshToken string) (*dto_auth.RefreshRespon
 		"user_id":   user.ID,
 		"username":  user.Username,
 		"full_name": user.FullName,
-		"role":      user.Role,
+		"role":      user.RoleName,
 		"apps":      session.DeviceInfo,
 	}
 	jwt.CreateClaims(claims)
-	newToken, err := jwt.GenerateToken()
-	if err != nil {
-		return nil, &errors.InternalServerError{Message: err.Error()}
+	newToken, newTokenErr := jwt.GenerateToken()
+	if newTokenErr != nil {
+		return nil, &errors.InternalServerError{Message: newTokenErr.Error()}
 	}
 
-	newRefreshToken, err := generateRefreshToken()
-	if err != nil {
-		return nil, &errors.InternalServerError{Message: err.Error()}
+	newRefreshToken, newRefErr := generateRefreshToken()
+	if newRefErr != nil {
+		return nil, &errors.InternalServerError{Message: newRefErr.Error()}
 	}
 
 	if err := s.repo.DeleteSessionByUserID(user.ID); err != nil {
@@ -142,7 +143,7 @@ func (s *authService) RefreshToken(refreshToken string) (*dto_auth.RefreshRespon
 
 	newSession := &model_auth.Session{
 		UserID:       user.ID,
-		UserRole:     user.Role,
+		UserRole:     user.RoleName,
 		Token:        newToken,
 		RefreshToken: newRefreshToken,
 		DeviceInfo:   session.DeviceInfo,
@@ -160,6 +161,7 @@ func (s *authService) RefreshToken(refreshToken string) (*dto_auth.RefreshRespon
 	}, nil
 }
 
+
 func (s *authService) GetMe(userID int) (*dto_auth.UserData, error) {
 	user, err := s.repo.GetUserByID(userID)
 	if err != nil {
@@ -172,7 +174,8 @@ func (s *authService) GetMe(userID int) (*dto_auth.UserData, error) {
 		ID:       user.ID,
 		Username: user.Username,
 		FullName: user.FullName,
-		Role:     user.Role,
+		RoleID:   user.RoleID,
+		RoleName: user.RoleName,
 	}, nil
 }
 

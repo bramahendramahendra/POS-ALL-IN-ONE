@@ -18,7 +18,7 @@ import type { Supplier } from '../suppliers.types'
 
 const supplierSchema = z.object({
   name: z.string().min(1, 'Nama supplier wajib diisi'),
-  contact_name: z.string().optional(),
+  contact_person: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email('Format email tidak valid').optional().or(z.literal('')),
   address: z.string().optional(),
@@ -36,7 +36,7 @@ interface SupplierFormModalProps {
 function mapSupplierToForm(supplier: Supplier): SupplierFormValues {
   return {
     name: supplier.name,
-    contact_name: supplier.contact_name ?? '',
+    contact_person: supplier.contact_person ?? '',
     phone: supplier.phone ?? '',
     email: supplier.email ?? '',
     address: supplier.address ?? '',
@@ -46,7 +46,7 @@ function mapSupplierToForm(supplier: Supplier): SupplierFormValues {
 
 const defaultValues: SupplierFormValues = {
   name: '',
-  contact_name: '',
+  contact_person: '',
   phone: '',
   email: '',
   address: '',
@@ -87,7 +87,7 @@ export function SupplierFormModal({ open, onOpenChange, supplierId }: SupplierFo
   const onSubmit = (values: SupplierFormValues) => {
     const payload = {
       name: values.name,
-      contact_name: values.contact_name || undefined,
+      contact_person: values.contact_person || undefined,
       phone: values.phone || undefined,
       email: values.email || undefined,
       address: values.address || undefined,
@@ -153,7 +153,7 @@ export function SupplierFormModal({ open, onOpenChange, supplierId }: SupplierFo
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="sup-contact">Nama Kontak</Label>
-              <Input id="sup-contact" {...register('contact_name')} placeholder="Nama kontak" />
+              <Input id="sup-contact" {...register('contact_person')} placeholder="Nama kontak" />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="sup-phone">No. Telepon</Label>
