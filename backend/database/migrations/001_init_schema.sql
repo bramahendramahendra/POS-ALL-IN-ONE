@@ -133,7 +133,6 @@ CREATE TABLE IF NOT EXISTS purchases (
     id               INT AUTO_INCREMENT PRIMARY KEY,
     purchase_code    VARCHAR(50)                       UNIQUE NOT NULL,
     supplier_id      INT                               NULL,
-    supplier_name    VARCHAR(200)                      NOT NULL,
     purchase_date    DATE                              NOT NULL,
     total_amount     DECIMAL(15,2)                     DEFAULT 0,
     payment_status   ENUM('unpaid','partial','paid')   DEFAULT 'unpaid',

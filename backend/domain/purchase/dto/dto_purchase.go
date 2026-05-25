@@ -11,7 +11,6 @@ type PurchaseItemRequest struct {
 type PurchaseRequest struct {
 	InvoiceNumber string                `json:"invoice_number" validate:"required"`
 	SupplierID    *int                  `json:"supplier_id"`
-	SupplierName  string                `json:"supplier_name"`
 	PurchaseDate  string                `json:"purchase_date" validate:"required"`
 	Notes         string                `json:"notes"`
 	Items         []PurchaseItemRequest `json:"items" validate:"required,min=1,dive"`
@@ -36,7 +35,6 @@ type PurchaseResponse struct {
 	PurchaseCode    string                 `json:"purchase_code"`
 	InvoiceNumber   string                 `json:"invoice_number"`
 	SupplierID      *int                   `json:"supplier_id"`
-	SupplierName    string                 `json:"supplier_name"`
 	PurchaseDate    string                 `json:"purchase_date"`
 	TotalAmount     float64                `json:"total_amount"`
 	PaymentStatus   string                 `json:"payment_status"`

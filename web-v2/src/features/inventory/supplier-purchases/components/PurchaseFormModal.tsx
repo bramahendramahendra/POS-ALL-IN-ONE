@@ -115,12 +115,16 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
     create(
       {
         ...values,
-        items: values.items.map((item) => ({
-          product_id: item.product_id,
-          quantity: item.quantity,
-          price: item.price,
-          unit: item.unit,
-        })),
+        items: values.items.map((item) => {
+          const product = products.find((p) => p.id === item.product_id)
+          return {
+            product_id: item.product_id,
+            product_name: product?.name ?? '',
+            quantity: item.quantity,
+            purchase_price: item.price,
+            unit: item.unit,
+          }
+        }),
         paid_amount: values.payment_status === 'lunas' ? total : values.paid_amount,
       },
       {
