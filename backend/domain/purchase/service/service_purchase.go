@@ -108,7 +108,7 @@ func (s *purchaseService) Delete(id int) error {
 	return nil
 }
 
-func (s *purchaseService) Pay(id int, req *dto_purchase.PayPurchaseRequest) error {
+func (s *purchaseService) Pay(id int, req *dto_purchase.PayPurchaseRequest, userID int) error {
 	existing, err := s.repo.GetRawByID(id)
 	if err != nil {
 		return &errors.InternalServerError{Message: err.Error()}
@@ -123,8 +123,16 @@ func (s *purchaseService) Pay(id int, req *dto_purchase.PayPurchaseRequest) erro
 		return &errors.BadRequestError{Message: "Jumlah pembayaran melebihi sisa tagihan"}
 	}
 
-	if err := s.repo.Pay(id, req.Amount); err != nil {
+	if err := s.repo.Pay(id, req, userID); err != nil {
 		return &errors.InternalServerError{Message: err.Error()}
 	}
 	return nil
+}
+
+func (s *purchaseService) GetPayments(purchaseID int) ([]dto_purchase.PurchasePaymentResponse, error) {
+	items, err := s.repo.GetPayments(purchaseID)
+	if err != nil {
+		return nil, &errors.InternalServerError{Message: err.Error()}
+	}
+	return items, nil
 }

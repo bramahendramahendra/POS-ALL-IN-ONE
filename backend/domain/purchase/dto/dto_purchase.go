@@ -19,12 +19,24 @@ type PurchaseRequest struct {
 }
 
 type PayPurchaseRequest struct {
-	Amount float64 `json:"amount" validate:"required,gt=0"`
+	Amount      float64 `json:"amount" validate:"required,gt=0"`
+	PaymentDate string  `json:"payment_date"`
+	Notes       string  `json:"notes"`
+}
+
+type PurchasePaymentResponse struct {
+	ID          int     `json:"id"`
+	PaymentDate string  `json:"payment_date"`
+	Amount      float64 `json:"amount"`
+	Notes       string  `json:"notes"`
+	UserName    string  `json:"user_name"`
+	CreatedAt   string  `json:"created_at"`
 }
 
 type PurchaseItemResponse struct {
 	ID            int     `json:"id"`
 	ProductID     int     `json:"product_id"`
+	ProductName   string  `json:"product_name"`
 	Quantity      float64 `json:"quantity"`
 	Unit          string  `json:"unit"`
 	PurchasePrice float64 `json:"purchase_price"`

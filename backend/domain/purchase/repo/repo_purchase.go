@@ -16,7 +16,9 @@ const (
 	createPurchaseItemQuery   = `INSERT INTO purchase_items (purchase_id, product_id, quantity, unit, purchase_price, subtotal) VALUES (?, ?, ?, ?, ?, ?)`
 	addStockQuery             = `UPDATE products SET stock = stock + ?, updated_at = NOW() WHERE id = ?`
 	payPurchaseQuery          = `UPDATE purchases SET paid_amount = paid_amount + ?, remaining_amount = remaining_amount - ?, payment_status = CASE WHEN remaining_amount - ? <= 0 THEN 'paid' WHEN paid_amount + ? > 0 THEN 'partial' ELSE 'unpaid' END, updated_at = NOW() WHERE id = ?`
-	getPurchaseItemsQuery     = `SELECT id, product_id, quantity, unit, purchase_price, subtotal FROM purchase_items WHERE purchase_id = ?`
+	getPurchaseItemsQuery     = `SELECT pi.id, pi.product_id, COALESCE(p.name, '') as product_name, pi.quantity, pi.unit, pi.purchase_price, pi.subtotal FROM purchase_items pi LEFT JOIN products p ON pi.product_id = p.id WHERE pi.purchase_id = ?`
+	createPaymentQuery        = `INSERT INTO purchase_payments (purchase_id, payment_date, amount, notes, user_id) VALUES (?, ?, ?, ?, ?)`
+	getPaymentsQuery          = `SELECT pp.id, pp.payment_date, pp.amount, COALESCE(pp.notes, '') as notes, COALESCE(u.full_name, '') as user_name, pp.created_at FROM purchase_payments pp LEFT JOIN users u ON pp.user_id = u.id WHERE pp.purchase_id = ? ORDER BY pp.created_at ASC`
 	rollbackStockQuery        = `UPDATE products SET stock = stock - ?, updated_at = NOW() WHERE id = ?`
 	deletePurchaseItemsQuery  = `DELETE FROM purchase_items WHERE purchase_id = ?`
 	deletePurchaseQuery       = `DELETE FROM purchases WHERE id = ?`
@@ -163,12 +165,33 @@ func (r *purchaseRepo) GetItems(purchaseID int) ([]model_purchase.PurchaseItem, 
 	for rows.Next() {
 		var item model_purchase.PurchaseItem
 		if err := rows.Scan(
-			&item.ID, &item.ProductID,
+			&item.ID, &item.ProductID, &item.ProductName,
 			&item.Quantity, &item.Unit, &item.PurchasePrice, &item.Subtotal,
 		); err != nil {
 			return nil, err
 		}
 		items = append(items, item)
+	}
+	return items, nil
+}
+
+func (r *purchaseRepo) GetPayments(purchaseID int) ([]dto_purchase.PurchasePaymentResponse, error) {
+	rows, err := r.db.Raw(getPaymentsQuery, purchaseID).Rows()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []dto_purchase.PurchasePaymentResponse
+	for rows.Next() {
+		var item dto_purchase.PurchasePaymentResponse
+		if err := rows.Scan(&item.ID, &item.PaymentDate, &item.Amount, &item.Notes, &item.UserName, &item.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+	if items == nil {
+		items = []dto_purchase.PurchasePaymentResponse{}
 	}
 	return items, nil
 }
@@ -350,6 +373,16 @@ func (r *purchaseRepo) Delete(id int) error {
 	})
 }
 
-func (r *purchaseRepo) Pay(id int, amount float64) error {
-	return r.db.Exec(payPurchaseQuery, amount, amount, amount, amount, id).Error
+func (r *purchaseRepo) Pay(id int, req *dto_purchase.PayPurchaseRequest, userID int) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec(payPurchaseQuery, req.Amount, req.Amount, req.Amount, req.Amount, id).Error; err != nil {
+			return err
+		}
+
+		paymentDate := req.PaymentDate
+		if paymentDate == "" {
+			paymentDate = time.Now().Format("2006-01-02")
+		}
+		return tx.Exec(createPaymentQuery, id, paymentDate, req.Amount, req.Notes, userID).Error
+	})
 }

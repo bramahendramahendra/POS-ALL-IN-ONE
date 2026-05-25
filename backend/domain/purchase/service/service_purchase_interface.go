@@ -10,5 +10,6 @@ type PurchaseService interface {
 	Create(req *dto_purchase.PurchaseRequest, userID int) (*dto_purchase.PurchaseResponse, error)
 	Update(id int, req *dto_purchase.PurchaseRequest) (*dto_purchase.PurchaseResponse, error)
 	Delete(id int) error
-	Pay(id int, req *dto_purchase.PayPurchaseRequest) error
+	Pay(id int, req *dto_purchase.PayPurchaseRequest, userID int) error
+	GetPayments(purchaseID int) ([]dto_purchase.PurchasePaymentResponse, error)
 }

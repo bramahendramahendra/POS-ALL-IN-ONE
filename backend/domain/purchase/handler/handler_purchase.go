@@ -201,6 +201,28 @@ func (h *PurchaseHandler) Delete(c *gin.Context) {
 	})
 }
 
+// GET /api/purchases/:id/payments
+func (h *PurchaseHandler) GetPayments(c *gin.Context) {
+	id, err := parsePurchaseID(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	items, svcErr := h.service.GetPayments(id)
+	if svcErr != nil {
+		c.Error(svcErr)
+		return
+	}
+
+	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
+		Code:    helper.StatusOk,
+		Status:  true,
+		Message: "Riwayat pembayaran purchase order",
+		Data:    items,
+	})
+}
+
 // POST /api/purchases/:id/pay
 func (h *PurchaseHandler) Pay(c *gin.Context) {
 	id, err := parsePurchaseID(c)
@@ -219,7 +241,10 @@ func (h *PurchaseHandler) Pay(c *gin.Context) {
 		return
 	}
 
-	if svcErr := h.service.Pay(id, &req); svcErr != nil {
+	userID, _ := c.Get("user_id")
+	uid, _ := userID.(int)
+
+	if svcErr := h.service.Pay(id, &req, uid); svcErr != nil {
 		c.Error(svcErr)
 		return
 	}

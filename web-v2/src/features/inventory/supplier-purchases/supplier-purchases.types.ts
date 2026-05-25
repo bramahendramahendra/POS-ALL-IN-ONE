@@ -1,12 +1,22 @@
 export type PaymentStatus = 'lunas' | 'hutang' | 'partial'
 
 export interface SupplierPurchaseItem {
+  id: number
   product_id: number
   product_name: string
   quantity: number
   unit: string
-  price: number
+  purchase_price: number
   subtotal: number
+}
+
+export interface PurchasePayment {
+  id: number
+  payment_date: string
+  amount: number
+  notes: string
+  user_name: string
+  created_at: string
 }
 
 export interface SupplierPurchase {

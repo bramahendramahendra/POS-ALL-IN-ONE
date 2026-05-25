@@ -22,6 +22,7 @@ import {
 import type { PaymentStatus, SupplierPurchase, SupplierPurchaseFilter } from './supplier-purchases.types'
 import { PurchaseTable } from './components/PurchaseTable'
 import { PurchaseFormModal } from './components/PurchaseFormModal'
+import { PurchaseDetailModal } from './components/PurchaseDetailModal'
 import { PaymentModal } from './components/PaymentModal'
 
 function monthStartString() {
@@ -43,9 +44,11 @@ export function SupplierPurchasesPage() {
   const { page, pageSize, onPageChange, onPageSizeChange } = usePagination()
   const { isOpen: formOpen, open: openForm, close: closeForm } = useDisclosure()
   const { isOpen: payOpen, open: openPay, close: closePay } = useDisclosure()
+  const { isOpen: detailOpen, open: openDetail, close: closeDetail } = useDisclosure()
   const { isOpen: deleteOpen, open: openDelete, close: closeDelete } = useDisclosure()
 
   const [payingPurchase, setPayingPurchase] = useState<SupplierPurchase | null>(null)
+  const [detailId, setDetailId] = useState<number | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
 
   const { data: suppliersData, isLoading: isSuppliersLoading } = useSupplierListQuery({ page_size: 200 })
@@ -78,7 +81,8 @@ export function SupplierPurchasesPage() {
   }
 
   function handleDetail(purchase: SupplierPurchase) {
-    setPayingPurchase(purchase)
+    setDetailId(purchase.id)
+    openDetail()
   }
 
   function confirmDelete() {
@@ -220,6 +224,17 @@ export function SupplierPurchasesPage() {
       />
 
       <PurchaseFormModal open={formOpen} onOpenChange={(o) => !o && closeForm()} />
+
+      <PurchaseDetailModal
+        open={detailOpen}
+        onOpenChange={(o) => {
+          if (!o) {
+            closeDetail()
+            setDetailId(null)
+          }
+        }}
+        purchaseId={detailId}
+      />
 
       <PaymentModal
         open={payOpen}

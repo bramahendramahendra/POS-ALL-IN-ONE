@@ -21,6 +21,7 @@ func PurchaseRoutes(r *gin.RouterGroup) {
 		g.GET("", purchaseHand.GetAll)
 		g.GET("/:id", purchaseHand.GetByID)
 		g.GET("/:id/items", purchaseHand.GetItems)
+		g.GET("/:id/payments", purchaseHand.GetPayments)
 		g.POST("", middleware.RoleMiddleware("owner", "admin"), purchaseHand.Create)
 		g.PUT("/:id", middleware.RoleMiddleware("owner", "admin"), purchaseHand.Update)
 		g.DELETE("/:id", middleware.RoleMiddleware("owner", "admin"), purchaseHand.Delete)

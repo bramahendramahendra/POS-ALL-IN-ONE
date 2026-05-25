@@ -5,6 +5,7 @@ import { api } from '@/services/api.client'
 
 import type {
   CreateSupplierPurchasePayload,
+  PurchasePayment,
   SupplierPurchase,
   SupplierPurchaseFilter,
   SupplierPurchasePayment,
@@ -86,11 +87,19 @@ export function useDeleteSupplierPurchaseMutation() {
   })
 }
 
+export function useSupplierPurchasePaymentsQuery(id: number | null) {
+  return useQuery({
+    queryKey: [...QK.detail(id ?? 0), 'payments'],
+    queryFn: () => api.get<PurchasePayment[]>(`/supplier-purchases/${id}/payments`),
+    enabled: id !== null && id > 0,
+  })
+}
+
 export function usePaySupplierPurchaseMutation(id: number) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (payload: SupplierPurchasePayment) =>
-      api.post<void>(`/supplier-purchases/${id}/payments`, payload),
+      api.post<void>(`/supplier-purchases/${id}/pay`, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QK.all() })
     },
