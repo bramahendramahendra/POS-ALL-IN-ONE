@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, type UseFormRegister } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 
@@ -49,7 +49,9 @@ export function RoleFormModal({ open, onOpenChange, roleId }: RoleFormModalProps
   const createForm = useForm<CreateForm>({ resolver: zodResolver(createSchema), defaultValues: createDefaults })
   const editForm   = useForm<EditForm>({ resolver: zodResolver(editSchema), defaultValues: editDefaults })
 
-  const { register, handleSubmit, reset, formState: { errors } } = isEdit ? editForm : createForm
+  const activeForm = isEdit ? editForm : createForm
+  const { handleSubmit, reset, formState: { errors } } = activeForm
+  const register = activeForm.register as UseFormRegister<{ display_name: string; description?: string }>
 
   useEffect(() => { if (!open) reset(isEdit ? editDefaults : createDefaults) }, [open, reset, isEdit])
   useEffect(() => { if (isEdit && detail) reset(mapToEditForm(detail)) }, [detail, isEdit, reset])

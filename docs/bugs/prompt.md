@@ -29,7 +29,7 @@ Saya ingin membandingkan fitur antara dua versi aplikasi.
 Aplikasi 1 (Lama/Referensi): Desktop
 Aplikasi 2 (Baru/Target): Web-v2
 
-Fokus analisis pada modul: Produk, Kategori, Satuan
+Fokus analisis pada modul: Supplier, Pembelian, Retur
 
 Lakukan hal berikut:
 1. Baca dan analisis kode dari kedua aplikasi secara menyeluruh — termasuk form fields, validasi, logika bisnis, fitur UI (search, filter, pagination, export, import, print), dan CRUD operations.
@@ -47,9 +47,10 @@ Jangan tampilkan analisis panjang, langsung ke 2 tabel.
 ======================================================
 
 Pada Web-v2 tambahkan beberapa fitur berikut berdasarkan laporan yang anda berikan.
-- 	Jumlah cetak label per produk
-- 	Pilihan ukuran label lebih banyak
-
+- Filter by status (Aktif/Nonaktif)
+- Toggle status Aktif/Nonaktif
+- Kolom Status di tabel
+- Kolom Kode Supplier di tabel
 
 Sebelum mulai, baca konvensi kode yang sudah ada di folder `web-v2/` dan `backend/` — ikuti standar masing-masing, jangan asumsikan.
 

@@ -1,8 +1,9 @@
-import { Eye, Pencil, Trash2 } from 'lucide-react'
+import { Eye, Pencil, Power, Trash2 } from 'lucide-react'
 
 import { ROLES } from '@/shared/constants'
 import { DataTable, RoleGuard } from '@/shared/components'
 import { Button } from '@/shared/components/ui/button'
+import { Badge } from '@/shared/components/ui/badge'
 import type { ColumnDef, PaginationProps } from '@/shared/components/DataTable/DataTable.types'
 
 import type { Supplier } from '../suppliers.types'
@@ -14,6 +15,7 @@ interface SupplierTableProps {
   onDetail: (id: number) => void
   onEdit: (supplier: Supplier) => void
   onDelete: (id: number) => void
+  onToggleStatus: (id: number) => void
 }
 
 export function SupplierTable({
@@ -23,8 +25,14 @@ export function SupplierTable({
   onDetail,
   onEdit,
   onDelete,
+  onToggleStatus,
 }: SupplierTableProps) {
   const columns: ColumnDef<Supplier>[] = [
+    {
+      key: 'supplier_code',
+      header: 'Kode Supplier',
+      cell: (row) => <span className="font-mono text-sm text-gray-600">{row.supplier_code}</span>,
+    },
     {
       key: 'name',
       header: 'Nama Supplier',
@@ -62,10 +70,26 @@ export function SupplierTable({
         ),
     },
     {
+      key: 'is_active',
+      header: 'Status',
+      align: 'center',
+      width: '90px',
+      cell: (row) =>
+        row.is_active ? (
+          <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700 text-xs">
+            Aktif
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="border-gray-200 bg-gray-50 text-gray-500 text-xs">
+            Nonaktif
+          </Badge>
+        ),
+    },
+    {
       key: 'actions',
       header: 'Aksi',
       align: 'center',
-      width: '100px',
+      width: '120px',
       cell: (row) => (
         <div className="flex items-center justify-center gap-1">
           <Button
@@ -86,6 +110,17 @@ export function SupplierTable({
           >
             <Pencil size={14} />
           </Button>
+          <RoleGuard allowedRoles={[ROLES.OWNER, ROLES.ADMIN]}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-7 w-7 ${row.is_active ? 'text-gray-500 hover:text-amber-600' : 'text-gray-400 hover:text-green-600'}`}
+              onClick={() => onToggleStatus(row.id)}
+              title={row.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+            >
+              <Power size={14} />
+            </Button>
+          </RoleGuard>
           <RoleGuard allowedRoles={[ROLES.OWNER]}>
             <Button
               variant="ghost"

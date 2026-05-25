@@ -17,7 +17,7 @@ const schema = z.object({
   label:       z.string().min(1, 'Label wajib diisi'),
   icon:        z.string().optional(),
   path:        z.string().optional(),
-  order_index: z.number().default(0),
+  order_index: z.number().optional(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -67,7 +67,7 @@ export function MenuFormModal({ open, onOpenChange, menuId, allMenus }: MenuForm
     if (isEdit) {
       update({ id: menuId!, ...values }, cb)
     } else {
-      create(values, cb)
+      create({ ...values, key_name: values.key_name ?? '' }, cb)
     }
   }
 

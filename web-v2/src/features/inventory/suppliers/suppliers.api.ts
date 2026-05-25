@@ -29,6 +29,17 @@ export function useSupplierListQuery(filter?: SupplierFilter) {
   })
 }
 
+export function useToggleSupplierStatusMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => api.patch<void>(`/suppliers/${id}/toggle-status`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.suppliers.all() })
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+}
+
 export function useSupplierDetailQuery(id: number) {
   return useQuery({
     queryKey: queryKeys.suppliers.detail(id),

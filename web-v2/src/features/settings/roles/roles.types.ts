@@ -22,6 +22,7 @@ export interface UpdateRolePayload {
 export interface RoleFilter {
   search?: string
   is_active?: boolean
+  [key: string]: unknown
 }
 
 // Untuk halaman RoleAccessPage

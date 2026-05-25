@@ -7,7 +7,6 @@ import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { Input } from '@/shared/components/ui/input'
 import { useDebounce } from '@/shared/hooks'
-import { ROUTES } from '@/shared/constants/routes'
 
 import { useDeleteRoleMutation, useRoleListQuery, useToggleRoleStatusMutation } from './roles.api'
 import { useRolesStore } from './roles.store'

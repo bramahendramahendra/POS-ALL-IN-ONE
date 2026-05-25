@@ -32,12 +32,12 @@ const createSchema = z.object({
   username: z.string().min(3, 'Username minimal 3 karakter'),
   password: z.string().min(6, 'Password minimal 6 karakter'),
   full_name: z.string().min(1, 'Nama wajib diisi'),
-  role_id: z.number({ required_error: 'Role wajib dipilih' }).int().positive('Role wajib dipilih'),
+  role_id: z.number({ error: 'Role wajib dipilih' }).int().positive('Role wajib dipilih'),
 })
 
 const editSchema = z.object({
   full_name: z.string().min(1, 'Nama wajib diisi'),
-  role_id: z.number({ required_error: 'Role wajib dipilih' }).int().positive('Role wajib dipilih'),
+  role_id: z.number({ error: 'Role wajib dipilih' }).int().positive('Role wajib dipilih'),
   is_active: z.boolean(),
 })
 

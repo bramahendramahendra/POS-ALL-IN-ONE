@@ -34,6 +34,7 @@ export interface SupplierDetail {
 
 export interface SupplierFilter {
   search?: string
+  is_active?: boolean
   page?: number
   page_size?: number
 }

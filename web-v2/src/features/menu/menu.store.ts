@@ -14,13 +14,6 @@ interface MenuState {
   hasAccess: (keyName: string) => boolean
 }
 
-const DEFAULT_PERMISSION: MenuPermission = {
-  can_view: false,
-  can_create: false,
-  can_edit: false,
-  can_delete: false,
-}
-
 function buildPermissionMap(menus: MenuItem[]): Record<string, MenuPermission> {
   const map: Record<string, MenuPermission> = {}
 

@@ -114,7 +114,7 @@ export function RoleAccessPage() {
         title={`Akses Menu — ${role?.display_name ?? '...'}`}
         breadcrumbs={[
           { label: 'Sistem' },
-          { label: 'Manajemen Role', href: ROUTES.SETTINGS_ROLES },
+          { label: 'Manajemen Role', path: ROUTES.SETTINGS_ROLES },
           { label: 'Akses Menu' },
         ]}
         actions={

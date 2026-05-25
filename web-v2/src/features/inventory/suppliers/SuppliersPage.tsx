@@ -6,8 +6,15 @@ import { ConfirmDialog, PageHeader, RoleGuard } from '@/shared/components'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { useDebounce, useDisclosure, usePagination } from '@/shared/hooks'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/select'
 
-import { useDeleteSupplierMutation, useSupplierListQuery } from './suppliers.api'
+import { useDeleteSupplierMutation, useSupplierListQuery, useToggleSupplierStatusMutation } from './suppliers.api'
 import type { Supplier } from './suppliers.types'
 import { SupplierDetailModal } from './components/SupplierDetailModal'
 import { SupplierFormModal } from './components/SupplierFormModal'
@@ -15,6 +22,7 @@ import { SupplierTable } from './components/SupplierTable'
 
 export function SuppliersPage() {
   const [search, setSearch] = useState('')
+  const [isActiveFilter, setIsActiveFilter] = useState<'all' | 'true' | 'false'>('all')
   const debouncedSearch = useDebounce(search, 300)
   const { page, pageSize, onPageChange, onPageSizeChange, reset } = usePagination()
   const { isOpen: detailOpen, open: openDetail, close: closeDetail } = useDisclosure()
@@ -24,9 +32,15 @@ export function SuppliersPage() {
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
 
-  const filter = { search: debouncedSearch || undefined, page, page_size: pageSize }
+  const filter = {
+    search: debouncedSearch || undefined,
+    is_active: isActiveFilter === 'all' ? undefined : isActiveFilter === 'true',
+    page,
+    page_size: pageSize,
+  }
   const { data: supplierData, isLoading } = useSupplierListQuery(filter)
   const { mutate: deleteSupplier, isPending: isDeleting } = useDeleteSupplierMutation()
+  const { mutate: toggleStatus } = useToggleSupplierStatusMutation()
 
   const suppliers = supplierData?.items ?? []
   const total = supplierData?.total ?? 0
@@ -34,6 +48,10 @@ export function SuppliersPage() {
   const handleSearchChange = (value: string) => {
     setSearch(value)
     reset()
+  }
+
+  const handleToggleStatus = (id: number) => {
+    toggleStatus(id)
   }
 
   const handleOpenDetail = (id: number) => {
@@ -97,11 +115,24 @@ export function SuppliersPage() {
             className="pl-8 h-9 text-sm"
           />
         </div>
-        {search && (
+        <Select
+          value={isActiveFilter}
+          onValueChange={(v) => setIsActiveFilter(v as 'all' | 'true' | 'false')}
+        >
+          <SelectTrigger className="w-36 h-9">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Semua Status</SelectItem>
+            <SelectItem value="true">Aktif</SelectItem>
+            <SelectItem value="false">Nonaktif</SelectItem>
+          </SelectContent>
+        </Select>
+        {(search || isActiveFilter !== 'all') && (
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handleSearchChange('')}
+            onClick={() => { handleSearchChange(''); setIsActiveFilter('all') }}
             className="h-9 gap-1"
           >
             <RotateCcw size={13} />
@@ -124,6 +155,7 @@ export function SuppliersPage() {
         onDetail={handleOpenDetail}
         onEdit={handleOpenEdit}
         onDelete={handleOpenDelete}
+        onToggleStatus={handleToggleStatus}
       />
 
       <SupplierDetailModal

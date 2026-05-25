@@ -52,4 +52,5 @@ export interface ReorderMenuPayload {
 export interface MenuFilter {
   search?: string
   is_active?: boolean
+  [key: string]: unknown
 }
