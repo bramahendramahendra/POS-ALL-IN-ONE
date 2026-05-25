@@ -213,6 +213,7 @@ export function SupplierPurchasesPage() {
         data={purchases}
         isLoading={isLoading}
         pagination={{ page, pageSize, total, onPageChange, onPageSizeChange, pageSizeOptions: [10, 20, 50] }}
+        suppliers={suppliers}
         onDetail={handleDetail}
         onPay={handlePay}
         onDelete={handleDelete}

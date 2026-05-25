@@ -12,14 +12,14 @@ interface SupplierDetailModalProps {
 
 const PAYMENT_STATUS_LABEL: Record<string, string> = {
   paid: 'Lunas',
-  partial: 'Sebagian',
-  unpaid: 'Belum Bayar',
+  unpaid: 'Hutang',
+  partial: 'Bayar Sebagian',
 }
 
 const PAYMENT_STATUS_COLOR: Record<string, string> = {
   paid: 'bg-green-100 text-green-700',
-  partial: 'bg-amber-100 text-amber-700',
-  unpaid: 'bg-red-100 text-red-600',
+  unpaid: 'bg-red-100 text-red-700',
+  partial: 'bg-yellow-100 text-yellow-700',
 }
 
 export function SupplierDetailModal({ open, onOpenChange, supplierId }: SupplierDetailModalProps) {
@@ -96,13 +96,18 @@ export function SupplierDetailModal({ open, onOpenChange, supplierId }: Supplier
                         <td className="px-2 py-1.5 text-gray-600">{formatDate(p.purchase_date)}</td>
                         <td className="px-2 py-1.5">{formatRupiah(p.total_amount)}</td>
                         <td className="px-2 py-1.5">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 font-medium ${
-                              PAYMENT_STATUS_COLOR[p.payment_status] ?? 'bg-gray-100 text-gray-600'
-                            }`}
-                          >
-                            {PAYMENT_STATUS_LABEL[p.payment_status] ?? p.payment_status}
-                          </span>
+                          {(() => {
+                            const status = p.payment_status || 'unpaid'
+                            return (
+                              <span
+                                className={`inline-flex items-center rounded-full px-2 py-0.5 font-medium ${
+                                  PAYMENT_STATUS_COLOR[status] ?? 'bg-gray-100 text-gray-600'
+                                }`}
+                              >
+                                {PAYMENT_STATUS_LABEL[status] ?? status}
+                              </span>
+                            )
+                          })()}
                         </td>
                         <td className="px-2 py-1.5">
                           {p.remaining_amount > 0

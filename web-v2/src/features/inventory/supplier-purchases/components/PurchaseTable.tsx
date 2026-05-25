@@ -5,12 +5,14 @@ import { Button } from '@/shared/components/ui/button'
 import { formatRupiah } from '@/shared/utils'
 import type { ColumnDef, PaginationProps } from '@/shared/components/DataTable/DataTable.types'
 
+import type { Supplier } from '../../suppliers/suppliers.types'
 import type { PaymentStatus, SupplierPurchase } from '../supplier-purchases.types'
 
 interface PurchaseTableProps {
   data: SupplierPurchase[]
   isLoading: boolean
   pagination: PaginationProps
+  suppliers: Supplier[]
   onDetail: (purchase: SupplierPurchase) => void
   onPay: (purchase: SupplierPurchase) => void
   onDelete: (purchase: SupplierPurchase) => void
@@ -34,10 +36,12 @@ export function PurchaseTable({
   data,
   isLoading,
   pagination,
+  suppliers,
   onDetail,
   onPay,
   onDelete,
 }: PurchaseTableProps) {
+  const supplierMap = new Map(suppliers.map((s) => [s.id, s.name]))
   const columns: ColumnDef<SupplierPurchase>[] = [
     {
       key: 'purchase_code',
@@ -57,7 +61,7 @@ export function PurchaseTable({
     {
       key: 'supplier_name',
       header: 'Supplier',
-      cell: (row) => <span className="text-sm">{row.supplier_name}</span>,
+      cell: (row) => <span className="text-sm">{row.supplier_id ? (supplierMap.get(row.supplier_id) ?? '-') : '-'}</span>,
     },
     {
       key: 'total_amount',
