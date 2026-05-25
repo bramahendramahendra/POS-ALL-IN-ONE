@@ -43,7 +43,7 @@ export interface SupplierPurchasePayment {
 export interface CreatePurchaseItemPayload {
   product_id: number
   quantity: number
-  price: number
+  purchase_price: number
   unit: string
 }
 

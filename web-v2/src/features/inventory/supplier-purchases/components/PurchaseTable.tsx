@@ -70,7 +70,7 @@ export function PurchaseTable({
       header: 'Status',
       align: 'center',
       cell: (row) => {
-        const s = STATUS_BADGE[row.payment_status]
+        const s = STATUS_BADGE[row.payment_status] ?? { label: row.payment_status, className: 'bg-gray-100 text-gray-600' }
         return (
           <span
             className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${s.className}`}

@@ -12,17 +12,17 @@ import (
 
 const (
 	generatePurchaseCodeQuery = `SELECT COUNT(*) FROM purchases WHERE DATE(purchase_date) = ?`
-	createPurchaseQuery       = `INSERT INTO purchases (purchase_code, invoice_number, supplier_id, purchase_date, total_amount, payment_status, paid_amount, remaining_amount, user_id, notes) VALUES (?, ?, ?, ?, ?, 'unpaid', 0, ?, ?, ?)`
-	createPurchaseItemQuery   = `INSERT INTO purchase_items (purchase_id, product_id, product_name, quantity, unit, purchase_price, subtotal) VALUES (?, ?, ?, ?, ?, ?, ?)`
+	createPurchaseQuery       = `INSERT INTO purchases (purchase_code, invoice_number, supplier_id, purchase_date, discount_amount, total_amount, payment_status, paid_amount, remaining_amount, user_id, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	createPurchaseItemQuery   = `INSERT INTO purchase_items (purchase_id, product_id, quantity, unit, purchase_price, subtotal) VALUES (?, ?, ?, ?, ?, ?)`
 	addStockQuery             = `UPDATE products SET stock = stock + ?, updated_at = NOW() WHERE id = ?`
 	payPurchaseQuery          = `UPDATE purchases SET paid_amount = paid_amount + ?, remaining_amount = remaining_amount - ?, payment_status = CASE WHEN remaining_amount - ? <= 0 THEN 'paid' WHEN paid_amount + ? > 0 THEN 'partial' ELSE 'unpaid' END, updated_at = NOW() WHERE id = ?`
-	getPurchaseItemsQuery     = `SELECT id, product_id, product_name, quantity, unit, purchase_price, subtotal FROM purchase_items WHERE purchase_id = ?`
+	getPurchaseItemsQuery     = `SELECT id, product_id, quantity, unit, purchase_price, subtotal FROM purchase_items WHERE purchase_id = ?`
 	rollbackStockQuery        = `UPDATE products SET stock = stock - ?, updated_at = NOW() WHERE id = ?`
 	deletePurchaseItemsQuery  = `DELETE FROM purchase_items WHERE purchase_id = ?`
 	deletePurchaseQuery       = `DELETE FROM purchases WHERE id = ?`
-	getPurchaseByIDQuery      = `SELECT p.id, p.purchase_code, p.invoice_number, p.supplier_id, p.purchase_date, p.total_amount, p.payment_status, p.paid_amount, p.remaining_amount, u.full_name as user_name, p.notes FROM purchases p LEFT JOIN users u ON p.user_id = u.id WHERE p.id = ?`
-	getRawPurchaseByIDQuery   = `SELECT id, purchase_code, invoice_number, supplier_id, purchase_date, total_amount, payment_status, paid_amount, remaining_amount, user_id, notes FROM purchases WHERE id = ?`
-	getAllPurchasesBase       = `SELECT p.id, p.purchase_code, p.invoice_number, p.supplier_id, p.purchase_date, p.total_amount, p.payment_status, p.paid_amount, p.remaining_amount, u.full_name as user_name, p.notes FROM purchases p LEFT JOIN users u ON p.user_id = u.id WHERE 1=1`
+	getPurchaseByIDQuery      = `SELECT p.id, p.purchase_code, p.invoice_number, p.supplier_id, p.purchase_date, p.discount_amount, p.total_amount, p.payment_status, p.paid_amount, p.remaining_amount, u.full_name as user_name, p.notes FROM purchases p LEFT JOIN users u ON p.user_id = u.id WHERE p.id = ?`
+	getRawPurchaseByIDQuery   = `SELECT id, purchase_code, invoice_number, supplier_id, purchase_date, discount_amount, total_amount, payment_status, paid_amount, remaining_amount, user_id, notes FROM purchases WHERE id = ?`
+	getAllPurchasesBase       = `SELECT p.id, p.purchase_code, p.invoice_number, p.supplier_id, p.purchase_date, p.discount_amount, p.total_amount, p.payment_status, p.paid_amount, p.remaining_amount, u.full_name as user_name, p.notes FROM purchases p LEFT JOIN users u ON p.user_id = u.id WHERE 1=1`
 	countPurchasesBase        = `SELECT COUNT(*) FROM purchases p WHERE 1=1`
 	createStockMutationQuery  = `INSERT INTO stock_mutations (product_id, mutation_type, quantity, stock_before, stock_after, reference_type, reference_id, notes, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	getProductStockQuery      = `SELECT stock FROM products WHERE id = ? LIMIT 1`
@@ -89,7 +89,7 @@ func (r *purchaseRepo) GetAll(filter *dto_purchase.PurchaseFilter) ([]*dto_purch
 		var item dto_purchase.PurchaseResponse
 		if err := rows.Scan(
 			&item.ID, &item.PurchaseCode, &item.InvoiceNumber, &item.SupplierID,
-			&item.PurchaseDate, &item.TotalAmount, &item.PaymentStatus,
+			&item.PurchaseDate, &item.DiscountAmount, &item.TotalAmount, &item.PaymentStatus,
 			&item.PaidAmount, &item.RemainingAmount, &item.UserName, &item.Notes,
 		); err != nil {
 			return nil, 0, err
@@ -116,7 +116,7 @@ func (r *purchaseRepo) GetByID(id int) (*dto_purchase.PurchaseResponse, error) {
 	var item dto_purchase.PurchaseResponse
 	if err := rows.Scan(
 		&item.ID, &item.PurchaseCode, &item.InvoiceNumber, &item.SupplierID,
-		&item.PurchaseDate, &item.TotalAmount, &item.PaymentStatus,
+		&item.PurchaseDate, &item.DiscountAmount, &item.TotalAmount, &item.PaymentStatus,
 		&item.PaidAmount, &item.RemainingAmount, &item.UserName, &item.Notes,
 	); err != nil {
 		return nil, err
@@ -131,7 +131,6 @@ func (r *purchaseRepo) GetByID(id int) (*dto_purchase.PurchaseResponse, error) {
 		item.Items = append(item.Items, dto_purchase.PurchaseItemResponse{
 			ID:            mi.ID,
 			ProductID:     mi.ProductID,
-			ProductName:   mi.ProductName,
 			Quantity:      mi.Quantity,
 			Unit:          mi.Unit,
 			PurchasePrice: mi.PurchasePrice,
@@ -164,7 +163,7 @@ func (r *purchaseRepo) GetItems(purchaseID int) ([]model_purchase.PurchaseItem, 
 	for rows.Next() {
 		var item model_purchase.PurchaseItem
 		if err := rows.Scan(
-			&item.ID, &item.ProductID, &item.ProductName,
+			&item.ID, &item.ProductID,
 			&item.Quantity, &item.Unit, &item.PurchasePrice, &item.Subtotal,
 		); err != nil {
 			return nil, err
@@ -196,15 +195,32 @@ func (r *purchaseRepo) Create(req *dto_purchase.PurchaseRequest, userID int) (*d
 		code := fmt.Sprintf("PO-%s-%03d", time.Now().Format("20060102"), count+1)
 
 		// 2. Hitung total_amount
-		var totalAmount float64
+		var subtotal float64
 		for _, item := range req.Items {
-			totalAmount += item.PurchasePrice * item.Quantity
+			subtotal += item.PurchasePrice * item.Quantity
 		}
+		totalAmount := subtotal - req.DiscountAmount
+		if totalAmount < 0 {
+			totalAmount = 0
+		}
+
+		// Tentukan payment_status dan paid_amount
+		paymentStatus := req.PaymentStatus
+		if paymentStatus == "" {
+			paymentStatus = "unpaid"
+		}
+		paidAmount := req.PaidAmount
+		if paymentStatus == "paid" {
+			paidAmount = totalAmount
+		} else if paymentStatus == "unpaid" {
+			paidAmount = 0
+		}
+		remainingAmount := totalAmount - paidAmount
 
 		// 3. Simpan PO header
 		if err := tx.Exec(createPurchaseQuery,
 			code, req.InvoiceNumber, req.SupplierID, req.PurchaseDate,
-			totalAmount, totalAmount, userID, req.Notes,
+			req.DiscountAmount, totalAmount, paymentStatus, paidAmount, remainingAmount, userID, req.Notes,
 		).Error; err != nil {
 			return err
 		}
@@ -219,7 +235,7 @@ func (r *purchaseRepo) Create(req *dto_purchase.PurchaseRequest, userID int) (*d
 
 			// Simpan item
 			if err := tx.Exec(createPurchaseItemQuery,
-				purchaseID, item.ProductID, item.ProductName,
+				purchaseID, item.ProductID,
 				item.Quantity, item.Unit, item.PurchasePrice, subtotal,
 			).Error; err != nil {
 				return err
@@ -294,7 +310,7 @@ func (r *purchaseRepo) Update(id int, req *dto_purchase.PurchaseRequest) (*dto_p
 		for _, item := range req.Items {
 			subtotal := item.PurchasePrice * item.Quantity
 			if err := tx.Exec(createPurchaseItemQuery,
-				id, item.ProductID, item.ProductName,
+				id, item.ProductID,
 				item.Quantity, item.Unit, item.PurchasePrice, subtotal,
 			).Error; err != nil {
 				return err

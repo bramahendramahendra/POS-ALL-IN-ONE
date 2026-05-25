@@ -43,7 +43,6 @@ func (s *purchaseService) GetItems(purchaseID int) ([]dto_purchase.PurchaseItemR
 		result = append(result, dto_purchase.PurchaseItemResponse{
 			ID:            mi.ID,
 			ProductID:     mi.ProductID,
-			ProductName:   mi.ProductName,
 			Quantity:      mi.Quantity,
 			Unit:          mi.Unit,
 			PurchasePrice: mi.PurchasePrice,

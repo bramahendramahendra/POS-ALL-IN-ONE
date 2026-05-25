@@ -22,8 +22,11 @@ function normalizeStatus(purchase: SupplierPurchase): SupplierPurchase {
     paid: 'lunas',
     unpaid: 'hutang',
     partial: 'partial',
+    lunas: 'lunas',
+    hutang: 'hutang',
   }
-  return { ...purchase, payment_status: map[purchase.payment_status] ?? purchase.payment_status }
+  const raw = (purchase.payment_status as string) ?? ''
+  return { ...purchase, payment_status: (map[raw] ?? 'hutang') as SupplierPurchase['payment_status'] }
 }
 
 const QK = {

@@ -8,6 +8,7 @@ type Purchase struct {
 	InvoiceNumber   string     `db:"invoice_number"`
 	SupplierID      *int       `db:"supplier_id"`
 	PurchaseDate    string     `db:"purchase_date"`
+	DiscountAmount  float64    `db:"discount_amount"`
 	TotalAmount     float64    `db:"total_amount"`
 	PaymentStatus   string     `db:"payment_status"`
 	PaidAmount      float64    `db:"paid_amount"`
@@ -22,7 +23,6 @@ type PurchaseItem struct {
 	ID            int     `db:"id"`
 	PurchaseID    int     `db:"purchase_id"`
 	ProductID     int     `db:"product_id"`
-	ProductName   string  `db:"product_name"`
 	Quantity      float64 `db:"quantity"`
 	Unit          string  `db:"unit"`
 	PurchasePrice float64 `db:"purchase_price"`

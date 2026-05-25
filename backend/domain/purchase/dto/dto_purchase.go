@@ -2,18 +2,20 @@ package dto_purchase
 
 type PurchaseItemRequest struct {
 	ProductID     int     `json:"product_id" validate:"required,gt=0"`
-	ProductName   string  `json:"product_name" validate:"required"`
 	Quantity      float64 `json:"quantity" validate:"required,gt=0"`
 	Unit          string  `json:"unit" validate:"required"`
 	PurchasePrice float64 `json:"purchase_price" validate:"required,gt=0"`
 }
 
 type PurchaseRequest struct {
-	InvoiceNumber string                `json:"invoice_number" validate:"required"`
-	SupplierID    *int                  `json:"supplier_id"`
-	PurchaseDate  string                `json:"purchase_date" validate:"required"`
-	Notes         string                `json:"notes"`
-	Items         []PurchaseItemRequest `json:"items" validate:"required,min=1,dive"`
+	InvoiceNumber  string                `json:"invoice_number" validate:"required"`
+	SupplierID     *int                  `json:"supplier_id"`
+	PurchaseDate   string                `json:"purchase_date" validate:"required"`
+	DiscountAmount float64               `json:"discount_amount"`
+	PaymentStatus  string                `json:"payment_status"`
+	PaidAmount     float64               `json:"paid_amount"`
+	Notes          string                `json:"notes"`
+	Items          []PurchaseItemRequest `json:"items" validate:"required,min=1,dive"`
 }
 
 type PayPurchaseRequest struct {
@@ -23,7 +25,6 @@ type PayPurchaseRequest struct {
 type PurchaseItemResponse struct {
 	ID            int     `json:"id"`
 	ProductID     int     `json:"product_id"`
-	ProductName   string  `json:"product_name"`
 	Quantity      float64 `json:"quantity"`
 	Unit          string  `json:"unit"`
 	PurchasePrice float64 `json:"purchase_price"`
@@ -36,6 +37,7 @@ type PurchaseResponse struct {
 	InvoiceNumber   string                 `json:"invoice_number"`
 	SupplierID      *int                   `json:"supplier_id"`
 	PurchaseDate    string                 `json:"purchase_date"`
+	DiscountAmount  float64                `json:"discount_amount"`
 	TotalAmount     float64                `json:"total_amount"`
 	PaymentStatus   string                 `json:"payment_status"`
 	PaidAmount      float64                `json:"paid_amount"`
