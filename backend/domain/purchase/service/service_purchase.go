@@ -56,6 +56,14 @@ func (s *purchaseService) GetItems(purchaseID int) ([]dto_purchase.PurchaseItemR
 	return result, nil
 }
 
+func (s *purchaseService) GenerateCode() (*dto_purchase.GeneratePurchaseCodeResponse, error) {
+	code, err := s.repo.GenerateCode()
+	if err != nil {
+		return nil, &errors.InternalServerError{Message: err.Error()}
+	}
+	return &dto_purchase.GeneratePurchaseCodeResponse{PurchaseCode: code}, nil
+}
+
 func (s *purchaseService) Create(req *dto_purchase.PurchaseRequest, userID int) (*dto_purchase.PurchaseResponse, error) {
 	item, err := s.repo.Create(req, userID)
 	if err != nil {

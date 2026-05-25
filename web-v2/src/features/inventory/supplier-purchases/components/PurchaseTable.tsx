@@ -40,6 +40,11 @@ export function PurchaseTable({
 }: PurchaseTableProps) {
   const columns: ColumnDef<SupplierPurchase>[] = [
     {
+      key: 'purchase_code',
+      header: 'Kode PO',
+      cell: (row) => <span className="text-sm font-mono font-medium text-blue-700">{row.purchase_code}</span>,
+    },
+    {
       key: 'purchase_date',
       header: 'Tanggal',
       cell: (row) => <span className="text-sm text-gray-600">{formatDate(row.purchase_date)}</span>,

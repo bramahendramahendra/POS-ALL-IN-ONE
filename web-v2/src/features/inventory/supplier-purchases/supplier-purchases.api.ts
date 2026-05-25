@@ -41,6 +41,15 @@ export function useSupplierPurchaseDetailQuery(id: number | null) {
   })
 }
 
+export function useGeneratePurchaseCodeQuery(enabled: boolean) {
+  return useQuery({
+    queryKey: ['purchaseGenerateCode', enabled],
+    queryFn: () => api.get<{ purchase_code: string }>('/supplier-purchases/generate-code'),
+    enabled,
+    staleTime: 0,
+  })
+}
+
 export function useCreateSupplierPurchaseMutation() {
   const qc = useQueryClient()
   return useMutation({

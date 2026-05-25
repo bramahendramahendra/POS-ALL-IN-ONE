@@ -15,8 +15,9 @@ func PurchaseRoutes(r *gin.RouterGroup) {
 	purchaseSvc := purchase_service.NewPurchaseService(purchaseRepo)
 	purchaseHand := purchase_handler.NewPurchaseHandler(purchaseSvc)
 
-	g := r.Group("/purchases")
+	g := r.Group("/supplier-purchases")
 	{
+		g.GET("/generate-code", purchaseHand.GenerateCode)
 		g.GET("", purchaseHand.GetAll)
 		g.GET("/:id", purchaseHand.GetByID)
 		g.GET("/:id/items", purchaseHand.GetItems)

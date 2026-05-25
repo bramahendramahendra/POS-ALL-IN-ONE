@@ -9,11 +9,12 @@ type PurchaseItemRequest struct {
 }
 
 type PurchaseRequest struct {
-	SupplierID   *int                  `json:"supplier_id"`
-	SupplierName string                `json:"supplier_name"`
-	PurchaseDate string                `json:"purchase_date" validate:"required"`
-	Notes        string                `json:"notes"`
-	Items        []PurchaseItemRequest `json:"items" validate:"required,min=1,dive"`
+	InvoiceNumber string                `json:"invoice_number" validate:"required"`
+	SupplierID    *int                  `json:"supplier_id"`
+	SupplierName  string                `json:"supplier_name"`
+	PurchaseDate  string                `json:"purchase_date" validate:"required"`
+	Notes         string                `json:"notes"`
+	Items         []PurchaseItemRequest `json:"items" validate:"required,min=1,dive"`
 }
 
 type PayPurchaseRequest struct {
@@ -33,6 +34,7 @@ type PurchaseItemResponse struct {
 type PurchaseResponse struct {
 	ID              int                    `json:"id"`
 	PurchaseCode    string                 `json:"purchase_code"`
+	InvoiceNumber   string                 `json:"invoice_number"`
 	SupplierID      *int                   `json:"supplier_id"`
 	SupplierName    string                 `json:"supplier_name"`
 	PurchaseDate    string                 `json:"purchase_date"`
@@ -43,6 +45,10 @@ type PurchaseResponse struct {
 	UserName        string                 `json:"user_name"`
 	Notes           string                 `json:"notes"`
 	Items           []PurchaseItemResponse `json:"items,omitempty"`
+}
+
+type GeneratePurchaseCodeResponse struct {
+	PurchaseCode string `json:"purchase_code"`
 }
 
 type PurchaseFilter struct {

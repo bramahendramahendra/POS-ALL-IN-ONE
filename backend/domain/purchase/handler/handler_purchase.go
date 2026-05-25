@@ -22,6 +22,22 @@ func NewPurchaseHandler(service service_purchase.PurchaseService) *PurchaseHandl
 	return &PurchaseHandler{service: service}
 }
 
+// GET /api/purchases/generate-code
+func (h *PurchaseHandler) GenerateCode(c *gin.Context) {
+	result, err := h.service.GenerateCode()
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
+		Code:    helper.StatusOk,
+		Status:  true,
+		Message: "Generate kode PO",
+		Data:    result,
+	})
+}
+
 // GET /api/purchases
 func (h *PurchaseHandler) GetAll(c *gin.Context) {
 	filter := &dto_purchase.PurchaseFilter{

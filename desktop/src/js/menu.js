@@ -113,7 +113,7 @@ function renderMenu(activePage) {
 
   // Filter menu by user role
   const allowedMenuItems = menuItems.filter(item => 
-    item.roles.includes(currentUser.role)
+    item.roles.includes(currentUser.role_name || currentUser.role)
   );
 
   // Generate menu HTML
@@ -176,7 +176,7 @@ function renderNavbar() {
       <span id="connection-indicator" class="status-online">● Online</span>
       <span class="user-info">
         <strong id="userName">${escapeHtml(currentUser.full_name)}</strong>
-        <span class="user-role" id="userRole">(${currentUser.role})</span>
+        <span class="user-role" id="userRole">(${currentUser.role_name || currentUser.role})</span>
       </span>
       <button class="btn btn-danger btn-sm" id="logoutBtn">Logout</button>
     </div>

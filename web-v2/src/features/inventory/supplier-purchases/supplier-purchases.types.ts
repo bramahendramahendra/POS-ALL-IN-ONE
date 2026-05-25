@@ -11,8 +11,9 @@ export interface SupplierPurchaseItem {
 
 export interface SupplierPurchase {
   id: number
-  purchase_date: string
+  purchase_code: string
   invoice_number: string
+  purchase_date: string
   supplier_id: number
   supplier_name: string
   subtotal: number

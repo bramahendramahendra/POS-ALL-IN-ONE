@@ -5,6 +5,7 @@ import "time"
 type Purchase struct {
 	ID              int        `db:"id"`
 	PurchaseCode    string     `db:"purchase_code"`
+	InvoiceNumber   string     `db:"invoice_number"`
 	SupplierID      *int       `db:"supplier_id"`
 	SupplierName    string     `db:"supplier_name"`
 	PurchaseDate    string     `db:"purchase_date"`

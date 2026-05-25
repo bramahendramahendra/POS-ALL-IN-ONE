@@ -12,7 +12,7 @@ import (
 
 const (
 	generatePurchaseCodeQuery = `SELECT COUNT(*) FROM purchases WHERE DATE(purchase_date) = ?`
-	createPurchaseQuery       = `INSERT INTO purchases (purchase_code, supplier_id, supplier_name, purchase_date, total_amount, payment_status, paid_amount, remaining_amount, user_id, notes) VALUES (?, ?, ?, ?, ?, 'unpaid', 0, ?, ?, ?)`
+	createPurchaseQuery       = `INSERT INTO purchases (purchase_code, invoice_number, supplier_id, supplier_name, purchase_date, total_amount, payment_status, paid_amount, remaining_amount, user_id, notes) VALUES (?, ?, ?, ?, ?, ?, 'unpaid', 0, ?, ?, ?)`
 	createPurchaseItemQuery   = `INSERT INTO purchase_items (purchase_id, product_id, product_name, quantity, unit, purchase_price, subtotal) VALUES (?, ?, ?, ?, ?, ?, ?)`
 	addStockQuery             = `UPDATE products SET stock = stock + ?, updated_at = NOW() WHERE id = ?`
 	payPurchaseQuery          = `UPDATE purchases SET paid_amount = paid_amount + ?, remaining_amount = remaining_amount - ?, payment_status = CASE WHEN remaining_amount - ? <= 0 THEN 'paid' WHEN paid_amount + ? > 0 THEN 'partial' ELSE 'unpaid' END, updated_at = NOW() WHERE id = ?`
@@ -20,9 +20,9 @@ const (
 	rollbackStockQuery        = `UPDATE products SET stock = stock - ?, updated_at = NOW() WHERE id = ?`
 	deletePurchaseItemsQuery  = `DELETE FROM purchase_items WHERE purchase_id = ?`
 	deletePurchaseQuery       = `DELETE FROM purchases WHERE id = ?`
-	getPurchaseByIDQuery      = `SELECT p.id, p.purchase_code, p.supplier_id, p.supplier_name, p.purchase_date, p.total_amount, p.payment_status, p.paid_amount, p.remaining_amount, u.full_name as user_name, p.notes FROM purchases p LEFT JOIN users u ON p.user_id = u.id WHERE p.id = ?`
-	getRawPurchaseByIDQuery   = `SELECT id, purchase_code, supplier_id, supplier_name, purchase_date, total_amount, payment_status, paid_amount, remaining_amount, user_id, notes FROM purchases WHERE id = ?`
-	getAllPurchasesBase       = `SELECT p.id, p.purchase_code, p.supplier_id, p.supplier_name, p.purchase_date, p.total_amount, p.payment_status, p.paid_amount, p.remaining_amount, u.full_name as user_name, p.notes FROM purchases p LEFT JOIN users u ON p.user_id = u.id WHERE 1=1`
+	getPurchaseByIDQuery      = `SELECT p.id, p.purchase_code, p.invoice_number, p.supplier_id, p.supplier_name, p.purchase_date, p.total_amount, p.payment_status, p.paid_amount, p.remaining_amount, u.full_name as user_name, p.notes FROM purchases p LEFT JOIN users u ON p.user_id = u.id WHERE p.id = ?`
+	getRawPurchaseByIDQuery   = `SELECT id, purchase_code, invoice_number, supplier_id, supplier_name, purchase_date, total_amount, payment_status, paid_amount, remaining_amount, user_id, notes FROM purchases WHERE id = ?`
+	getAllPurchasesBase       = `SELECT p.id, p.purchase_code, p.invoice_number, p.supplier_id, p.supplier_name, p.purchase_date, p.total_amount, p.payment_status, p.paid_amount, p.remaining_amount, u.full_name as user_name, p.notes FROM purchases p LEFT JOIN users u ON p.user_id = u.id WHERE 1=1`
 	countPurchasesBase        = `SELECT COUNT(*) FROM purchases p WHERE 1=1`
 	createStockMutationQuery  = `INSERT INTO stock_mutations (product_id, mutation_type, quantity, stock_before, stock_after, reference_type, reference_id, notes, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	getProductStockQuery      = `SELECT stock FROM products WHERE id = ? LIMIT 1`
@@ -88,7 +88,7 @@ func (r *purchaseRepo) GetAll(filter *dto_purchase.PurchaseFilter) ([]*dto_purch
 	for rows.Next() {
 		var item dto_purchase.PurchaseResponse
 		if err := rows.Scan(
-			&item.ID, &item.PurchaseCode, &item.SupplierID, &item.SupplierName,
+			&item.ID, &item.PurchaseCode, &item.InvoiceNumber, &item.SupplierID, &item.SupplierName,
 			&item.PurchaseDate, &item.TotalAmount, &item.PaymentStatus,
 			&item.PaidAmount, &item.RemainingAmount, &item.UserName, &item.Notes,
 		); err != nil {
@@ -115,7 +115,7 @@ func (r *purchaseRepo) GetByID(id int) (*dto_purchase.PurchaseResponse, error) {
 
 	var item dto_purchase.PurchaseResponse
 	if err := rows.Scan(
-		&item.ID, &item.PurchaseCode, &item.SupplierID, &item.SupplierName,
+		&item.ID, &item.PurchaseCode, &item.InvoiceNumber, &item.SupplierID, &item.SupplierName,
 		&item.PurchaseDate, &item.TotalAmount, &item.PaymentStatus,
 		&item.PaidAmount, &item.RemainingAmount, &item.UserName, &item.Notes,
 	); err != nil {
@@ -174,6 +174,15 @@ func (r *purchaseRepo) GetItems(purchaseID int) ([]model_purchase.PurchaseItem, 
 	return items, nil
 }
 
+func (r *purchaseRepo) GenerateCode() (string, error) {
+	today := time.Now().Format("2006-01-02")
+	var count int
+	if err := r.db.Raw(generatePurchaseCodeQuery, today).Scan(&count).Error; err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("PO-%s-%03d", time.Now().Format("20060102"), count+1), nil
+}
+
 func (r *purchaseRepo) Create(req *dto_purchase.PurchaseRequest, userID int) (*dto_purchase.PurchaseResponse, error) {
 	var purchaseID int
 
@@ -194,7 +203,7 @@ func (r *purchaseRepo) Create(req *dto_purchase.PurchaseRequest, userID int) (*d
 
 		// 3. Simpan PO header
 		if err := tx.Exec(createPurchaseQuery,
-			code, req.SupplierID, req.SupplierName, req.PurchaseDate,
+			code, req.InvoiceNumber, req.SupplierID, req.SupplierName, req.PurchaseDate,
 			totalAmount, totalAmount, userID, req.Notes,
 		).Error; err != nil {
 			return err
@@ -275,8 +284,8 @@ func (r *purchaseRepo) Update(id int, req *dto_purchase.PurchaseRequest) (*dto_p
 
 		// Update PO header
 		if err := tx.Exec(
-			`UPDATE purchases SET supplier_id=?, supplier_name=?, purchase_date=?, total_amount=?, remaining_amount=total_amount-paid_amount, notes=?, updated_at=NOW() WHERE id=?`,
-			req.SupplierID, req.SupplierName, req.PurchaseDate, totalAmount, req.Notes, id,
+			`UPDATE purchases SET invoice_number=?, supplier_id=?, supplier_name=?, purchase_date=?, total_amount=?, remaining_amount=total_amount-paid_amount, notes=?, updated_at=NOW() WHERE id=?`,
+			req.InvoiceNumber, req.SupplierID, req.SupplierName, req.PurchaseDate, totalAmount, req.Notes, id,
 		).Error; err != nil {
 			return err
 		}

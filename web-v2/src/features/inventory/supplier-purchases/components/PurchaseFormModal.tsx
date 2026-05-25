@@ -21,7 +21,7 @@ import { formatRupiah } from '@/shared/utils'
 import { useSupplierListQuery } from '@/features/inventory/suppliers/suppliers.api'
 import { useProductListQuery } from '@/features/inventory/products/products.api'
 
-import { useCreateSupplierPurchaseMutation } from '../supplier-purchases.api'
+import { useCreateSupplierPurchaseMutation, useGeneratePurchaseCodeQuery } from '../supplier-purchases.api'
 import type { PaymentStatus } from '../supplier-purchases.types'
 import type { Product } from '@/features/inventory/products/products.types'
 
@@ -72,6 +72,7 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
   const products: Product[] = productsData?.items ?? []
 
   const { mutate: create, isPending } = useCreateSupplierPurchaseMutation()
+  const { data: codeData, isFetching: isGeneratingCode } = useGeneratePurchaseCodeQuery(open)
 
   const {
     register,
@@ -141,7 +142,16 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
     >
       <div className="space-y-5">
         {/* Header info */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="pur-code">Kode PO</Label>
+            <Input
+              id="pur-code"
+              value={isGeneratingCode ? '...' : (codeData?.purchase_code ?? '')}
+              readOnly
+              className="bg-gray-50 font-mono text-blue-700 font-medium"
+            />
+          </div>
           <div className="space-y-1.5">
             <Label htmlFor="pur-date">
               Tanggal <span className="text-red-500">*</span>

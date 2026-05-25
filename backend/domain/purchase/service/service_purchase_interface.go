@@ -6,6 +6,7 @@ type PurchaseService interface {
 	GetAll(filter *dto_purchase.PurchaseFilter) ([]*dto_purchase.PurchaseResponse, int, error)
 	GetByID(id int) (*dto_purchase.PurchaseResponse, error)
 	GetItems(purchaseID int) ([]dto_purchase.PurchaseItemResponse, error)
+	GenerateCode() (*dto_purchase.GeneratePurchaseCodeResponse, error)
 	Create(req *dto_purchase.PurchaseRequest, userID int) (*dto_purchase.PurchaseResponse, error)
 	Update(id int, req *dto_purchase.PurchaseRequest) (*dto_purchase.PurchaseResponse, error)
 	Delete(id int) error
