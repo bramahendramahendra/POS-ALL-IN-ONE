@@ -26,12 +26,12 @@ export interface SupplierPurchase {
   purchase_date: string
   supplier_id: number
   supplier_name: string
-  subtotal: number
   discount_amount: number
   total_amount: number
   paid_amount: number
   remaining_amount: number
   payment_status: PaymentStatus
+  user_name: string
   notes?: string
   items: SupplierPurchaseItem[]
 }

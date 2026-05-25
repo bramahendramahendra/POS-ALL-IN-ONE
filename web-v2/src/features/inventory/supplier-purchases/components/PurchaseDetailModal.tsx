@@ -58,7 +58,7 @@ export function PurchaseDetailModal({ open, onOpenChange, purchaseId }: Purchase
             </InfoField>
             <InfoField label="Tanggal Pembelian" value={formatDate(purchase.purchase_date)} />
             <InfoField label="Supplier" value={purchase.supplier_name || '—'} />
-            <InfoField label="Dicatat Oleh" value={(purchase as any).user_name || '—'} />
+            <InfoField label="Dicatat Oleh" value={purchase.user_name || '—'} />
             <InfoField label="Status">
               <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusBadge?.className}`}>
                 {statusBadge?.label}

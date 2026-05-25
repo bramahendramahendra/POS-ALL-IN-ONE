@@ -48,6 +48,7 @@ type PurchaseResponse struct {
 	PurchaseCode    string                 `json:"purchase_code"`
 	InvoiceNumber   string                 `json:"invoice_number"`
 	SupplierID      *int                   `json:"supplier_id"`
+	SupplierName    string                 `json:"supplier_name"`
 	PurchaseDate    string                 `json:"purchase_date"`
 	DiscountAmount  float64                `json:"discount_amount"`
 	TotalAmount     float64                `json:"total_amount"`
