@@ -635,7 +635,7 @@ async function loadPurchases() {
     const params = { start_date: filters.startDate, end_date: filters.endDate };
     if (filters.paymentStatus) params.payment_status = filters.paymentStatus;
 
-    const result = await apiClient.get('/purchases', params);
+    const result = await apiClient.get('/supplier-purchases', params);
 
     if (result.success) {
       allPurchases = result.data.items ?? result.data ?? [];
@@ -694,14 +694,15 @@ function updatePurchasesSummary(purchases) {
   document.getElementById('purchasesDebt').textContent = formatCurrency(debt);
 }
 
-function openAddPurchaseModal() {
+async function openAddPurchaseModal() {
   editingPurchaseId = null;
   purchaseItems = [];
   document.getElementById('purchaseModalTitle').textContent = 'Tambah Pembelian';
   document.getElementById('purchaseForm').reset();
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('purchaseDate').value = today;
-  document.getElementById('purchaseCode').value = generatePurchaseCode();
+  document.getElementById('purchaseCode').value = '...';
+  document.getElementById('invoiceNumber').value = '';
   populateSupplierDropdown(null);
   document.getElementById('paymentStatus').value = 'unpaid';
   document.getElementById('paidAmount').value = '';
@@ -711,7 +712,15 @@ function openAddPurchaseModal() {
   document.getElementById('purchaseFormError').style.display = 'none';
   document.getElementById('btnSubmitPurchaseText').textContent = 'Simpan';
   document.getElementById('purchaseModal').style.display = 'flex';
-  setTimeout(() => { document.getElementById('purchaseDate').focus(); }, 100);
+  try {
+    const codeResult = await apiClient.get('/supplier-purchases/generate-code');
+    if (codeResult.success) {
+      document.getElementById('purchaseCode').value = codeResult.data.purchase_code;
+    }
+  } catch (e) {
+    console.error('Generate code error:', e);
+  }
+  setTimeout(() => { document.getElementById('invoiceNumber').focus(); }, 100);
 }
 
 function closePurchaseModal() {
@@ -863,13 +872,10 @@ async function handlePurchaseFormSubmit(e) {
     : '';
 
   const formData = {
-    purchase_code: document.getElementById('purchaseCode').value,
+    invoice_number: document.getElementById('invoiceNumber').value.trim(),
     supplier_id: supplierIdVal,
     supplier_name: supplierNameVal,
     purchase_date: document.getElementById('purchaseDate').value,
-    total_amount: total,
-    payment_status: document.getElementById('paymentStatus').value,
-    paid_amount: paidAmount,
     notes: document.getElementById('purchaseNotes').value.trim(),
     items: purchaseItems
   };
@@ -889,7 +895,7 @@ async function savePurchase(formData) {
   btnSubmit.textContent = 'Menyimpan...';
 
   try {
-    const result = await apiClient.post('/purchases', formData);
+    const result = await apiClient.post('/supplier-purchases', formData);
     if (result.success) {
       closePurchaseModal();
       await loadPurchases();
@@ -915,7 +921,7 @@ function showPurchaseFormError(message) {
 
 async function openPayPurchaseModal(purchaseId) {
   try {
-    const result = await apiClient.get(`/purchases/${purchaseId}`);
+    const result = await apiClient.get(`/supplier-purchases/${purchaseId}`);
     if (result.success) {
       const purchase = result.data;
       if (purchase.payment_status === 'paid') { showToast('Pembelian sudah lunas', 'info'); return; }
@@ -989,7 +995,7 @@ async function handlePayPurchase(e) {
 
 async function processPurchasePayment(purchaseId, amount) {
   try {
-    const result = await apiClient.post(`/purchases/${purchaseId}/pay`, { amount });
+    const result = await apiClient.post(`/supplier-purchases/${purchaseId}/pay`, { amount });
     if (result.success) {
       closePayPurchaseModal();
       await loadPurchases();
@@ -1011,7 +1017,7 @@ function showPayPurchaseError(message) {
 
 async function openDetailPurchase(purchaseId) {
   try {
-    const result = await apiClient.get(`/purchases/${purchaseId}`);
+    const result = await apiClient.get(`/supplier-purchases/${purchaseId}`);
     if (result.success) {
       displayPurchaseDetail(result.data);
       document.getElementById('detailPurchaseModal').style.display = 'flex';
@@ -1114,7 +1120,7 @@ function confirmDeletePurchase(purchaseId, purchaseCode) {
 
 async function deletePurchase(purchaseId) {
   try {
-    const result = await apiClient.delete(`/purchases/${purchaseId}`);
+    const result = await apiClient.delete(`/supplier-purchases/${purchaseId}`);
     if (result.success) {
       await loadPurchases();
       showToast('Pembelian berhasil dihapus', 'success');
@@ -1206,7 +1212,7 @@ function updateReturnsSummary(returns) {
 
 async function loadPurchasesForReturn() {
   try {
-    const result = await apiClient.get('/purchases', { limit: 1000 });
+    const result = await apiClient.get('/supplier-purchases', { limit: 1000 });
     if (result.success) {
       purchasesForReturn = result.data.items ?? [];
       const select = document.getElementById('returnPurchaseId');
@@ -1271,8 +1277,8 @@ async function handleReturnPurchaseChange() {
 
   try {
     const [purchaseResult, itemsResult] = await Promise.all([
-      apiClient.get(`/purchases/${parseInt(purchaseId)}`),
-      apiClient.get(`/purchases/${parseInt(purchaseId)}/items`)
+      apiClient.get(`/supplier-purchases/${parseInt(purchaseId)}`),
+      apiClient.get(`/supplier-purchases/${parseInt(purchaseId)}/items`)
     ]);
 
     if (purchaseResult.success && itemsResult.success) {

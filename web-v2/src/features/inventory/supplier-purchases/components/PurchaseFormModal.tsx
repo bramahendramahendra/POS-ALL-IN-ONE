@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useForm, useFieldArray } from 'react-hook-form'
+import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Plus, Trash2 } from 'lucide-react'
@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/shared/components/ui/select'
 import { formatRupiah } from '@/shared/utils'
+import { RupiahInput } from '@/shared/components/ui/rupiah-input'
 import { useSupplierListQuery } from '@/features/inventory/suppliers/suppliers.api'
 import { useProductListQuery } from '@/features/inventory/products/products.api'
 
@@ -106,6 +107,7 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
     const product = products.find((p) => p.id === id)
     if (product) {
       setValue(`items.${index}.unit`, product.unit ?? 'pcs')
+      setValue(`items.${index}.price`, product.purchase_price ?? 0)
     }
   }
 
@@ -216,10 +218,10 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
               <thead className="bg-gray-50 border-b">
                 <tr>
                   <th className="px-3 py-2 text-left font-medium text-gray-500 w-[35%]">Produk</th>
-                  <th className="px-3 py-2 text-left font-medium text-gray-500 w-[15%]">Satuan</th>
-                  <th className="px-3 py-2 text-right font-medium text-gray-500 w-[15%]">Qty</th>
-                  <th className="px-3 py-2 text-right font-medium text-gray-500 w-[20%]">Harga</th>
-                  <th className="px-3 py-2 text-right font-medium text-gray-500 w-[15%]">Subtotal</th>
+                  <th className="px-3 py-2 text-right font-medium text-gray-500 w-[10%]">Qty</th>
+                  <th className="px-3 py-2 text-left font-medium text-gray-500 w-[10%]">Satuan</th>
+                  <th className="px-3 py-2 text-right font-medium text-gray-500 w-[22%]">Harga</th>
+                  <th className="px-3 py-2 text-right font-medium text-gray-500 w-[18%]">Subtotal</th>
                   <th className="px-3 py-2 w-8" />
                 </tr>
               </thead>
@@ -245,25 +247,26 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
                       </td>
                       <td className="px-3 py-2">
                         <Input
-                          {...register(`items.${index}.unit`)}
-                          placeholder="pcs"
-                          className="h-8 text-xs"
-                        />
-                      </td>
-                      <td className="px-3 py-2">
-                        <Input
                           type="number"
                           min={1}
                           {...register(`items.${index}.quantity`, { valueAsNumber: true })}
                           className="h-8 text-xs text-right"
                         />
                       </td>
+                      <td className="px-3 py-2 text-xs text-gray-700">
+                        {watchItems[index]?.unit || '-'}
+                      </td>
                       <td className="px-3 py-2">
-                        <Input
-                          type="number"
-                          min={0}
-                          {...register(`items.${index}.price`, { valueAsNumber: true })}
-                          className="h-8 text-xs text-right"
+                        <Controller
+                          control={control}
+                          name={`items.${index}.price`}
+                          render={({ field }) => (
+                            <RupiahInput
+                              value={field.value}
+                              onChange={field.onChange}
+                              className="h-8 text-xs"
+                            />
+                          )}
                         />
                       </td>
                       <td className="px-3 py-2 text-right text-xs font-medium">
@@ -316,7 +319,7 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
                 <SelectContent>
                   <SelectItem value="lunas">Lunas</SelectItem>
                   <SelectItem value="hutang">Hutang</SelectItem>
-                  <SelectItem value="partial">Partial</SelectItem>
+                  <SelectItem value="partial">Bayar Sebagian</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -324,12 +327,16 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
             {watchPaymentStatus === 'partial' && (
               <div className="space-y-1.5">
                 <Label htmlFor="pur-paid">Jumlah Dibayar (Rp)</Label>
-                <Input
-                  id="pur-paid"
-                  type="number"
-                  min={0}
-                  placeholder="0"
-                  {...register('paid_amount', { valueAsNumber: true })}
+                <Controller
+                  control={control}
+                  name="paid_amount"
+                  render={({ field }) => (
+                    <RupiahInput
+                      id="pur-paid"
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
                 />
               </div>
             )}
