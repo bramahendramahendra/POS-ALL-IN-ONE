@@ -19,6 +19,15 @@ export interface SupplierPurchaseItem {
   remaining_amount: number
 }
 
+export interface SupplierReturnHistoryItem {
+  id: number
+  return_code: string
+  return_date: string
+  total_return: number
+  reason: string
+  status: string
+}
+
 export interface SupplierDetail {
   id: number
   supplier_code: string
@@ -29,7 +38,12 @@ export interface SupplierDetail {
   address: string
   notes: string
   is_active: boolean
+  total_purchases: number
+  total_amount: number
+  total_debt: number
+  total_return: number
   purchase_history: SupplierPurchaseItem[]
+  return_history: SupplierReturnHistoryItem[]
 }
 
 export interface SupplierFilter {

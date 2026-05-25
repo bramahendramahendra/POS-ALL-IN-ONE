@@ -15,6 +15,7 @@ const (
 	getActiveSupplierList = `SELECT id, name, supplier_code FROM suppliers WHERE is_active = 1 ORDER BY name`
 	getSupplierByID       = `SELECT id, supplier_code, name, address, phone, email, contact_person, notes, is_active FROM suppliers WHERE id = ?`
 	getSupplierPurchases  = `SELECT id, purchase_code, purchase_date, total_amount, payment_status, remaining_amount FROM purchases WHERE supplier_id = ? ORDER BY purchase_date DESC LIMIT 10`
+	getSupplierReturns    = `SELECT id, return_code, return_date, total_return_amount, reason, status FROM supplier_returns WHERE supplier_id = ? ORDER BY return_date DESC LIMIT 10`
 	checkSupplierHasPO    = `SELECT COUNT(*) FROM purchases WHERE supplier_id = ?`
 	generateSupplierCode  = `SELECT COUNT(*) FROM suppliers`
 	createSupplier        = `INSERT INTO suppliers (supplier_code, name, address, phone, email, contact_person, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`
@@ -121,6 +122,24 @@ func (r *supplierRepo) GetPurchaseHistory(supplierID int) ([]dto_supplier.Suppli
 	for rows.Next() {
 		var item dto_supplier.SupplierPurchaseItem
 		if err := rows.Scan(&item.ID, &item.PurchaseCode, &item.PurchaseDate, &item.TotalAmount, &item.PaymentStatus, &item.RemainingAmount); err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+	return items, nil
+}
+
+func (r *supplierRepo) GetReturnHistory(supplierID int) ([]dto_supplier.SupplierReturnHistoryItem, error) {
+	rows, err := r.db.Raw(getSupplierReturns, supplierID).Rows()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []dto_supplier.SupplierReturnHistoryItem
+	for rows.Next() {
+		var item dto_supplier.SupplierReturnHistoryItem
+		if err := rows.Scan(&item.ID, &item.ReturnCode, &item.ReturnDate, &item.TotalReturn, &item.Reason, &item.Status); err != nil {
 			return nil, err
 		}
 		items = append(items, item)

@@ -38,6 +38,20 @@ func (s *supplierService) GetDetail(id int) (*dto_supplier.SupplierDetailRespons
 		purchases = []dto_supplier.SupplierPurchaseItem{}
 	}
 
+	returns, _ := s.repo.GetReturnHistory(id)
+	if returns == nil {
+		returns = []dto_supplier.SupplierReturnHistoryItem{}
+	}
+
+	var totalAmount, totalDebt, totalReturnAmount float64
+	for _, p := range purchases {
+		totalAmount += p.TotalAmount
+		totalDebt += p.RemainingAmount
+	}
+	for _, r := range returns {
+		totalReturnAmount += r.TotalReturn
+	}
+
 	return &dto_supplier.SupplierDetailResponse{
 		ID:              supplier.ID,
 		SupplierCode:    supplier.SupplierCode,
@@ -48,7 +62,12 @@ func (s *supplierService) GetDetail(id int) (*dto_supplier.SupplierDetailRespons
 		ContactPerson:   supplier.ContactPerson,
 		Notes:           supplier.Notes,
 		IsActive:        supplier.IsActive,
+		TotalPurchases:  len(purchases),
+		TotalAmount:     totalAmount,
+		TotalDebt:       totalDebt,
+		TotalReturn:     totalReturnAmount,
 		PurchaseHistory: purchases,
+		ReturnHistory:   returns,
 	}, nil
 }
 
