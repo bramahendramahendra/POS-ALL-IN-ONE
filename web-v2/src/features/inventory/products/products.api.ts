@@ -60,12 +60,11 @@ export function useImportProductsBulkMutation() {
 
 // ─── Generate ─────────────────────────────────────────────────────────────────
 
-export function useGenerateBarcodeQuery(enabled: boolean) {
+export function useGenerateBarcodeQuery() {
   return useQuery({
     queryKey: ['generate-barcode'],
     queryFn: () => api.get<{ barcode: string }>('/products/generate-barcode'),
-    enabled,
-    staleTime: Infinity,
+    enabled: false,
   })
 }
 

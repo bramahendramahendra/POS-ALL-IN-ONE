@@ -190,7 +190,6 @@ function GrosirRowForm({
 
 export function ProductFormModal({ open, onOpenChange, productId }: ProductFormModalProps) {
   const isEdit = productId !== undefined
-  const [generateBarcodeEnabled, setGenerateBarcodeEnabled] = useState(false)
   const [generateSkuEnabled, setGenerateSkuEnabled] = useState(false)
 
   // Grosiran state (create mode only)
@@ -240,9 +239,7 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
   const sellingPriceValue = watch('selling_price')
   const margin = calcMargin(purchasePriceValue, sellingPriceValue)
 
-  const { data: barcodeData, isFetching: isFetchingBarcode } = useGenerateBarcodeQuery(
-    !isEdit && generateBarcodeEnabled
-  )
+  const { data: barcodeData, isFetching: isFetchingBarcode, refetch: refetchBarcode } = useGenerateBarcodeQuery()
   const { data: skuData, isFetching: isFetchingSku } = useGenerateSkuQuery(
     categoryIdValue ?? 0,
     !isEdit && generateSkuEnabled
@@ -286,7 +283,6 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
         name: '', sku: '', barcode: '', category_id: undefined, description: '',
         purchase_price: 0, selling_price: 0, stock: 0, min_stock: 5, unit: '', is_active: true,
       })
-      setGenerateBarcodeEnabled(false)
       setGenerateSkuEnabled(false)
       setGrosirRows([])
       setShowGrosirForm(false)
@@ -467,8 +463,8 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
                       {!isEdit && (
                         <button
                           type="button"
-                          disabled={generateBarcodeEnabled || isFetchingBarcode}
-                          onClick={() => setGenerateBarcodeEnabled(true)}
+                          disabled={isFetchingBarcode}
+                          onClick={() => refetchBarcode()}
                           className="shrink-0 rounded-md border border-gray-300 px-2.5 text-xs text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           {isFetchingBarcode ? '...' : 'Generate'}
