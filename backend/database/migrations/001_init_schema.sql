@@ -1,7 +1,7 @@
 -- =============================================================
 -- Migration 001: Initial Schema — POS Retail
--- Mencakup seluruh definisi tabel, index, dan kolom final.
--- Semua perubahan dari migration 003–011 sudah digabung di sini.
+-- Schema lengkap final. Semua tabel, kolom, index, dan constraint
+-- sudah dalam kondisi terbaru. Tidak ada ALTER TABLE terpisah.
 -- =============================================================
 
 -- -------------------------------------------------------------
@@ -10,17 +10,17 @@
 
 CREATE TABLE IF NOT EXISTS users (
     id         INT AUTO_INCREMENT PRIMARY KEY,
-    username   VARCHAR(50)                      UNIQUE NOT NULL,
-    password   VARCHAR(255)                     NOT NULL,
-    full_name  VARCHAR(100)                     NOT NULL,
-    role       ENUM('owner','admin','kasir')    NOT NULL,
-    pin_hash   VARCHAR(255)                     NULL,
-    is_active  TINYINT(1)                       DEFAULT 1,
-    created_at DATETIME                         DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME                         DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    username   VARCHAR(50)   UNIQUE NOT NULL,
+    password   VARCHAR(255)  NOT NULL,
+    full_name  VARCHAR(100)  NOT NULL,
+    role_id    INT           NULL,
+    pin_hash   VARCHAR(255)  NULL,
+    is_active  TINYINT(1)    DEFAULT 1,
+    created_at DATETIME      DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) DEFAULT CHARSET=utf8mb4;
 
--- user_role ditambahkan agar token tidak perlu decode untuk cek role (dari migration 003)
+-- user_role disimpan sebagai VARCHAR agar token tidak perlu decode untuk cek role
 CREATE TABLE IF NOT EXISTS sessions (
     id            INT AUTO_INCREMENT PRIMARY KEY,
     user_id       INT          NOT NULL,
@@ -36,13 +36,64 @@ CREATE TABLE IF NOT EXISTS sessions (
 ) DEFAULT CHARSET=utf8mb4;
 
 -- -------------------------------------------------------------
+-- RBAC — Roles, Menus, Role Menu Access
+-- -------------------------------------------------------------
+
+-- is_system = 1 artinya role bawaan sistem, tidak bisa dihapus
+CREATE TABLE IF NOT EXISTS roles (
+    id           INT AUTO_INCREMENT PRIMARY KEY,
+    name         VARCHAR(50)  UNIQUE NOT NULL,
+    display_name VARCHAR(100) NOT NULL,
+    description  VARCHAR(255) NULL,
+    is_system    TINYINT(1)   DEFAULT 0,
+    is_active    TINYINT(1)   DEFAULT 1,
+    created_at   DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    updated_at   DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) DEFAULT CHARSET=utf8mb4;
+
+-- parent_id NULL = menu top-level; path NULL = menu grup (tidak punya halaman sendiri)
+CREATE TABLE IF NOT EXISTS menus (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    parent_id   INT          NULL,
+    key_name    VARCHAR(100) UNIQUE NOT NULL,
+    label       VARCHAR(100) NOT NULL,
+    icon        VARCHAR(100) NULL,
+    path        VARCHAR(200) NULL,
+    order_index INT          DEFAULT 0,
+    is_active   TINYINT(1)   DEFAULT 1,
+    created_at  DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    updated_at  DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (parent_id) REFERENCES menus(id) ON DELETE SET NULL
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS role_menu_access (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    role_id    INT        NOT NULL,
+    menu_id    INT        NOT NULL,
+    can_view   TINYINT(1) DEFAULT 1,
+    can_create TINYINT(1) DEFAULT 0,
+    can_edit   TINYINT(1) DEFAULT 0,
+    can_delete TINYINT(1) DEFAULT 0,
+    created_at DATETIME   DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME   DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_role_menu (role_id, menu_id),
+    FOREIGN KEY (role_id) REFERENCES roles(id)  ON DELETE CASCADE,
+    FOREIGN KEY (menu_id) REFERENCES menus(id)  ON DELETE CASCADE
+) DEFAULT CHARSET=utf8mb4;
+
+-- FK users.role_id → roles
+ALTER TABLE users ADD CONSTRAINT fk_users_role_id FOREIGN KEY (role_id) REFERENCES roles(id);
+
+-- -------------------------------------------------------------
 -- Master Data
 -- -------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS categories (
     id          INT AUTO_INCREMENT PRIMARY KEY,
     name        VARCHAR(100) NOT NULL,
+    code        VARCHAR(10)  NULL UNIQUE,
     description TEXT         NULL,
+    is_active   TINYINT(1)   NOT NULL DEFAULT 1,
     created_at  DATETIME     DEFAULT CURRENT_TIMESTAMP,
     updated_at  DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) DEFAULT CHARSET=utf8mb4;
@@ -70,21 +121,21 @@ CREATE TABLE IF NOT EXISTS settings (
 
 CREATE TABLE IF NOT EXISTS products (
     id             INT AUTO_INCREMENT PRIMARY KEY,
-    barcode        VARCHAR(100) UNIQUE NULL,
-    name           VARCHAR(200) NOT NULL,
-    category_id    INT          NULL,
+    barcode        VARCHAR(100)  UNIQUE NULL,
+    sku            VARCHAR(50)   NULL UNIQUE,
+    name           VARCHAR(200)  NOT NULL,
+    category_id    INT           NULL,
     purchase_price DECIMAL(15,2) DEFAULT 0,
     selling_price  DECIMAL(15,2) DEFAULT 0,
     stock          DECIMAL(15,3) DEFAULT 0,
     min_stock      DECIMAL(15,3) DEFAULT 0,
-    unit           VARCHAR(50)  DEFAULT 'pcs',
-    is_active      TINYINT(1)   DEFAULT 1,
-    created_at     DATETIME     DEFAULT CURRENT_TIMESTAMP,
-    updated_at     DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    unit           VARCHAR(50)   DEFAULT 'pcs',
+    is_active      TINYINT(1)    DEFAULT 1,
+    created_at     DATETIME      DEFAULT CURRENT_TIMESTAMP,
+    updated_at     DATETIME      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
 ) DEFAULT CHARSET=utf8mb4;
 
--- purchase_price ditambahkan untuk harga beli per unit konversi (dari migration 010)
 CREATE TABLE IF NOT EXISTS product_units (
     id             INT AUTO_INCREMENT PRIMARY KEY,
     product_id     INT           NOT NULL,
@@ -131,18 +182,19 @@ CREATE TABLE IF NOT EXISTS suppliers (
 
 CREATE TABLE IF NOT EXISTS purchases (
     id               INT AUTO_INCREMENT PRIMARY KEY,
-    purchase_code    VARCHAR(50)                       UNIQUE NOT NULL,
-    supplier_id      INT                               NULL,
-    purchase_date    DATE                              NOT NULL,
-    discount_amount  DECIMAL(15,2)                     DEFAULT 0,
-    total_amount     DECIMAL(15,2)                     DEFAULT 0,
-    payment_status   ENUM('unpaid','partial','paid')   DEFAULT 'unpaid',
-    paid_amount      DECIMAL(15,2)                     DEFAULT 0,
-    remaining_amount DECIMAL(15,2)                     DEFAULT 0,
-    user_id          INT                               NULL,
-    notes            TEXT                              NULL,
-    created_at       DATETIME                          DEFAULT CURRENT_TIMESTAMP,
-    updated_at       DATETIME                          DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    purchase_code    VARCHAR(50)                      UNIQUE NOT NULL,
+    invoice_number   VARCHAR(100)                     NOT NULL DEFAULT '',
+    supplier_id      INT                              NULL,
+    purchase_date    DATE                             NOT NULL,
+    discount_amount  DECIMAL(15,2)                    DEFAULT 0,
+    total_amount     DECIMAL(15,2)                    DEFAULT 0,
+    payment_status   ENUM('unpaid','partial','paid')  DEFAULT 'unpaid',
+    paid_amount      DECIMAL(15,2)                    DEFAULT 0,
+    remaining_amount DECIMAL(15,2)                    DEFAULT 0,
+    user_id          INT                              NULL,
+    notes            TEXT                             NULL,
+    created_at       DATETIME                         DEFAULT CURRENT_TIMESTAMP,
+    updated_at       DATETIME                         DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL,
     FOREIGN KEY (user_id)     REFERENCES users(id)     ON DELETE SET NULL
 ) DEFAULT CHARSET=utf8mb4;
@@ -160,20 +212,33 @@ CREATE TABLE IF NOT EXISTS purchase_items (
     FOREIGN KEY (product_id)  REFERENCES products(id)  ON DELETE SET NULL
 ) DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS purchase_payments (
+    id             INT AUTO_INCREMENT PRIMARY KEY,
+    purchase_id    INT           NOT NULL,
+    payment_date   DATE          NOT NULL,
+    amount         DECIMAL(15,2) NOT NULL,
+    payment_method VARCHAR(50)   NOT NULL DEFAULT 'tunai',
+    notes          TEXT          NULL,
+    user_id        INT           NULL,
+    created_at     DATETIME      DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (purchase_id) REFERENCES purchases(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id)     REFERENCES users(id)     ON DELETE SET NULL
+) DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS supplier_returns (
     id                  INT AUTO_INCREMENT PRIMARY KEY,
-    return_code         VARCHAR(50)                          UNIQUE NOT NULL,
-    purchase_id         INT                                  NOT NULL,
-    supplier_id         INT                                  NULL,
-    supplier_name       VARCHAR(200)                         NOT NULL,
-    return_date         DATE                                 NOT NULL,
-    total_return_amount DECIMAL(15,2)                        DEFAULT 0,
-    reason              TEXT                                 NOT NULL,
+    return_code         VARCHAR(50)                           UNIQUE NOT NULL,
+    purchase_id         INT                                   NOT NULL,
+    supplier_id         INT                                   NULL,
+    supplier_name       VARCHAR(200)                          NOT NULL,
+    return_date         DATE                                  NOT NULL,
+    total_return_amount DECIMAL(15,2)                         DEFAULT 0,
+    reason              TEXT                                  NOT NULL,
     status              ENUM('pending','approved','rejected') DEFAULT 'pending',
-    user_id             INT                                  NOT NULL,
-    notes               TEXT                                 NULL,
-    created_at          DATETIME                             DEFAULT CURRENT_TIMESTAMP,
-    updated_at          DATETIME                             DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    user_id             INT                                   NOT NULL,
+    notes               TEXT                                  NULL,
+    created_at          DATETIME                              DEFAULT CURRENT_TIMESTAMP,
+    updated_at          DATETIME                              DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (purchase_id) REFERENCES purchases(id)  ON DELETE RESTRICT,
     FOREIGN KEY (supplier_id) REFERENCES suppliers(id)  ON DELETE SET NULL,
     FOREIGN KEY (user_id)     REFERENCES users(id)      ON DELETE RESTRICT
@@ -200,42 +265,42 @@ CREATE TABLE IF NOT EXISTS supplier_return_items (
 
 CREATE TABLE IF NOT EXISTS customers (
     id            INT AUTO_INCREMENT PRIMARY KEY,
-    customer_code VARCHAR(50)  UNIQUE NOT NULL,
-    name          VARCHAR(200) NOT NULL,
-    phone         VARCHAR(50)  NULL,
-    address       TEXT         NULL,
+    customer_code VARCHAR(50)   UNIQUE NOT NULL,
+    name          VARCHAR(200)  NOT NULL,
+    phone         VARCHAR(50)   NULL,
+    address       TEXT          NULL,
     credit_limit  DECIMAL(15,2) DEFAULT 0,
-    is_active     TINYINT(1)   DEFAULT 1,
-    notes         TEXT         NULL,
-    created_at    DATETIME     DEFAULT CURRENT_TIMESTAMP,
-    updated_at    DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    is_active     TINYINT(1)    DEFAULT 1,
+    notes         TEXT          NULL,
+    created_at    DATETIME      DEFAULT CURRENT_TIMESTAMP,
+    updated_at    DATETIME      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS receivables (
     id               INT AUTO_INCREMENT PRIMARY KEY,
-    transaction_id   INT                              NULL,
-    customer_id      INT                              NULL,
-    total_amount     DECIMAL(15,2)                    NOT NULL,
-    paid_amount      DECIMAL(15,2)                    DEFAULT 0,
-    remaining_amount DECIMAL(15,2)                    NOT NULL,
-    status           ENUM('unpaid','partial','paid')  DEFAULT 'unpaid',
-    due_date         DATE                             NULL,
-    notes            TEXT                             NULL,
-    created_at       DATETIME                         DEFAULT CURRENT_TIMESTAMP,
-    updated_at       DATETIME                         DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    transaction_id   INT                             NULL,
+    customer_id      INT                             NULL,
+    total_amount     DECIMAL(15,2)                   NOT NULL,
+    paid_amount      DECIMAL(15,2)                   DEFAULT 0,
+    remaining_amount DECIMAL(15,2)                   NOT NULL,
+    status           ENUM('unpaid','partial','paid') DEFAULT 'unpaid',
+    due_date         DATE                            NULL,
+    notes            TEXT                            NULL,
+    created_at       DATETIME                        DEFAULT CURRENT_TIMESTAMP,
+    updated_at       DATETIME                        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE SET NULL,
     FOREIGN KEY (customer_id)    REFERENCES customers(id)    ON DELETE SET NULL
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS receivable_payments (
     id             INT AUTO_INCREMENT PRIMARY KEY,
-    receivable_id  INT                                        NOT NULL,
-    payment_date   DATE                                       NOT NULL,
-    amount         DECIMAL(15,2)                              NOT NULL,
-    payment_method ENUM('cash','debit','credit','qris')       DEFAULT 'cash',
-    notes          TEXT                                       NULL,
-    user_id        INT                                        NULL,
-    created_at     DATETIME                                   DEFAULT CURRENT_TIMESTAMP,
+    receivable_id  INT                                  NOT NULL,
+    payment_date   DATE                                 NOT NULL,
+    amount         DECIMAL(15,2)                        NOT NULL,
+    payment_method ENUM('cash','debit','credit','qris') DEFAULT 'cash',
+    notes          TEXT                                 NULL,
+    user_id        INT                                  NULL,
+    created_at     DATETIME                             DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (receivable_id) REFERENCES receivables(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id)       REFERENCES users(id)       ON DELETE SET NULL
 ) DEFAULT CHARSET=utf8mb4;
@@ -256,23 +321,23 @@ CREATE TABLE IF NOT EXISTS shifts (
 
 CREATE TABLE IF NOT EXISTS transactions (
     id               INT AUTO_INCREMENT PRIMARY KEY,
-    transaction_code VARCHAR(50)                           UNIQUE NOT NULL,
-    user_id          INT                                   NULL,
-    shift_id         INT                                   NULL,
-    transaction_date DATETIME                              NOT NULL,
-    subtotal         DECIMAL(15,2)                         DEFAULT 0,
-    discount         DECIMAL(15,2)                         DEFAULT 0,
-    tax              DECIMAL(15,2)                         DEFAULT 0,
-    total_amount     DECIMAL(15,2)                         DEFAULT 0,
-    payment_method   ENUM('cash','debit','credit','qris')  DEFAULT 'cash',
-    payment_amount   DECIMAL(15,2)                         DEFAULT 0,
-    change_amount    DECIMAL(15,2)                         DEFAULT 0,
-    customer_id      INT                                   NULL,
-    is_credit        TINYINT(1)                            DEFAULT 0,
-    status           ENUM('pending','completed','void')    DEFAULT 'completed',
-    device_source    ENUM('desktop','web','android')       DEFAULT 'web',
-    created_at       DATETIME                              DEFAULT CURRENT_TIMESTAMP,
-    updated_at       DATETIME                              DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    transaction_code VARCHAR(50)                          UNIQUE NOT NULL,
+    user_id          INT                                  NULL,
+    shift_id         INT                                  NULL,
+    transaction_date DATETIME                             NOT NULL,
+    subtotal         DECIMAL(15,2)                        DEFAULT 0,
+    discount         DECIMAL(15,2)                        DEFAULT 0,
+    tax              DECIMAL(15,2)                        DEFAULT 0,
+    total_amount     DECIMAL(15,2)                        DEFAULT 0,
+    payment_method   ENUM('cash','debit','credit','qris') DEFAULT 'cash',
+    payment_amount   DECIMAL(15,2)                        DEFAULT 0,
+    change_amount    DECIMAL(15,2)                        DEFAULT 0,
+    customer_id      INT                                  NULL,
+    is_credit        TINYINT(1)                           DEFAULT 0,
+    status           ENUM('pending','completed','void')   DEFAULT 'completed',
+    device_source    ENUM('desktop','web','android')      DEFAULT 'web',
+    created_at       DATETIME                             DEFAULT CURRENT_TIMESTAMP,
+    updated_at       DATETIME                             DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id)     REFERENCES users(id)     ON DELETE SET NULL,
     FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL,
     FOREIGN KEY (shift_id)    REFERENCES shifts(id)    ON DELETE SET NULL
@@ -299,7 +364,6 @@ CREATE TABLE IF NOT EXISTS transaction_items (
 -- Keuangan
 -- -------------------------------------------------------------
 
--- open_notes ditambahkan untuk catatan saat membuka kas (dari migration 011)
 CREATE TABLE IF NOT EXISTS cash_drawer (
     id               INT AUTO_INCREMENT PRIMARY KEY,
     user_id          INT           NULL,
@@ -342,16 +406,16 @@ CREATE TABLE IF NOT EXISTS expenses (
 
 CREATE TABLE IF NOT EXISTS stock_mutations (
     id             INT AUTO_INCREMENT PRIMARY KEY,
-    product_id     INT                                          NULL,
-    mutation_type  ENUM('in','out','adjustment','void')         NOT NULL,
-    quantity       DECIMAL(15,3)                               NOT NULL,
-    stock_before   DECIMAL(15,3)                               NOT NULL,
-    stock_after    DECIMAL(15,3)                               NOT NULL,
-    reference_type VARCHAR(50)                                 NULL,
-    reference_id   INT                                         NULL,
-    notes          TEXT                                        NULL,
-    user_id        INT                                         NULL,
-    created_at     DATETIME                                    DEFAULT CURRENT_TIMESTAMP,
+    product_id     INT                                  NULL,
+    mutation_type  ENUM('in','out','adjustment','void') NOT NULL,
+    quantity       DECIMAL(15,3)                        NOT NULL,
+    stock_before   DECIMAL(15,3)                        NOT NULL,
+    stock_after    DECIMAL(15,3)                        NOT NULL,
+    reference_type VARCHAR(50)                          NULL,
+    reference_id   INT                                  NULL,
+    notes          TEXT                                 NULL,
+    user_id        INT                                  NULL,
+    created_at     DATETIME                             DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
     FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE SET NULL
 ) DEFAULT CHARSET=utf8mb4;
@@ -360,7 +424,6 @@ CREATE TABLE IF NOT EXISTS stock_mutations (
 -- Sistem & Versi
 -- -------------------------------------------------------------
 
--- is_mandatory ditambahkan untuk wajib update di klien (dari migration 008)
 CREATE TABLE IF NOT EXISTS app_versions (
     id            INT AUTO_INCREMENT PRIMARY KEY,
     platform      ENUM('android','desktop') NOT NULL,
@@ -376,52 +439,51 @@ CREATE TABLE IF NOT EXISTS app_versions (
 -- Sinkronisasi
 -- -------------------------------------------------------------
 
--- local_id, device_id, resolved_action ditambahkan untuk conflict detection per-device (dari migration 006)
 CREATE TABLE IF NOT EXISTS sync_conflicts (
     id              INT AUTO_INCREMENT PRIMARY KEY,
-    entity_type     VARCHAR(50)              NOT NULL,
-    entity_id       INT                      NOT NULL,
-    local_id        VARCHAR(36)              NULL,
-    device_id       VARCHAR(100)             NOT NULL DEFAULT '',
-    desktop_data    JSON                     NOT NULL,
-    online_data     JSON                     NOT NULL,
-    desktop_time    DATETIME                 NOT NULL,
-    online_time     DATETIME                 NOT NULL,
+    entity_type     VARCHAR(50)                NOT NULL,
+    entity_id       INT                        NOT NULL,
+    local_id        VARCHAR(36)                NULL,
+    device_id       VARCHAR(100)               NOT NULL DEFAULT '',
+    desktop_data    JSON                        NOT NULL,
+    online_data     JSON                        NOT NULL,
+    desktop_time    DATETIME                   NOT NULL,
+    online_time     DATETIME                   NOT NULL,
     status          ENUM('pending','resolved') DEFAULT 'pending',
-    resolved_by     INT                      NULL,
-    resolution      ENUM('desktop','online') NULL,
-    resolved_action ENUM('approve','reject') NULL,
-    resolved_at     DATETIME                 NULL,
-    created_at      DATETIME                 DEFAULT CURRENT_TIMESTAMP,
+    resolved_by     INT                        NULL,
+    resolution      ENUM('desktop','online')   NULL,
+    resolved_action ENUM('approve','reject')   NULL,
+    resolved_at     DATETIME                   NULL,
+    created_at      DATETIME                   DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (resolved_by) REFERENCES users(id) ON DELETE SET NULL
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS sync_queue (
     id            INT AUTO_INCREMENT PRIMARY KEY,
-    device_id     VARCHAR(100)                              NOT NULL,
-    entity_type   VARCHAR(50)                               NOT NULL,
-    entity_id     INT                                       NULL,
-    action        ENUM('create','update','delete')          NOT NULL,
-    payload       JSON                                      NOT NULL,
+    device_id     VARCHAR(100)                                NOT NULL,
+    entity_type   VARCHAR(50)                                 NOT NULL,
+    entity_id     INT                                         NULL,
+    action        ENUM('create','update','delete')            NOT NULL,
+    payload       JSON                                        NOT NULL,
     status        ENUM('pending','syncing','synced','failed') DEFAULT 'pending',
-    retry_count   INT                                       DEFAULT 0,
-    error_message TEXT                                      NULL,
-    created_at    DATETIME                                  DEFAULT CURRENT_TIMESTAMP,
-    synced_at     DATETIME                                  NULL
+    retry_count   INT                                         DEFAULT 0,
+    error_message TEXT                                        NULL,
+    created_at    DATETIME                                    DEFAULT CURRENT_TIMESTAMP,
+    synced_at     DATETIME                                    NULL
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS sync_history (
-    id             BIGINT                              PRIMARY KEY AUTO_INCREMENT,
-    device_id      VARCHAR(100)                        NOT NULL,
-    device_type    ENUM('desktop','web','android')     DEFAULT 'desktop',
-    total_items    INT                                 DEFAULT 0,
-    synced_items   INT                                 DEFAULT 0,
-    conflict_items INT                                 DEFAULT 0,
-    failed_items   INT                                 DEFAULT 0,
-    duration_ms    INT                                 NULL,
-    status         ENUM('success','partial','failed')  DEFAULT 'success',
-    started_at     DATETIME                            NOT NULL,
-    finished_at    DATETIME                            NULL
+    id             BIGINT AUTO_INCREMENT PRIMARY KEY,
+    device_id      VARCHAR(100)                       NOT NULL,
+    device_type    ENUM('desktop','web','android')    DEFAULT 'desktop',
+    total_items    INT                                DEFAULT 0,
+    synced_items   INT                                DEFAULT 0,
+    conflict_items INT                                DEFAULT 0,
+    failed_items   INT                                DEFAULT 0,
+    duration_ms    INT                                NULL,
+    status         ENUM('success','partial','failed') DEFAULT 'success',
+    started_at     DATETIME                           NOT NULL,
+    finished_at    DATETIME                           NULL
 ) DEFAULT CHARSET=utf8mb4;
 
 -- -------------------------------------------------------------
@@ -447,29 +509,36 @@ CREATE TABLE IF NOT EXISTS log_requests (
 -- =============================================================
 
 -- Products
-CREATE INDEX idx_products_category        ON products(category_id);
+CREATE INDEX idx_products_category       ON products(category_id);
 
 -- Transactions
-CREATE INDEX idx_transactions_date        ON transactions(transaction_date);
-CREATE INDEX idx_transactions_user        ON transactions(user_id);
-CREATE INDEX idx_transaction_items_trx    ON transaction_items(transaction_id);
-CREATE INDEX idx_transaction_items_prod   ON transaction_items(product_id);
+CREATE INDEX idx_transactions_date       ON transactions(transaction_date);
+CREATE INDEX idx_transactions_user       ON transactions(user_id);
+CREATE INDEX idx_transaction_items_trx   ON transaction_items(transaction_id);
+CREATE INDEX idx_transaction_items_prod  ON transaction_items(product_id);
 
 -- Purchases
-CREATE INDEX idx_purchases_supplier       ON purchases(supplier_id);
-CREATE INDEX idx_purchases_date           ON purchases(purchase_date);
+CREATE INDEX idx_purchases_supplier      ON purchases(supplier_id);
+CREATE INDEX idx_purchases_date          ON purchases(purchase_date);
+CREATE INDEX idx_purchase_payments       ON purchase_payments(purchase_id);
 
 -- Stock
-CREATE INDEX idx_stock_mutations_product  ON stock_mutations(product_id);
-CREATE INDEX idx_stock_mutations_ref      ON stock_mutations(reference_type, reference_id);
+CREATE INDEX idx_stock_mutations_product ON stock_mutations(product_id);
+CREATE INDEX idx_stock_mutations_ref     ON stock_mutations(reference_type, reference_id);
 
 -- Receivables
-CREATE INDEX idx_receivables_customer     ON receivables(customer_id);
+CREATE INDEX idx_receivables_customer    ON receivables(customer_id);
+
+-- RBAC
+CREATE INDEX idx_menus_parent            ON menus(parent_id);
+CREATE INDEX idx_menus_order             ON menus(order_index);
+CREATE INDEX idx_role_menu_role_id       ON role_menu_access(role_id);
+CREATE INDEX idx_role_menu_menu_id       ON role_menu_access(menu_id);
 
 -- Sync
-CREATE INDEX idx_sync_queue_status        ON sync_queue(status);
-CREATE INDEX idx_sync_queue_device        ON sync_queue(device_id);
-CREATE INDEX idx_sync_conflicts_status    ON sync_conflicts(status);
-CREATE INDEX idx_sync_conflicts_entity    ON sync_conflicts(entity_type, entity_id);
-CREATE INDEX idx_sync_history_device      ON sync_history(device_id);
-CREATE INDEX idx_sync_history_started     ON sync_history(started_at);
+CREATE INDEX idx_sync_queue_status       ON sync_queue(status);
+CREATE INDEX idx_sync_queue_device       ON sync_queue(device_id);
+CREATE INDEX idx_sync_conflicts_status   ON sync_conflicts(status);
+CREATE INDEX idx_sync_conflicts_entity   ON sync_conflicts(entity_type, entity_id);
+CREATE INDEX idx_sync_history_device     ON sync_history(device_id);
+CREATE INDEX idx_sync_history_started    ON sync_history(started_at);
