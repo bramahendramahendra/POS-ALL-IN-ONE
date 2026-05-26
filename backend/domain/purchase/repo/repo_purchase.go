@@ -17,8 +17,8 @@ const (
 	addStockQuery             = `UPDATE products SET stock = stock + ?, updated_at = NOW() WHERE id = ?`
 	payPurchaseQuery          = `UPDATE purchases SET paid_amount = paid_amount + ?, remaining_amount = remaining_amount - ?, payment_status = CASE WHEN remaining_amount - ? <= 0 THEN 'paid' WHEN paid_amount + ? > 0 THEN 'partial' ELSE 'unpaid' END, updated_at = NOW() WHERE id = ?`
 	getPurchaseItemsQuery     = `SELECT pi.id, pi.product_id, COALESCE(p.name, '') as product_name, pi.quantity, pi.unit, pi.purchase_price, pi.subtotal FROM purchase_items pi LEFT JOIN products p ON pi.product_id = p.id WHERE pi.purchase_id = ?`
-	createPaymentQuery        = `INSERT INTO purchase_payments (purchase_id, payment_date, amount, notes, user_id) VALUES (?, ?, ?, ?, ?)`
-	getPaymentsQuery          = `SELECT pp.id, pp.payment_date, pp.amount, COALESCE(pp.notes, '') as notes, COALESCE(u.full_name, '') as user_name, pp.created_at FROM purchase_payments pp LEFT JOIN users u ON pp.user_id = u.id WHERE pp.purchase_id = ? ORDER BY pp.created_at ASC`
+	createPaymentQuery        = `INSERT INTO purchase_payments (purchase_id, payment_date, amount, payment_method, notes, user_id) VALUES (?, ?, ?, ?, ?, ?)`
+	getPaymentsQuery          = `SELECT pp.id, pp.payment_date, pp.amount, COALESCE(pp.payment_method, '') as payment_method, COALESCE(pp.notes, '') as notes, COALESCE(u.full_name, '') as user_name, pp.created_at FROM purchase_payments pp LEFT JOIN users u ON pp.user_id = u.id WHERE pp.purchase_id = ? ORDER BY pp.created_at ASC`
 	rollbackStockQuery        = `UPDATE products SET stock = stock - ?, updated_at = NOW() WHERE id = ?`
 	deletePurchaseItemsQuery  = `DELETE FROM purchase_items WHERE purchase_id = ?`
 	deletePurchaseQuery       = `DELETE FROM purchases WHERE id = ?`
@@ -186,7 +186,7 @@ func (r *purchaseRepo) GetPayments(purchaseID int) ([]dto_purchase.PurchasePayme
 	var items []dto_purchase.PurchasePaymentResponse
 	for rows.Next() {
 		var item dto_purchase.PurchasePaymentResponse
-		if err := rows.Scan(&item.ID, &item.PaymentDate, &item.Amount, &item.Notes, &item.UserName, &item.CreatedAt); err != nil {
+		if err := rows.Scan(&item.ID, &item.PaymentDate, &item.Amount, &item.PaymentMethod, &item.Notes, &item.UserName, &item.CreatedAt); err != nil {
 			return nil, err
 		}
 		items = append(items, item)
@@ -384,6 +384,6 @@ func (r *purchaseRepo) Pay(id int, req *dto_purchase.PayPurchaseRequest, userID 
 		if paymentDate == "" {
 			paymentDate = time.Now().Format("2006-01-02")
 		}
-		return tx.Exec(createPaymentQuery, id, paymentDate, req.Amount, req.Notes, userID).Error
+		return tx.Exec(createPaymentQuery, id, paymentDate, req.Amount, req.PaymentMethod, req.Notes, userID).Error
 	})
 }

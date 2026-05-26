@@ -131,7 +131,7 @@ export function PurchaseDetailModal({ open, onOpenChange, purchaseId }: Purchase
                 <table className="w-full text-xs">
                   <thead className="bg-gray-50">
                     <tr>
-                      {['#', 'Tanggal', 'Jumlah', 'Dicatat Oleh', 'Catatan'].map((h) => (
+                      {['#', 'Tanggal', 'Jumlah', 'Metode', 'Dicatat Oleh', 'Catatan'].map((h) => (
                         <th key={h} className="px-2 py-1.5 text-left font-medium text-gray-600">
                           {h}
                         </th>
@@ -144,6 +144,7 @@ export function PurchaseDetailModal({ open, onOpenChange, purchaseId }: Purchase
                         <td className="px-2 py-1.5 text-gray-400">{i + 1}</td>
                         <td className="px-2 py-1.5 text-gray-600">{formatDate(p.payment_date)}</td>
                         <td className="px-2 py-1.5 font-semibold text-green-700">{formatRupiah(p.amount)}</td>
+                        <td className="px-2 py-1.5 text-gray-600 capitalize">{p.payment_method || '—'}</td>
                         <td className="px-2 py-1.5 text-gray-600">{p.user_name || '—'}</td>
                         <td className="px-2 py-1.5 text-gray-500">{p.notes || '—'}</td>
                       </tr>
@@ -155,7 +156,7 @@ export function PurchaseDetailModal({ open, onOpenChange, purchaseId }: Purchase
                       <td className="px-2 py-1.5 font-bold text-green-700">
                         {formatRupiah(payments.reduce((s, p) => s + p.amount, 0))}
                       </td>
-                      <td colSpan={2} />
+                      <td colSpan={3} />
                     </tr>
                   </tfoot>
                 </table>

@@ -14,6 +14,7 @@ export interface PurchasePayment {
   id: number
   payment_date: string
   amount: number
+  payment_method: string
   notes: string
   user_name: string
   created_at: string
@@ -47,6 +48,8 @@ export interface SupplierPurchaseFilter {
 
 export interface SupplierPurchasePayment {
   amount: number
+  payment_date?: string
+  payment_method?: string
   notes?: string
 }
 

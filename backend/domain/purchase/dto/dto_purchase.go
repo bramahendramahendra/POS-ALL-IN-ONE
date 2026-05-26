@@ -19,18 +19,20 @@ type PurchaseRequest struct {
 }
 
 type PayPurchaseRequest struct {
-	Amount      float64 `json:"amount" validate:"required,gt=0"`
-	PaymentDate string  `json:"payment_date"`
-	Notes       string  `json:"notes"`
+	Amount        float64 `json:"amount" validate:"required,gt=0"`
+	PaymentDate   string  `json:"payment_date"`
+	PaymentMethod string  `json:"payment_method"`
+	Notes         string  `json:"notes"`
 }
 
 type PurchasePaymentResponse struct {
-	ID          int     `json:"id"`
-	PaymentDate string  `json:"payment_date"`
-	Amount      float64 `json:"amount"`
-	Notes       string  `json:"notes"`
-	UserName    string  `json:"user_name"`
-	CreatedAt   string  `json:"created_at"`
+	ID            int     `json:"id"`
+	PaymentDate   string  `json:"payment_date"`
+	Amount        float64 `json:"amount"`
+	PaymentMethod string  `json:"payment_method"`
+	Notes         string  `json:"notes"`
+	UserName      string  `json:"user_name"`
+	CreatedAt     string  `json:"created_at"`
 }
 
 type PurchaseItemResponse struct {
