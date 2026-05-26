@@ -60,6 +60,7 @@ export function CategoryTab({ openAdd, onOpenAddChange }: CategoryTabProps) {
       handleOpenAdd()
       onOpenAddChange?.(false)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openAdd])
 
   const filtered = debouncedSearch

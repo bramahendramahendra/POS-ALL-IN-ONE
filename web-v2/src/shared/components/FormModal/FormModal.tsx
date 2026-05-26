@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useCallback, type ReactNode } from 'react'
 import { Loader2 } from 'lucide-react'
 
 import { Button } from '@/shared/components/ui/button'
@@ -47,10 +47,13 @@ export function FormModal({
   children,
   hideFooter,
 }: FormModalProps) {
-  const handleOpenChange = (val: boolean) => {
-    if (isLoading) return
-    onOpenChange(val)
-  }
+  const handleOpenChange = useCallback(
+    (val: boolean) => {
+      if (isLoading) return
+      onOpenChange(val)
+    },
+    [isLoading, onOpenChange],
+  )
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>

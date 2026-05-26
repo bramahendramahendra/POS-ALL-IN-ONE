@@ -14,6 +14,7 @@ import {
 } from '@/shared/components/ui/select'
 import { useDisclosure, usePagination } from '@/shared/hooks'
 import { useSupplierListQuery } from '@/features/inventory/suppliers/suppliers.api'
+import { useProductListQuery } from '@/features/inventory/products/products.api'
 
 import {
   useSupplierPurchasesQuery,
@@ -52,8 +53,10 @@ export function SupplierPurchasesPage() {
   const [deletingId, setDeletingId] = useState<number | null>(null)
 
   const { data: suppliersData, isLoading: isSuppliersLoading } = useSupplierListQuery({ page_size: 200 })
+  const { data: productsData, isLoading: isProductsLoading } = useProductListQuery({ page_size: 1 })
   const suppliers = suppliersData?.items ?? []
   const hasSuppliers = suppliers.length > 0
+  const hasProducts = (productsData?.total ?? 0) > 0
 
   const filter: SupplierPurchaseFilter = {
     date_from: dateFrom || undefined,
@@ -95,7 +98,7 @@ export function SupplierPurchasesPage() {
     })
   }
 
-  if (isSuppliersLoading) {
+  if (isSuppliersLoading || isProductsLoading) {
     return (
       <div className="space-y-4">
         <PageHeader
@@ -111,7 +114,7 @@ export function SupplierPurchasesPage() {
     )
   }
 
-  if (!hasSuppliers) {
+  if (!hasSuppliers || !hasProducts) {
     return (
       <div className="space-y-4">
         <PageHeader
@@ -130,11 +133,19 @@ export function SupplierPurchasesPage() {
           <p className="mb-1 text-sm text-gray-500">
             Sebelum menambah pembelian, pastikan data berikut sudah tersedia:
           </p>
-          <ul className="mb-6 text-sm">
-            <li className="flex items-center gap-2 text-amber-600">
-              <span>!</span>
-              Belum ada supplier — tambahkan di menu Supplier
-            </li>
+          <ul className="mb-6 space-y-1 text-sm">
+            {!hasSuppliers && (
+              <li className="flex items-center gap-2 text-amber-600">
+                <span>!</span>
+                Belum ada supplier — tambahkan di menu Supplier
+              </li>
+            )}
+            {!hasProducts && (
+              <li className="flex items-center gap-2 text-amber-600">
+                <span>!</span>
+                Belum ada produk — tambahkan di menu Produk
+              </li>
+            )}
           </ul>
         </div>
       </div>

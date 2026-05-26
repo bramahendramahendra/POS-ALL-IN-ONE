@@ -58,6 +58,7 @@ export function UnitTab({ openAdd, onOpenAddChange }: UnitTabProps) {
       handleOpenAdd()
       onOpenAddChange?.(false)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openAdd])
 
   const filtered = debouncedSearch
