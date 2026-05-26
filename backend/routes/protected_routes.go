@@ -17,6 +17,7 @@ func protectedRoutes(r *gin.RouterGroup) {
 	r.Use(pos_middleware.POSBearerAuthMiddleware(authSvc))
 
 	segment.AuthRoutes(r)
+	segment.PinRoutes(r)
 	segment.UserRoutes(r)
 	segment.ProductCategoryRoutes(r)
 	segment.ProductUnitRoutes(r)
