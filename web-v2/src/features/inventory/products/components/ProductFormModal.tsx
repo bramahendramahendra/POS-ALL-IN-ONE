@@ -252,8 +252,8 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
 
   useEffect(() => {
     const sku = skuData?.sku
-    if (sku) setValue('sku', sku)
-  }, [skuData, setValue])
+    if (sku && generateSkuEnabled) setValue('sku', sku)
+  }, [skuData, generateSkuEnabled, setValue])
 
   useEffect(() => {
     if (isEdit && detailData) {

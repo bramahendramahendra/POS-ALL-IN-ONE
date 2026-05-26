@@ -74,6 +74,7 @@ export function useGenerateSkuQuery(categoryId: number, enabled: boolean) {
     queryFn: () => api.get<{ sku: string }>('/products/generate-sku', { category_id: categoryId }),
     enabled: enabled && categoryId > 0,
     staleTime: Infinity,
+    gcTime: 0,
   })
 }
 
