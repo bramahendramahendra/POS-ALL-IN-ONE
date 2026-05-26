@@ -25,6 +25,7 @@ func protectedRoutes(r *gin.RouterGroup) {
 	segment.TransactionRoutes(r)
 	segment.CashDrawerRoutes(r)
 	segment.ExpenseRoutes(r)
+	segment.PaymentStatusRoutes(r)
 	segment.PurchaseRoutes(r)
 	segment.SupplierRoutes(r)
 	segment.SupplierReturnRoutes(r)

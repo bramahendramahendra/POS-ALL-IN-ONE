@@ -27,8 +27,8 @@ function formatDate(dateStr: string): string {
 }
 
 const STATUS_BADGE: Record<PaymentStatus, { label: string; className: string }> = {
-  lunas:   { label: 'Lunas',          className: 'bg-green-100 text-green-700' },
-  hutang:  { label: 'Hutang',         className: 'bg-red-100 text-red-700' },
+  paid:    { label: 'Lunas',          className: 'bg-green-100 text-green-700' },
+  unpaid:  { label: 'Hutang',         className: 'bg-red-100 text-red-700' },
   partial: { label: 'Bayar Sebagian', className: 'bg-yellow-100 text-yellow-700' },
 }
 
@@ -103,7 +103,7 @@ export function PurchaseTable({
           <Button variant="ghost" size="sm" onClick={() => onDetail(row)} title="Detail">
             <Eye className="h-4 w-4" />
           </Button>
-          {row.payment_status !== 'lunas' && (
+          {row.payment_status !== 'paid' && (
             <Button variant="outline" size="sm" onClick={() => onPay(row)} className="text-xs h-7 px-2">
               Bayar
             </Button>

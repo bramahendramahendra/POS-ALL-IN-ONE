@@ -216,9 +216,9 @@ export function SupplierPurchasesPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Semua Status</SelectItem>
-              <SelectItem value="lunas">Lunas</SelectItem>
-              <SelectItem value="hutang">Hutang</SelectItem>
-              <SelectItem value="partial">Partial</SelectItem>
+              <SelectItem value="paid">Lunas</SelectItem>
+              <SelectItem value="unpaid">Hutang</SelectItem>
+              <SelectItem value="partial">Bayar Sebagian</SelectItem>
             </SelectContent>
           </Select>
         </div>

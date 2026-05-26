@@ -1,4 +1,10 @@
-export type PaymentStatus = 'lunas' | 'hutang' | 'partial'
+export type PaymentStatus = 'paid' | 'unpaid' | 'partial'
+
+export const PAYMENT_STATUS_LABEL: Record<PaymentStatus, string> = {
+  paid: 'Lunas',
+  unpaid: 'Hutang',
+  partial: 'Bayar Sebagian',
+}
 
 export interface SupplierPurchaseItem {
   id: number

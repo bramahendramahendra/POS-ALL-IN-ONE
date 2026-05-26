@@ -234,9 +234,10 @@ func (r *purchaseRepo) Create(req *dto_purchase.PurchaseRequest, userID int) (*d
 			paymentStatus = "unpaid"
 		}
 		paidAmount := req.PaidAmount
-		if paymentStatus == "paid" {
+		switch paymentStatus {
+		case "paid":
 			paidAmount = totalAmount
-		} else if paymentStatus == "unpaid" {
+		case "unpaid":
 			paidAmount = 0
 		}
 		remainingAmount := totalAmount - paidAmount

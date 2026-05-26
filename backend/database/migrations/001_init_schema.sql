@@ -179,23 +179,39 @@ CREATE TABLE IF NOT EXISTS suppliers (
     updated_at     DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS payment_statuses (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    code       VARCHAR(20)  NOT NULL UNIQUE,
+    label      VARCHAR(50)  NOT NULL,
+    is_active  TINYINT(1)   NOT NULL DEFAULT 1,
+    sort_order INT          NOT NULL DEFAULT 0,
+    created_at DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) DEFAULT CHARSET=utf8mb4;
+
+INSERT IGNORE INTO payment_statuses (code, label, is_active, sort_order) VALUES
+    ('unpaid',  'Hutang',         1, 1),
+    ('partial', 'Bayar Sebagian', 1, 2),
+    ('paid',    'Lunas',          1, 3);
+
 CREATE TABLE IF NOT EXISTS purchases (
     id               INT AUTO_INCREMENT PRIMARY KEY,
-    purchase_code    VARCHAR(50)                      UNIQUE NOT NULL,
-    invoice_number   VARCHAR(100)                     NOT NULL DEFAULT '',
-    supplier_id      INT                              NULL,
-    purchase_date    DATE                             NOT NULL,
-    discount_amount  DECIMAL(15,2)                    DEFAULT 0,
-    total_amount     DECIMAL(15,2)                    DEFAULT 0,
-    payment_status   ENUM('unpaid','partial','paid')  DEFAULT 'unpaid',
-    paid_amount      DECIMAL(15,2)                    DEFAULT 0,
-    remaining_amount DECIMAL(15,2)                    DEFAULT 0,
-    user_id          INT                              NULL,
-    notes            TEXT                             NULL,
-    created_at       DATETIME                         DEFAULT CURRENT_TIMESTAMP,
-    updated_at       DATETIME                         DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL,
-    FOREIGN KEY (user_id)     REFERENCES users(id)     ON DELETE SET NULL
+    purchase_code    VARCHAR(50)   UNIQUE NOT NULL,
+    invoice_number   VARCHAR(100)  NOT NULL DEFAULT '',
+    supplier_id      INT           NULL,
+    purchase_date    DATE          NOT NULL,
+    discount_amount  DECIMAL(15,2) DEFAULT 0,
+    total_amount     DECIMAL(15,2) DEFAULT 0,
+    payment_status   VARCHAR(20)   NOT NULL DEFAULT 'unpaid',
+    paid_amount      DECIMAL(15,2) DEFAULT 0,
+    remaining_amount DECIMAL(15,2) DEFAULT 0,
+    user_id          INT           NULL,
+    notes            TEXT          NULL,
+    created_at       DATETIME      DEFAULT CURRENT_TIMESTAMP,
+    updated_at       DATETIME      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (supplier_id)    REFERENCES suppliers(id)        ON DELETE SET NULL,
+    FOREIGN KEY (user_id)        REFERENCES users(id)            ON DELETE SET NULL,
+    FOREIGN KEY (payment_status) REFERENCES payment_statuses(code)
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS purchase_items (

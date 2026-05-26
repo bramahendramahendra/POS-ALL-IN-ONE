@@ -23,6 +23,7 @@ import { useSupplierListQuery } from '@/features/inventory/suppliers/suppliers.a
 import { useProductListQuery } from '@/features/inventory/products/products.api'
 
 import { useCreateSupplierPurchaseMutation, useGeneratePurchaseCodeQuery } from '../supplier-purchases.api'
+import { usePaymentStatusesQuery } from '../payment-statuses.api'
 import type { PaymentStatus } from '../supplier-purchases.types'
 import type { Product } from '@/features/inventory/products/products.types'
 
@@ -45,7 +46,7 @@ const schema = z.object({
   items: z.array(itemSchema).min(1, 'Minimal 1 item'),
   discount_amount: z.number().nonnegative(),
   notes: z.string().optional(),
-  payment_status: z.enum(['lunas', 'hutang', 'partial']),
+  payment_status: z.enum(['paid', 'unpaid', 'partial']),
   paid_amount: z.number().nonnegative(),
 })
 
@@ -62,7 +63,7 @@ const defaultValues: FormValues = {
   items: [{ product_id: 0, quantity: 1, price: 0, unit: '' }],
   discount_amount: 0,
   notes: '',
-  payment_status: 'lunas',
+  payment_status: 'paid',
   paid_amount: 0,
 }
 
@@ -74,6 +75,7 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
 
   const { mutate: create, isPending } = useCreateSupplierPurchaseMutation()
   const { data: codeData, isFetching: isGeneratingCode } = useGeneratePurchaseCodeQuery(open)
+  const { data: paymentStatuses = [] } = usePaymentStatusesQuery()
 
   const {
     register,
@@ -121,7 +123,7 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
           purchase_price: item.price,
           unit: item.unit,
         })),
-        paid_amount: values.payment_status === 'lunas' ? total : values.paid_amount,
+        paid_amount: values.payment_status === 'paid' ? total : values.paid_amount,
       },
       {
         onSuccess: () => {
@@ -310,16 +312,18 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
             <div className="space-y-1.5">
               <Label>Status Pembayaran</Label>
               <Select
-                defaultValue="lunas"
+                defaultValue="paid"
                 onValueChange={(v) => setValue('payment_status', v as PaymentStatus)}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="lunas">Lunas</SelectItem>
-                  <SelectItem value="hutang">Hutang</SelectItem>
-                  <SelectItem value="partial">Bayar Sebagian</SelectItem>
+                  {paymentStatuses.map((s) => (
+                    <SelectItem key={s.code} value={s.code}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

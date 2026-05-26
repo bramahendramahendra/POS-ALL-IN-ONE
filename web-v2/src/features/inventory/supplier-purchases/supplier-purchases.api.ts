@@ -18,18 +18,6 @@ interface SupplierPurchaseListData {
   limit: number
 }
 
-function normalizeStatus(purchase: SupplierPurchase): SupplierPurchase {
-  const map: Record<string, SupplierPurchase['payment_status']> = {
-    paid: 'lunas',
-    unpaid: 'hutang',
-    partial: 'partial',
-    lunas: 'lunas',
-    hutang: 'hutang',
-  }
-  const raw = (purchase.payment_status as string) ?? ''
-  return { ...purchase, payment_status: (map[raw] ?? 'hutang') as SupplierPurchase['payment_status'] }
-}
-
 const QK = {
   all: () => ['supplierPurchases'] as const,
   list: (filter?: SupplierPurchaseFilter) => ['supplierPurchases', 'list', filter] as const,
@@ -42,7 +30,7 @@ export function useSupplierPurchasesQuery(filter?: SupplierPurchaseFilter) {
     queryFn: async () => {
       const { page_size, ...rest } = filter ?? {}
       const data = await api.get<SupplierPurchaseListData>('/supplier-purchases', { ...rest, limit: page_size })
-      return { ...data, items: data.items.map(normalizeStatus) }
+      return data
     },
   })
 }
@@ -50,7 +38,7 @@ export function useSupplierPurchasesQuery(filter?: SupplierPurchaseFilter) {
 export function useSupplierPurchaseDetailQuery(id: number | null) {
   return useQuery({
     queryKey: QK.detail(id ?? 0),
-    queryFn: async () => normalizeStatus(await api.get<SupplierPurchase>(`/supplier-purchases/${id}`)),
+    queryFn: async () => api.get<SupplierPurchase>(`/supplier-purchases/${id}`),
     enabled: id !== null && id > 0,
   })
 }
