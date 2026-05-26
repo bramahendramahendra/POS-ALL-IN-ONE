@@ -1,4 +1,4 @@
-package dto_master
+package dto_product_category
 
 import "time"
 

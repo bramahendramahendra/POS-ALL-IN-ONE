@@ -1,4 +1,4 @@
-package dto_master
+package dto_product_unit
 
 type CreateUnitRequest struct {
 	Name         string `json:"name" validate:"required,min=1"`

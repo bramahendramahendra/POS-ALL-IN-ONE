@@ -1,20 +1,20 @@
-package repo_master
+package repo_product_unit
 
 import (
-	model_master "pos_api/domain/master/model"
+	model_product_unit "pos_api/domain/product_unit/model"
 
 	"gorm.io/gorm"
 )
 
 const (
 	getAllUnitsQuery      = `SELECT id, name, abbreviation, is_active FROM units ORDER BY name`
-	getActiveUnitsQuery   = `SELECT id, name, abbreviation, is_active FROM units WHERE is_active = 1 ORDER BY name`
-	getUnitByIDQuery      = `SELECT id, name, abbreviation, is_active FROM units WHERE id = ? LIMIT 1`
-	checkUnitNameQuery    = `SELECT id FROM units WHERE name = ? AND id != ? LIMIT 1`
-	checkUnitUsedQuery    = `SELECT COUNT(*) FROM product_units WHERE unit_id = ?`
-	createUnitQuery       = `INSERT INTO units (name, abbreviation) VALUES (?, ?)`
-	updateUnitQuery       = `UPDATE units SET name = ?, abbreviation = ?, updated_at = NOW() WHERE id = ?`
-	deleteUnitQuery       = `DELETE FROM units WHERE id = ?`
+	getActiveUnitsQuery  = `SELECT id, name, abbreviation, is_active FROM units WHERE is_active = 1 ORDER BY name`
+	getUnitByIDQuery     = `SELECT id, name, abbreviation, is_active FROM units WHERE id = ? LIMIT 1`
+	checkUnitNameQuery   = `SELECT id FROM units WHERE name = ? AND id != ? LIMIT 1`
+	checkUnitUsedQuery   = `SELECT COUNT(*) FROM product_units WHERE unit_id = ?`
+	createUnitQuery      = `INSERT INTO units (name, abbreviation) VALUES (?, ?)`
+	updateUnitQuery      = `UPDATE units SET name = ?, abbreviation = ?, updated_at = NOW() WHERE id = ?`
+	deleteUnitQuery      = `DELETE FROM units WHERE id = ?`
 	toggleUnitStatusQuery = `UPDATE units SET is_active = NOT is_active, updated_at = NOW() WHERE id = ?`
 )
 
@@ -26,16 +26,16 @@ func NewUnitRepo(db *gorm.DB) UnitRepo {
 	return &unitRepo{db: db}
 }
 
-func (r *unitRepo) GetAll() ([]*model_master.Unit, error) {
+func (r *unitRepo) GetAll() ([]*model_product_unit.Unit, error) {
 	rows, err := r.db.Raw(getAllUnitsQuery).Rows()
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	units := make([]*model_master.Unit, 0)
+	units := make([]*model_product_unit.Unit, 0)
 	for rows.Next() {
-		var u model_master.Unit
+		var u model_product_unit.Unit
 		if err := rows.Scan(&u.ID, &u.Name, &u.Abbreviation, &u.IsActive); err != nil {
 			return nil, err
 		}
@@ -47,16 +47,16 @@ func (r *unitRepo) GetAll() ([]*model_master.Unit, error) {
 	return units, nil
 }
 
-func (r *unitRepo) GetActive() ([]*model_master.Unit, error) {
+func (r *unitRepo) GetActive() ([]*model_product_unit.Unit, error) {
 	rows, err := r.db.Raw(getActiveUnitsQuery).Rows()
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	units := make([]*model_master.Unit, 0)
+	units := make([]*model_product_unit.Unit, 0)
 	for rows.Next() {
-		var u model_master.Unit
+		var u model_product_unit.Unit
 		if err := rows.Scan(&u.ID, &u.Name, &u.Abbreviation, &u.IsActive); err != nil {
 			return nil, err
 		}
@@ -68,8 +68,8 @@ func (r *unitRepo) GetActive() ([]*model_master.Unit, error) {
 	return units, nil
 }
 
-func (r *unitRepo) GetByID(id int) (*model_master.Unit, error) {
-	var u model_master.Unit
+func (r *unitRepo) GetByID(id int) (*model_product_unit.Unit, error) {
+	var u model_product_unit.Unit
 	result := r.db.Raw(getUnitByIDQuery, id).Scan(&u)
 	if result.Error != nil {
 		return nil, result.Error

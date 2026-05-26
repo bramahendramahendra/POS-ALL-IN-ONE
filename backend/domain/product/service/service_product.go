@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	repo_category "pos_api/domain/master/repo"
+	repo_category "pos_api/domain/product_category/repo"
 	dto_product "pos_api/domain/product/dto"
 	model_product "pos_api/domain/product/model"
 	repo_product "pos_api/domain/product/repo"

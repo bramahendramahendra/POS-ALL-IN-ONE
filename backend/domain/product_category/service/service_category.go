@@ -1,37 +1,37 @@
-package service_master
+package service_product_category
 
 import (
 	"fmt"
 	"strings"
 	"unicode"
 
-	dto_master "pos_api/domain/master/dto"
-	model_master "pos_api/domain/master/model"
-	repo_master "pos_api/domain/master/repo"
+	dto_product_category "pos_api/domain/product_category/dto"
+	model_product_category "pos_api/domain/product_category/model"
+	repo_product_category "pos_api/domain/product_category/repo"
 	"pos_api/errors"
 )
 
 type categoryService struct {
-	repo repo_master.CategoryRepo
+	repo repo_product_category.CategoryRepo
 }
 
-func NewCategoryService(repo repo_master.CategoryRepo) CategoryService {
+func NewCategoryService(repo repo_product_category.CategoryRepo) CategoryService {
 	return &categoryService{repo: repo}
 }
 
-func (s *categoryService) GetAll() ([]*dto_master.CategoryResponse, error) {
+func (s *categoryService) GetAll() ([]*dto_product_category.CategoryResponse, error) {
 	categories, err := s.repo.GetAll()
 	if err != nil {
 		return nil, &errors.InternalServerError{Message: err.Error()}
 	}
-	result := make([]*dto_master.CategoryResponse, 0, len(categories))
+	result := make([]*dto_product_category.CategoryResponse, 0, len(categories))
 	for _, c := range categories {
 		result = append(result, toCategoryResponse(c))
 	}
 	return result, nil
 }
 
-func (s *categoryService) GetByID(id int) (*dto_master.CategoryResponse, error) {
+func (s *categoryService) GetByID(id int) (*dto_product_category.CategoryResponse, error) {
 	c, err := s.repo.GetByID(id)
 	if err != nil {
 		return nil, &errors.InternalServerError{Message: err.Error()}
@@ -42,7 +42,7 @@ func (s *categoryService) GetByID(id int) (*dto_master.CategoryResponse, error) 
 	return toCategoryResponse(c), nil
 }
 
-func (s *categoryService) Create(req *dto_master.CreateCategoryRequest) (*dto_master.CategoryResponse, error) {
+func (s *categoryService) Create(req *dto_product_category.CreateCategoryRequest) (*dto_product_category.CategoryResponse, error) {
 	req.Name = strings.TrimSpace(req.Name)
 	req.Description = strings.TrimSpace(req.Description)
 	exists, err := s.repo.CheckNameExists(req.Name, 0)
@@ -73,7 +73,6 @@ func (s *categoryService) Create(req *dto_master.CreateCategoryRequest) (*dto_ma
 // generateUniqueCode membuat kode 3 huruf dari nama kategori, unik di DB.
 // Contoh: "Minuman" → "MIN", jika sudah ada → "MIN2", "MIN3", dst.
 func (s *categoryService) generateUniqueCode(name string) (string, error) {
-	// Ambil huruf alfabet saja, uppercase
 	letters := strings.Map(func(r rune) rune {
 		if unicode.IsLetter(r) {
 			return unicode.ToUpper(r)
@@ -89,7 +88,6 @@ func (s *categoryService) generateUniqueCode(name string) (string, error) {
 		base += "X"
 	}
 
-	// Cek keunikan, jika tabrakan tambah angka suffix
 	candidate := base
 	for i := 2; i <= 99; i++ {
 		exists, err := s.repo.CheckCodeExists(candidate)
@@ -104,7 +102,7 @@ func (s *categoryService) generateUniqueCode(name string) (string, error) {
 	return "", &errors.InternalServerError{Message: "Tidak bisa generate kode kategori yang unik"}
 }
 
-func (s *categoryService) Update(id int, req *dto_master.UpdateCategoryRequest) error {
+func (s *categoryService) Update(id int, req *dto_product_category.UpdateCategoryRequest) error {
 	req.Name = strings.TrimSpace(req.Name)
 	req.Description = strings.TrimSpace(req.Description)
 	c, err := s.repo.GetByID(id)
@@ -155,7 +153,6 @@ func (s *categoryService) ToggleStatus(id int) error {
 		return &errors.NotFoundError{Message: "Kategori tidak ditemukan"}
 	}
 
-	// Cegah nonaktifkan jika masih ada produk aktif
 	if c.IsActive {
 		activeCount, err := s.repo.CountActiveProductsByCategory(id)
 		if err != nil {
@@ -169,8 +166,8 @@ func (s *categoryService) ToggleStatus(id int) error {
 	return s.repo.ToggleStatus(id)
 }
 
-func toCategoryResponse(c *model_master.Category) *dto_master.CategoryResponse {
-	return &dto_master.CategoryResponse{
+func toCategoryResponse(c *model_product_category.Category) *dto_product_category.CategoryResponse {
+	return &dto_product_category.CategoryResponse{
 		ID:                 c.ID,
 		Name:               c.Name,
 		Code:               c.Code,

@@ -51,7 +51,6 @@ CREATE TABLE IF NOT EXISTS roles (
     updated_at   DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) DEFAULT CHARSET=utf8mb4;
 
--- parent_id NULL = menu top-level; path NULL = menu grup (tidak punya halaman sendiri)
 CREATE TABLE IF NOT EXISTS menus (
     id          INT AUTO_INCREMENT PRIMARY KEY,
     parent_id   INT          NULL,

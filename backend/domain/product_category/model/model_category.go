@@ -1,4 +1,4 @@
-package model_master
+package model_product_category
 
 import "time"
 

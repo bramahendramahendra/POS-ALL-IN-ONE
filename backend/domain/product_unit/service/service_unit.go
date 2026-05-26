@@ -1,47 +1,47 @@
-package service_master
+package service_product_unit
 
 import (
 	"strings"
 
-	dto_master "pos_api/domain/master/dto"
-	model_master "pos_api/domain/master/model"
-	repo_master "pos_api/domain/master/repo"
+	dto_product_unit "pos_api/domain/product_unit/dto"
+	model_product_unit "pos_api/domain/product_unit/model"
+	repo_product_unit "pos_api/domain/product_unit/repo"
 	"pos_api/errors"
 )
 
 type unitService struct {
-	repo repo_master.UnitRepo
+	repo repo_product_unit.UnitRepo
 }
 
-func NewUnitService(repo repo_master.UnitRepo) UnitService {
+func NewUnitService(repo repo_product_unit.UnitRepo) UnitService {
 	return &unitService{repo: repo}
 }
 
-func (s *unitService) GetAll() ([]*dto_master.UnitResponse, error) {
+func (s *unitService) GetAll() ([]*dto_product_unit.UnitResponse, error) {
 	units, err := s.repo.GetAll()
 	if err != nil {
 		return nil, &errors.InternalServerError{Message: err.Error()}
 	}
-	result := make([]*dto_master.UnitResponse, 0, len(units))
+	result := make([]*dto_product_unit.UnitResponse, 0, len(units))
 	for _, u := range units {
 		result = append(result, toUnitResponse(u))
 	}
 	return result, nil
 }
 
-func (s *unitService) GetActive() ([]*dto_master.UnitActiveResponse, error) {
+func (s *unitService) GetActive() ([]*dto_product_unit.UnitActiveResponse, error) {
 	units, err := s.repo.GetActive()
 	if err != nil {
 		return nil, &errors.InternalServerError{Message: err.Error()}
 	}
-	result := make([]*dto_master.UnitActiveResponse, 0, len(units))
+	result := make([]*dto_product_unit.UnitActiveResponse, 0, len(units))
 	for _, u := range units {
 		result = append(result, toUnitActiveResponse(u))
 	}
 	return result, nil
 }
 
-func (s *unitService) GetByID(id int) (*dto_master.UnitResponse, error) {
+func (s *unitService) GetByID(id int) (*dto_product_unit.UnitResponse, error) {
 	u, err := s.repo.GetByID(id)
 	if err != nil {
 		return nil, &errors.InternalServerError{Message: err.Error()}
@@ -52,7 +52,7 @@ func (s *unitService) GetByID(id int) (*dto_master.UnitResponse, error) {
 	return toUnitResponse(u), nil
 }
 
-func (s *unitService) Create(req *dto_master.CreateUnitRequest) (*dto_master.UnitResponse, error) {
+func (s *unitService) Create(req *dto_product_unit.CreateUnitRequest) (*dto_product_unit.UnitResponse, error) {
 	req.Name = strings.TrimSpace(req.Name)
 	req.Abbreviation = strings.TrimSpace(req.Abbreviation)
 	exists, err := s.repo.CheckNameExists(req.Name, 0)
@@ -75,7 +75,7 @@ func (s *unitService) Create(req *dto_master.CreateUnitRequest) (*dto_master.Uni
 	return toUnitResponse(created), nil
 }
 
-func (s *unitService) Update(id int, req *dto_master.UpdateUnitRequest) error {
+func (s *unitService) Update(id int, req *dto_product_unit.UpdateUnitRequest) error {
 	req.Name = strings.TrimSpace(req.Name)
 	req.Abbreviation = strings.TrimSpace(req.Abbreviation)
 	u, err := s.repo.GetByID(id)
@@ -128,8 +128,8 @@ func (s *unitService) ToggleStatus(id int) error {
 	return s.repo.ToggleStatus(id)
 }
 
-func toUnitResponse(u *model_master.Unit) *dto_master.UnitResponse {
-	return &dto_master.UnitResponse{
+func toUnitResponse(u *model_product_unit.Unit) *dto_product_unit.UnitResponse {
+	return &dto_product_unit.UnitResponse{
 		ID:           u.ID,
 		Name:         u.Name,
 		Abbreviation: u.Abbreviation,
@@ -137,8 +137,8 @@ func toUnitResponse(u *model_master.Unit) *dto_master.UnitResponse {
 	}
 }
 
-func toUnitActiveResponse(u *model_master.Unit) *dto_master.UnitActiveResponse {
-	return &dto_master.UnitActiveResponse{
+func toUnitActiveResponse(u *model_product_unit.Unit) *dto_product_unit.UnitActiveResponse {
+	return &dto_product_unit.UnitActiveResponse{
 		ID:           u.ID,
 		Name:         u.Name,
 		Abbreviation: u.Abbreviation,

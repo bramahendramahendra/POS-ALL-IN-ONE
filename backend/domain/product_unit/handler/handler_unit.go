@@ -1,10 +1,10 @@
-package handler_master
+package handler_product_unit
 
 import (
 	"strconv"
 
-	dto_master "pos_api/domain/master/dto"
-	service_master "pos_api/domain/master/service"
+	dto_product_unit "pos_api/domain/product_unit/dto"
+	service_product_unit "pos_api/domain/product_unit/service"
 	global_dto "pos_api/dto"
 	"pos_api/errors"
 	"pos_api/helper"
@@ -14,17 +14,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type CategoryHandler struct {
-	service service_master.CategoryService
+type UnitHandler struct {
+	service service_product_unit.UnitService
 }
 
-func NewCategoryHandler(service service_master.CategoryService) *CategoryHandler {
-	return &CategoryHandler{service: service}
+func NewUnitHandler(service service_product_unit.UnitService) *UnitHandler {
+	return &UnitHandler{service: service}
 }
 
-// GET /api/categories
-func (h *CategoryHandler) GetAll(c *gin.Context) {
-	categories, err := h.service.GetAll()
+// GET /api/units
+func (h *UnitHandler) GetAll(c *gin.Context) {
+	units, err := h.service.GetAll()
 	if err != nil {
 		c.Error(err)
 		return
@@ -33,20 +33,36 @@ func (h *CategoryHandler) GetAll(c *gin.Context) {
 	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
 		Code:    helper.StatusOk,
 		Status:  true,
-		Message: "Daftar kategori",
-		Data:    categories,
+		Message: "Daftar satuan",
+		Data:    units,
 	})
 }
 
-// GET /api/categories/:id
-func (h *CategoryHandler) GetByID(c *gin.Context) {
-	id, err := parseMasterIDParam(c)
+// GET /api/units/active
+func (h *UnitHandler) GetActive(c *gin.Context) {
+	units, err := h.service.GetActive()
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
-	category, svcErr := h.service.GetByID(id)
+	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
+		Code:    helper.StatusOk,
+		Status:  true,
+		Message: "Daftar satuan aktif",
+		Data:    units,
+	})
+}
+
+// GET /api/units/:id
+func (h *UnitHandler) GetByID(c *gin.Context) {
+	id, err := parseIDParam(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	unit, svcErr := h.service.GetByID(id)
 	if svcErr != nil {
 		c.Error(svcErr)
 		return
@@ -55,14 +71,14 @@ func (h *CategoryHandler) GetByID(c *gin.Context) {
 	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
 		Code:    helper.StatusOk,
 		Status:  true,
-		Message: "Detail kategori",
-		Data:    category,
+		Message: "Detail satuan",
+		Data:    unit,
 	})
 }
 
-// POST /api/categories
-func (h *CategoryHandler) Create(c *gin.Context) {
-	var req dto_master.CreateCategoryRequest
+// POST /api/units
+func (h *UnitHandler) Create(c *gin.Context) {
+	var req dto_product_unit.CreateUnitRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(&errors.BadRequestError{Message: err.Error()})
 		return
@@ -72,7 +88,7 @@ func (h *CategoryHandler) Create(c *gin.Context) {
 		return
 	}
 
-	category, err := h.service.Create(&req)
+	unit, err := h.service.Create(&req)
 	if err != nil {
 		c.Error(err)
 		return
@@ -81,20 +97,20 @@ func (h *CategoryHandler) Create(c *gin.Context) {
 	response_helper.WrapResponse(c, 201, "json", &global_dto.ResponseParams{
 		Code:    helper.StatusOk,
 		Status:  true,
-		Message: "Kategori berhasil dibuat",
-		Data:    category,
+		Message: "Satuan berhasil dibuat",
+		Data:    unit,
 	})
 }
 
-// PUT /api/categories/:id
-func (h *CategoryHandler) Update(c *gin.Context) {
-	id, err := parseMasterIDParam(c)
+// PUT /api/units/:id
+func (h *UnitHandler) Update(c *gin.Context) {
+	id, err := parseIDParam(c)
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
-	var req dto_master.UpdateCategoryRequest
+	var req dto_product_unit.UpdateUnitRequest
 	if bindErr := c.ShouldBindJSON(&req); bindErr != nil {
 		c.Error(&errors.BadRequestError{Message: bindErr.Error()})
 		return
@@ -112,33 +128,13 @@ func (h *CategoryHandler) Update(c *gin.Context) {
 	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
 		Code:    helper.StatusOk,
 		Status:  true,
-		Message: "Kategori berhasil diperbarui",
+		Message: "Satuan berhasil diperbarui",
 	})
 }
 
-// PATCH /api/categories/:id/toggle-status
-func (h *CategoryHandler) ToggleStatus(c *gin.Context) {
-	id, err := parseMasterIDParam(c)
-	if err != nil {
-		c.Error(err)
-		return
-	}
-
-	if svcErr := h.service.ToggleStatus(id); svcErr != nil {
-		c.Error(svcErr)
-		return
-	}
-
-	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
-		Code:    helper.StatusOk,
-		Status:  true,
-		Message: "Status kategori berhasil diperbarui",
-	})
-}
-
-// DELETE /api/categories/:id
-func (h *CategoryHandler) Delete(c *gin.Context) {
-	id, err := parseMasterIDParam(c)
+// DELETE /api/units/:id
+func (h *UnitHandler) Delete(c *gin.Context) {
+	id, err := parseIDParam(c)
 	if err != nil {
 		c.Error(err)
 		return
@@ -152,11 +148,31 @@ func (h *CategoryHandler) Delete(c *gin.Context) {
 	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
 		Code:    helper.StatusOk,
 		Status:  true,
-		Message: "Kategori berhasil dihapus",
+		Message: "Satuan berhasil dihapus",
 	})
 }
 
-func parseMasterIDParam(c *gin.Context) (int, error) {
+// PATCH /api/units/:id/toggle-status
+func (h *UnitHandler) ToggleStatus(c *gin.Context) {
+	id, err := parseIDParam(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	if svcErr := h.service.ToggleStatus(id); svcErr != nil {
+		c.Error(svcErr)
+		return
+	}
+
+	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
+		Code:    helper.StatusOk,
+		Status:  true,
+		Message: "Status satuan berhasil diubah",
+	})
+}
+
+func parseIDParam(c *gin.Context) (int, error) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil || id <= 0 {
 		return 0, &errors.BadRequestError{Message: "ID tidak valid"}

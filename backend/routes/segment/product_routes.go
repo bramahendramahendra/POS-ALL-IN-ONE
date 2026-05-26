@@ -1,7 +1,7 @@
 package segment
 
 import (
-	master_repo "pos_api/domain/master/repo"
+	product_category_repo "pos_api/domain/product_category/repo"
 	product_handler "pos_api/domain/product/handler"
 	product_repo "pos_api/domain/product/repo"
 	product_service "pos_api/domain/product/service"
@@ -12,7 +12,7 @@ import (
 )
 
 func ProductRoutes(r *gin.RouterGroup) {
-	categoryRepo := master_repo.NewCategoryRepo(pkgdatabase.DB)
+	categoryRepo := product_category_repo.NewCategoryRepo(pkgdatabase.DB)
 
 	productRepo := product_repo.NewProductRepo(pkgdatabase.DB)
 	productSvc := product_service.NewProductService(productRepo, categoryRepo)
