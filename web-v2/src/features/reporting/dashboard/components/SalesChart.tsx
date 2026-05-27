@@ -8,10 +8,10 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 
-import type { SalesChartPoint } from '../dashboard.types'
+import type { SalesTrendItem } from '../dashboard.types'
 
 interface SalesChartProps {
-  data: SalesChartPoint[]
+  data: SalesTrendItem[]
   isLoading: boolean
 }
 
@@ -60,14 +60,14 @@ export function SalesChart({ data, isLoading }: SalesChartProps) {
         <Tooltip content={<CustomTooltip />} />
         <Area
           type="monotone"
-          dataKey="revenue"
+          dataKey="total_sales"
           stroke="#3498db"
           fill="url(#revenueGrad)"
           strokeWidth={2}
         />
         <Area
           type="monotone"
-          dataKey="transactions"
+          dataKey="total_transactions"
           stroke="#95a5a6"
           fill="transparent"
           strokeWidth={1.5}

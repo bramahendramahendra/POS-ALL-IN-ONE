@@ -98,6 +98,7 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
   const watchItems = watch('items')
   const watchDiscount = watch('discount_amount') ?? 0
   const watchPaymentStatus = watch('payment_status')
+  const watchPaymentMethod = watch('payment_method')
 
   const subtotal = watchItems.reduce((sum, item) => sum + (item.quantity || 0) * (item.price || 0), 0)
   const total = Math.max(0, subtotal - (watchDiscount || 0))
@@ -315,7 +316,7 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
             <div className="space-y-1.5">
               <Label>Status Pembayaran</Label>
               <Select
-                defaultValue="paid"
+                value={watchPaymentStatus}
                 onValueChange={(v) => setValue('payment_status', v as PaymentStatus)}
               >
                 <SelectTrigger>
@@ -352,7 +353,7 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
               <div className="space-y-1.5">
                 <Label>Metode Pembayaran</Label>
                 <Select
-                  defaultValue="tunai"
+                  value={watchPaymentMethod ?? 'tunai'}
                   onValueChange={(v) => setValue('payment_method', v)}
                 >
                   <SelectTrigger>

@@ -1,28 +1,42 @@
 export type DashboardPeriod = 'today' | 'week' | 'month'
 
-export interface DashboardSummary {
+export interface TodayStats {
   total_transactions: number
-  total_revenue: number
-  total_items_sold: number
-  new_customers: number
-  avg_transaction: number
-  period_label: string
+  total_sales: number
+  total_discount: number
+  total_expenses: number
+  gross_profit: number
 }
 
-export interface SalesChartPoint {
+export interface MonthStats {
+  total_transactions: number
+  total_sales: number
+  total_expenses: number
+  gross_profit: number
+}
+
+export interface DashboardStats {
+  today: TodayStats
+  this_month: MonthStats
+  low_stock_count: number
+  open_receivables: number
+}
+
+export interface SalesTrendItem {
   label: string
-  revenue: number
-  transactions: number
+  total_sales: number
+  total_transactions: number
 }
 
-export interface TopProduct {
-  rank: number
+export interface TopProductItem {
+  product_id: number
   product_name: string
-  unit_name: string
-  qty_sold: number
-  revenue: number
+  total_qty: number
+  total_value: number
 }
 
-export interface DashboardFilter {
-  period: DashboardPeriod
+export interface SummaryExtraResponse {
+  highest: { total_amount: number; transaction_code: string } | null
+  peakHour: { hour: number; count: number } | null
+  avg: { avg_amount: number; total_count: number } | null
 }

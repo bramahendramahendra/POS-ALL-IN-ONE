@@ -1,9 +1,9 @@
 import { formatRupiah } from '@/shared/utils'
 
-import type { TopProduct } from '../dashboard.types'
+import type { TopProductItem } from '../dashboard.types'
 
 interface TopProductsTableProps {
-  data: TopProduct[]
+  data: TopProductItem[]
   isLoading: boolean
 }
 
@@ -32,16 +32,15 @@ export function TopProductsTable({ data, isLoading }: TopProductsTableProps) {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {data.map((p) => (
-              <tr key={p.rank} className="hover:bg-gray-50">
-                <td className="px-3 py-2 text-center text-gray-400 font-mono">{p.rank}</td>
+            {data.map((p, i) => (
+              <tr key={p.product_id} className="hover:bg-gray-50">
+                <td className="px-3 py-2 text-center text-gray-400 font-mono">{i + 1}</td>
                 <td className="px-3 py-2">
                   <span className="font-medium text-gray-800">{p.product_name}</span>
-                  <span className="ml-1 text-xs text-gray-400">{p.unit_name}</span>
                 </td>
-                <td className="px-3 py-2 text-right text-gray-600">{p.qty_sold}</td>
+                <td className="px-3 py-2 text-right text-gray-600">{p.total_qty}</td>
                 <td className="px-3 py-2 text-right font-semibold text-blue-600">
-                  {formatRupiah(p.revenue)}
+                  {formatRupiah(p.total_value)}
                 </td>
               </tr>
             ))}

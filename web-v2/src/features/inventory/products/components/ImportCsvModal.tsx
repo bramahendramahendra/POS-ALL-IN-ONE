@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react'
 import { Download, Upload } from 'lucide-react'
 import * as XLSX from 'xlsx'
+import { toast } from 'sonner'
 
 import { FormModal } from '@/shared/components'
 import { Button } from '@/shared/components/ui/button'
+import { apiClient } from '@/services/api.client'
 
 import { useImportProductsBulkMutation, type ImportBulkRow } from '../products.api'
 import { validateImportRow } from '../products.utils'
@@ -20,9 +22,6 @@ interface ParsedRow {
   errors: string[]
   warnings: string[]
 }
-
-const TEMPLATE_HEADERS = ['nama', 'barcode', 'kategori', 'harga_beli', 'harga_jual', 'stok', 'stok_minimum', 'satuan']
-const TEMPLATE_EXAMPLE: (string | number)[] = ['Contoh Produk A', 'PROD-00001', 'Minuman', 5000, 7000, 100, 10, 'pcs']
 
 function parseRows(rawRows: Record<string, unknown>[]): ParsedRow[] {
   const seenBarcodes = new Set<string>()
@@ -59,34 +58,19 @@ function parseXlsx(buffer: ArrayBuffer): Record<string, unknown>[] {
   return XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' })
 }
 
-function parseCsv(text: string): Record<string, unknown>[] {
-  const lines = text.trim().split('\n')
-  if (lines.length < 2) return []
-  const headers = lines[0].split(',').map((h) => h.trim().replace(/^"|"$/g, ''))
-  return lines.slice(1).map((line) => {
-    const values = line.split(',').map((v) => v.trim().replace(/^"|"$/g, ''))
-    const row: Record<string, unknown> = {}
-    headers.forEach((h, idx) => { row[h] = values[idx] ?? '' })
-    return row
-  })
-}
-
-function downloadTemplate(format: 'xlsx' | 'csv') {
-  if (format === 'xlsx') {
-    const wb = XLSX.utils.book_new()
-    const ws = XLSX.utils.aoa_to_sheet([TEMPLATE_HEADERS, TEMPLATE_EXAMPLE])
-    ws['!cols'] = TEMPLATE_HEADERS.map(() => ({ wch: 18 }))
-    XLSX.utils.book_append_sheet(wb, ws, 'Template')
-    XLSX.writeFile(wb, 'template_import_produk.xlsx')
-  } else {
-    const csv = [TEMPLATE_HEADERS.join(','), TEMPLATE_EXAMPLE.join(',')].join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
+async function downloadTemplate() {
+  try {
+    const response = await apiClient.get('/products/import-template', {
+      responseType: 'blob',
+    })
+    const url = URL.createObjectURL(response.data as Blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'template_import_produk.csv'
+    a.download = 'template_import_produk.xlsx'
     a.click()
     URL.revokeObjectURL(url)
+  } catch {
+    toast.error('Gagal mengunduh template')
   }
 }
 
@@ -106,22 +90,12 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
     setFileName(file.name)
     setFilterView('all')
 
-    const ext = file.name.split('.').pop()?.toLowerCase()
     const reader = new FileReader()
-
-    if (ext === 'csv') {
-      reader.onload = (ev) => {
-        const text = ev.target?.result as string
-        setRows(parseRows(parseCsv(text)))
-      }
-      reader.readAsText(file)
-    } else {
-      reader.onload = (ev) => {
-        const buffer = ev.target?.result as ArrayBuffer
-        setRows(parseRows(parseXlsx(buffer)))
-      }
-      reader.readAsArrayBuffer(file)
+    reader.onload = (ev) => {
+      const buffer = ev.target?.result as ArrayBuffer
+      setRows(parseRows(parseXlsx(buffer)))
     }
+    reader.readAsArrayBuffer(file)
   }
 
   const handleImport = () => {
@@ -168,18 +142,9 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
             variant="outline"
             size="sm"
             className="gap-1 h-7 text-xs"
-            onClick={() => downloadTemplate('xlsx')}
+            onClick={downloadTemplate}
           >
             <Download size={12} /> Excel (.xlsx)
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="gap-1 h-7 text-xs"
-            onClick={() => downloadTemplate('csv')}
-          >
-            <Download size={12} /> CSV
           </Button>
         </div>
 
@@ -193,7 +158,7 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
             {fileName ? (
               <span className="font-medium text-gray-700">{fileName}</span>
             ) : (
-              'Klik untuk pilih file Excel (.xlsx) atau CSV (.csv)'
+              'Klik untuk pilih file Excel (.xlsx)'
             )}
           </p>
           <p className="text-xs text-gray-400">
@@ -202,7 +167,7 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".xlsx,.csv"
+            accept=".xlsx"
             className="hidden"
             onChange={handleFileChange}
           />

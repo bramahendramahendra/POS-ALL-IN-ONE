@@ -132,7 +132,7 @@ export function ProductsPage() {
             <div className="flex gap-2">
               <Button variant="outline" onClick={openImport} className="gap-1">
                 <Upload size={16} />
-                Import CSV
+                Import Produk
               </Button>
               <Button onClick={() => openProductModal()} className="gap-1">
                 <Plus size={16} />

@@ -1,4 +1,4 @@
-import { useCallback, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { Loader2 } from 'lucide-react'
 
 import { Button } from '@/shared/components/ui/button'
@@ -47,13 +47,10 @@ export function FormModal({
   children,
   hideFooter,
 }: FormModalProps) {
-  const handleOpenChange = useCallback(
-    (val: boolean) => {
-      if (isLoading) return
-      onOpenChange(val)
-    },
-    [isLoading, onOpenChange],
-  )
+  function handleOpenChange(val: boolean) {
+    if (isLoading) return
+    onOpenChange(val)
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -69,7 +66,9 @@ export function FormModal({
         {/* Header */}
         <DialogHeader className="border-b px-6 py-4">
           <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
+          <DialogDescription className={description ? '' : 'sr-only'}>
+            {description ?? title}
+          </DialogDescription>
         </DialogHeader>
 
         {/* Body — scrollable */}

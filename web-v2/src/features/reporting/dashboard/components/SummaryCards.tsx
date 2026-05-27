@@ -1,9 +1,9 @@
 import { formatRupiah } from '@/shared/utils'
 
-import type { DashboardSummary } from '../dashboard.types'
+import type { DashboardStats } from '../dashboard.types'
 
 interface SummaryCardsProps {
-  summary: DashboardSummary | undefined
+  stats: DashboardStats | undefined
   isLoading: boolean
 }
 
@@ -30,37 +30,37 @@ function StatCard({ icon, label, value, isLoading }: CardProps) {
   )
 }
 
-export function SummaryCards({ summary, isLoading }: SummaryCardsProps) {
+export function SummaryCards({ stats, isLoading }: SummaryCardsProps) {
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
       <StatCard
         icon="🧾"
-        label="Transaksi"
-        value={String(summary?.total_transactions ?? 0)}
+        label="Transaksi Hari Ini"
+        value={String(stats?.today.total_transactions ?? 0)}
         isLoading={isLoading}
       />
       <StatCard
         icon="💰"
-        label="Pendapatan"
-        value={formatRupiah(summary?.total_revenue ?? 0)}
+        label="Pendapatan Hari Ini"
+        value={formatRupiah(stats?.today.total_sales ?? 0)}
+        isLoading={isLoading}
+      />
+      <StatCard
+        icon="📈"
+        label="Laba Kotor Hari Ini"
+        value={formatRupiah(stats?.today.gross_profit ?? 0)}
         isLoading={isLoading}
       />
       <StatCard
         icon="📦"
-        label="Terjual"
-        value={`${summary?.total_items_sold ?? 0} item`}
+        label="Stok Menipis"
+        value={String(stats?.low_stock_count ?? 0)}
         isLoading={isLoading}
       />
       <StatCard
-        icon="👥"
-        label="Pelanggan Baru"
-        value={String(summary?.new_customers ?? 0)}
-        isLoading={isLoading}
-      />
-      <StatCard
-        icon="📊"
-        label="Rata-rata"
-        value={formatRupiah(summary?.avg_transaction ?? 0)}
+        icon="💳"
+        label="Piutang Terbuka"
+        value={String(stats?.open_receivables ?? 0)}
         isLoading={isLoading}
       />
     </div>

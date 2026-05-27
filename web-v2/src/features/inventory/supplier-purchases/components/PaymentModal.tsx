@@ -100,6 +100,7 @@ export function PaymentModal({ open, onOpenChange, purchase }: PaymentModalProps
   }
 
   const amountValue = watch('amount')
+  const paymentMethodValue = watch('payment_method')
 
   return (
     <FormModal
@@ -153,7 +154,7 @@ export function PaymentModal({ open, onOpenChange, purchase }: PaymentModalProps
               Metode Pembayaran <span className="text-red-500">*</span>
             </Label>
             <Select
-              defaultValue="tunai"
+              value={paymentMethodValue}
               onValueChange={(v) => setValue('payment_method', v)}
             >
               <SelectTrigger className={errors.payment_method ? 'border-red-500' : ''}>

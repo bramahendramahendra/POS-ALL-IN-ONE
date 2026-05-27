@@ -35,6 +35,7 @@ func ProductRoutes(r *gin.RouterGroup) {
 		g.GET("/barcode/:barcode", productHand.GetByBarcode)
 		g.GET("/:id", productHand.GetByID)
 		g.POST("", middleware.RoleMiddleware("owner", "admin"), productHand.Create)
+		g.GET("/import-template", middleware.RoleMiddleware("owner", "admin"), productHand.DownloadImportTemplate)
 		g.POST("/import", middleware.RoleMiddleware("owner", "admin"), productHand.Import)
 		g.POST("/import-bulk", middleware.RoleMiddleware("owner", "admin"), productHand.ImportBulk)
 		g.PUT("/:id", middleware.RoleMiddleware("owner", "admin"), productHand.Update)

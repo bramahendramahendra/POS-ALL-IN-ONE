@@ -40,6 +40,7 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 // Response interceptor
 apiClient.interceptors.response.use(
   (response) => {
+    if (response.config.responseType === 'blob') return response
     const body = response.data as { status: boolean; message: string; data: unknown }
     if (body.status === false) {
       throw new ApiError(body.message, response.status)

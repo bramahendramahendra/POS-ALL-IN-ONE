@@ -13,6 +13,7 @@ import (
 	"pos_api/validation"
 
 	"github.com/gin-gonic/gin"
+	"github.com/xuri/excelize/v2"
 )
 
 type ProductHandler struct {
@@ -248,6 +249,50 @@ func (h *ProductHandler) ImportBulk(c *gin.Context) {
 		Message: "Import selesai",
 		Data:    result,
 	})
+}
+
+// GET /api/products/import-template
+func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
+	headers := []string{"nama", "barcode", "kategori", "harga_beli", "harga_jual", "stok", "stok_minimum", "satuan"}
+	example := []interface{}{"Contoh Produk A", "PROD-00001", "Minuman", 5000, 7000, 100, 10, "pcs"}
+
+	f := excelize.NewFile()
+	defer f.Close()
+
+	sheet := "Template"
+	f.SetSheetName("Sheet1", sheet)
+
+	// Header row
+	for col, h := range headers {
+		cell, _ := excelize.CoordinatesToCellName(col+1, 1)
+		f.SetCellValue(sheet, cell, h)
+	}
+
+	// Example row
+	for col, val := range example {
+		cell, _ := excelize.CoordinatesToCellName(col+1, 2)
+		f.SetCellValue(sheet, cell, val)
+	}
+
+	// Style header: bold + background
+	style, _ := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{Bold: true},
+		Fill: excelize.Fill{Type: "pattern", Color: []string{"#E2EFDA"}, Pattern: 1},
+	})
+	f.SetCellStyle(sheet, "A1", "H1", style)
+
+	// Set column widths
+	for col := range headers {
+		colName, _ := excelize.ColumnNumberToName(col + 1)
+		f.SetColWidth(sheet, colName, colName, 18)
+	}
+
+	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	c.Header("Content-Disposition", "attachment; filename=template_import_produk.xlsx")
+
+	if err := f.Write(c.Writer); err != nil {
+		c.Error(&errors.InternalServerError{Message: "Gagal generate template"})
+	}
 }
 
 // PUT /api/products/:id
