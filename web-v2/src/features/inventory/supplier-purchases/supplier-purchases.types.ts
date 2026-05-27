@@ -54,8 +54,8 @@ export interface SupplierPurchaseFilter {
 
 export interface SupplierPurchasePayment {
   amount: number
-  payment_date?: string
-  payment_method?: string
+  payment_date: string
+  payment_method: string
   notes?: string
 }
 
@@ -75,4 +75,5 @@ export interface CreateSupplierPurchasePayload {
   notes?: string
   payment_status: PaymentStatus
   paid_amount: number
+  payment_method?: string
 }

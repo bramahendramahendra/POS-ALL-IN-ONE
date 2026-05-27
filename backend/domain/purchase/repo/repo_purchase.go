@@ -254,7 +254,20 @@ func (r *purchaseRepo) Create(req *dto_purchase.PurchaseRequest, userID int) (*d
 			return err
 		}
 
-		// 4. Loop items
+		// 4. Catat pembayaran awal jika ada
+		if paidAmount > 0 {
+			paymentDate := req.PurchaseDate
+			if paymentDate == "" {
+				paymentDate = time.Now().Format("2006-01-02")
+			}
+			if err := tx.Exec(createPaymentQuery,
+				purchaseID, paymentDate, paidAmount, req.PaymentMethod, req.Notes, userID,
+			).Error; err != nil {
+				return err
+			}
+		}
+
+		// 5. Loop items
 		for _, item := range req.Items {
 			subtotal := item.PurchasePrice * item.Quantity
 

@@ -14,14 +14,15 @@ type PurchaseRequest struct {
 	DiscountAmount float64               `json:"discount_amount"`
 	PaymentStatus  string                `json:"payment_status"`
 	PaidAmount     float64               `json:"paid_amount"`
+	PaymentMethod  string                `json:"payment_method"`
 	Notes          string                `json:"notes"`
 	Items          []PurchaseItemRequest `json:"items" validate:"required,min=1,dive"`
 }
 
 type PayPurchaseRequest struct {
 	Amount        float64 `json:"amount" validate:"required,gt=0"`
-	PaymentDate   string  `json:"payment_date"`
-	PaymentMethod string  `json:"payment_method"`
+	PaymentDate   string  `json:"payment_date" validate:"required"`
+	PaymentMethod string  `json:"payment_method" validate:"required"`
 	Notes         string  `json:"notes"`
 }
 

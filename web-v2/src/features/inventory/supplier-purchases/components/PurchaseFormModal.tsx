@@ -21,11 +21,17 @@ import { formatRupiah } from '@/shared/utils'
 import { RupiahInput } from '@/shared/components/ui/rupiah-input'
 import { useSupplierListQuery } from '@/features/inventory/suppliers/suppliers.api'
 import { useProductListQuery } from '@/features/inventory/products/products.api'
-
 import { useCreateSupplierPurchaseMutation, useGeneratePurchaseCodeQuery } from '../supplier-purchases.api'
 import { usePaymentStatusesQuery } from '../payment-statuses.api'
 import type { PaymentStatus } from '../supplier-purchases.types'
 import type { Product } from '@/features/inventory/products/products.types'
+
+const PAYMENT_METHODS = [
+  { value: 'tunai',    label: 'Tunai' },
+  { value: 'transfer', label: 'Transfer Bank' },
+  { value: 'debit',   label: 'Kartu Debit' },
+  { value: 'qris',    label: 'QRIS' },
+]
 
 interface PurchaseFormModalProps {
   open: boolean
@@ -48,6 +54,7 @@ const schema = z.object({
   notes: z.string().optional(),
   payment_status: z.enum(['paid', 'unpaid', 'partial']),
   paid_amount: z.number().nonnegative(),
+  payment_method: z.string().optional(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -65,6 +72,7 @@ const defaultValues: FormValues = {
   notes: '',
   payment_status: 'paid',
   paid_amount: 0,
+  payment_method: 'tunai',
 }
 
 export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps) {
@@ -342,6 +350,27 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
                     />
                   )}
                 />
+              </div>
+            )}
+
+            {watchPaymentStatus !== 'unpaid' && (
+              <div className="space-y-1.5">
+                <Label>Metode Pembayaran</Label>
+                <Select
+                  defaultValue="tunai"
+                  onValueChange={(v) => setValue('payment_method', v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih metode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_METHODS.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>
+                        {m.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
           </div>
