@@ -19,6 +19,7 @@ import {
 import { formatRupiah } from '@/shared/utils'
 
 import { usePaySupplierPurchaseMutation } from '../supplier-purchases.api'
+import { usePaymentMethodsQuery } from '../payment-methods.api'
 import type { SupplierPurchase } from '../supplier-purchases.types'
 
 interface PaymentModalProps {
@@ -26,13 +27,6 @@ interface PaymentModalProps {
   onOpenChange: (open: boolean) => void
   purchase: SupplierPurchase | null
 }
-
-const PAYMENT_METHODS = [
-  { value: 'tunai',    label: 'Tunai' },
-  { value: 'transfer', label: 'Transfer Bank' },
-  { value: 'debit',   label: 'Kartu Debit' },
-  { value: 'qris',    label: 'QRIS' },
-]
 
 const paymentSchema = z.object({
   amount:         z.number({ error: 'Jumlah wajib diisi' }).positive('Jumlah harus lebih dari 0'),
@@ -49,6 +43,7 @@ function todayString() {
 
 export function PaymentModal({ open, onOpenChange, purchase }: PaymentModalProps) {
   const { mutate: pay, isPending } = usePaySupplierPurchaseMutation(purchase?.id ?? 0)
+  const { data: paymentMethods = [] } = usePaymentMethodsQuery()
 
   const {
     register,
@@ -165,8 +160,8 @@ export function PaymentModal({ open, onOpenChange, purchase }: PaymentModalProps
                 <SelectValue placeholder="Pilih metode" />
               </SelectTrigger>
               <SelectContent>
-                {PAYMENT_METHODS.map((m) => (
-                  <SelectItem key={m.value} value={m.value}>
+                {paymentMethods.map((m) => (
+                  <SelectItem key={m.code} value={m.code}>
                     {m.label}
                   </SelectItem>
                 ))}

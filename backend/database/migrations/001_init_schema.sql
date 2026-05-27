@@ -194,6 +194,22 @@ INSERT IGNORE INTO payment_statuses (code, label, is_active, sort_order) VALUES
     ('partial', 'Bayar Sebagian', 1, 2),
     ('paid',    'Lunas',          1, 3);
 
+CREATE TABLE IF NOT EXISTS payment_methods (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    code       VARCHAR(30)  NOT NULL UNIQUE,
+    label      VARCHAR(50)  NOT NULL,
+    is_active  TINYINT(1)   NOT NULL DEFAULT 1,
+    sort_order INT          NOT NULL DEFAULT 0,
+    created_at DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) DEFAULT CHARSET=utf8mb4;
+
+INSERT IGNORE INTO payment_methods (code, label, is_active, sort_order) VALUES
+    ('tunai',    'Tunai',         1, 1),
+    ('transfer', 'Transfer Bank', 1, 2),
+    ('debit',    'Kartu Debit',   1, 3),
+    ('qris',     'QRIS',          1, 4);
+
 CREATE TABLE IF NOT EXISTS purchases (
     id               INT AUTO_INCREMENT PRIMARY KEY,
     purchase_code    VARCHAR(50)   UNIQUE NOT NULL,

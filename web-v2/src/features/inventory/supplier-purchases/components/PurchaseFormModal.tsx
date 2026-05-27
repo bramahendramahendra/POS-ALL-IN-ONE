@@ -23,15 +23,9 @@ import { useSupplierListQuery } from '@/features/inventory/suppliers/suppliers.a
 import { useProductListQuery } from '@/features/inventory/products/products.api'
 import { useCreateSupplierPurchaseMutation, useGeneratePurchaseCodeQuery } from '../supplier-purchases.api'
 import { usePaymentStatusesQuery } from '../payment-statuses.api'
+import { usePaymentMethodsQuery } from '../payment-methods.api'
 import type { PaymentStatus } from '../supplier-purchases.types'
 import type { Product } from '@/features/inventory/products/products.types'
-
-const PAYMENT_METHODS = [
-  { value: 'tunai',    label: 'Tunai' },
-  { value: 'transfer', label: 'Transfer Bank' },
-  { value: 'debit',   label: 'Kartu Debit' },
-  { value: 'qris',    label: 'QRIS' },
-]
 
 interface PurchaseFormModalProps {
   open: boolean
@@ -84,6 +78,7 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
   const { mutate: create, isPending } = useCreateSupplierPurchaseMutation()
   const { data: codeData, isFetching: isGeneratingCode } = useGeneratePurchaseCodeQuery(open)
   const { data: paymentStatuses = [] } = usePaymentStatusesQuery()
+  const { data: paymentMethods = [] } = usePaymentMethodsQuery()
 
   const {
     register,
@@ -364,8 +359,8 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
                     <SelectValue placeholder="Pilih metode" />
                   </SelectTrigger>
                   <SelectContent>
-                    {PAYMENT_METHODS.map((m) => (
-                      <SelectItem key={m.value} value={m.value}>
+                    {paymentMethods.map((m) => (
+                      <SelectItem key={m.code} value={m.code}>
                         {m.label}
                       </SelectItem>
                     ))}
