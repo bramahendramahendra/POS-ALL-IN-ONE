@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Pencil, Plus, Trash2 } from 'lucide-react'
+import { Lock, Pencil, Plus, Trash2, Unlock } from 'lucide-react'
 
 import { ConfirmDialog, FormModal } from '@/shared/components'
 import { Button } from '@/shared/components/ui/button'
@@ -199,6 +199,7 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
 
   const [isConfirming, setIsConfirming] = useState(false)
   const [pendingValues, setPendingValues] = useState<ProductFormValues | null>(null)
+  const [barcodeLocked, setBarcodeLocked] = useState(true)
 
   const { data: detailData, isLoading: isLoadingDetail } = useProductDetailQuery(
     isEdit && open ? (productId as number) : 0
@@ -289,6 +290,7 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
       setEditingGrosirIdx(null)
       setPendingValues(null)
       setIsConfirming(false)
+      setBarcodeLocked(true)
     }
   }, [open, reset])
 
@@ -453,14 +455,26 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
                       Barcode <span className="text-red-500">*</span>
                     </Label>
                     <div className="flex gap-1.5">
-                      <Input
-                        id="barcode"
-                        {...register('barcode')}
-                        readOnly
-                        placeholder={isEdit ? '' : 'Klik Generate'}
-                        className={`bg-gray-50 text-gray-700 ${errors.barcode ? 'border-red-500' : ''}`}
-                      />
-                      {!isEdit && (
+                      <div className="relative flex-1">
+                        <Input
+                          id="barcode"
+                          {...register('barcode')}
+                          readOnly={barcodeLocked}
+                          placeholder={isEdit ? '' : (barcodeLocked ? 'Klik 🔓 untuk edit manual' : 'Ketik barcode manual')}
+                          className={`pr-9 ${barcodeLocked ? 'bg-gray-50 text-gray-700' : ''} ${errors.barcode ? 'border-red-500' : ''}`}
+                        />
+                        {!isEdit && (
+                          <button
+                            type="button"
+                            onClick={() => setBarcodeLocked((v) => !v)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            title={barcodeLocked ? 'Klik untuk edit manual' : 'Kunci barcode'}
+                          >
+                            {barcodeLocked ? <Lock size={14} /> : <Unlock size={14} />}
+                          </button>
+                        )}
+                      </div>
+                      {!isEdit && barcodeLocked && (
                         <button
                           type="button"
                           disabled={isFetchingBarcode}
