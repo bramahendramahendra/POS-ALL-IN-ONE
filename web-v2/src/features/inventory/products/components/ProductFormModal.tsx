@@ -249,18 +249,21 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
   useEffect(() => {
     const barcode = barcodeData?.barcode
     if (barcode) setValue('barcode', barcode)
-  }, [barcodeData, setValue])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [barcodeData])
 
   useEffect(() => {
     const sku = skuData?.sku
     if (sku && generateSkuEnabled) setValue('sku', sku)
-  }, [skuData, generateSkuEnabled, setValue])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [skuData, generateSkuEnabled])
 
   useEffect(() => {
     if (isEdit && detailData) {
       reset(mapProductToForm(detailData))
     }
-  }, [detailData, isEdit, reset])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detailData, isEdit])
 
   useEffect(() => {
     if (isEdit && existingUnits.length > 0) {
@@ -292,7 +295,8 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
       setIsConfirming(false)
       setBarcodeLocked(true)
     }
-  }, [open, reset])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   const onSubmit = (values: ProductFormValues) => {
     setPendingValues(values)

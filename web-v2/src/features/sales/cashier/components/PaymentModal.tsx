@@ -316,12 +316,16 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                       id="amount-paid"
                       type="number"
                       min={0}
-                      {...register('amount_paid', { valueAsNumber: true })}
-                      ref={(el) => {
-                        register('amount_paid').ref(el)
-                        ;(amountInputRef as React.MutableRefObject<HTMLInputElement | null>).current =
-                          el
-                      }}
+                      {...(() => {
+                        const { ref: registerRef, ...rest } = register('amount_paid', { valueAsNumber: true })
+                        return {
+                          ...rest,
+                          ref: (el: HTMLInputElement | null) => {
+                            registerRef(el)
+                            ;(amountInputRef as React.MutableRefObject<HTMLInputElement | null>).current = el
+                          },
+                        }
+                      })()}
                       className={`text-right text-lg h-11 ${errors.amount_paid ? 'border-red-500' : ''}`}
                       placeholder="0"
                     />

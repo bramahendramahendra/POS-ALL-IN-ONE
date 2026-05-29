@@ -185,7 +185,7 @@ export function ReturnFormModal({ open, onOpenChange }: ReturnFormModalProps) {
                       </span>
                     )}
                     <span className="w-24 text-right font-medium">
-                      {formatRupiah(item.price * (sel?.quantity ?? item.quantity))}
+                      {formatRupiah(item.purchase_price * (sel?.quantity ?? item.quantity))}
                     </span>
                   </div>
                 )
