@@ -1,6 +1,7 @@
 package handler_product
 
 import (
+	"fmt"
 	"path/filepath"
 	"strconv"
 
@@ -237,7 +238,7 @@ func (h *ProductHandler) ImportBulk(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.ImportBulk(req.Rows)
+	result, err := h.service.ImportBulk(req)
 	if err != nil {
 		c.Error(err)
 		return
@@ -253,38 +254,135 @@ func (h *ProductHandler) ImportBulk(c *gin.Context) {
 
 // GET /api/products/import-template
 func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
-	headers := []string{"nama", "barcode", "kategori", "harga_beli", "harga_jual", "stok", "stok_minimum", "satuan"}
-	example := []interface{}{"Contoh Produk A", "PROD-00001", "Minuman", 5000, 7000, 100, 10, "pcs"}
+	categoryNames, err := h.service.GetCategoryNames()
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	unitNames, err := h.service.GetUnitNames()
+	if err != nil {
+		c.Error(err)
+		return
+	}
 
 	f := excelize.NewFile()
 	defer f.Close()
 
-	sheet := "Template"
-	f.SetSheetName("Sheet1", sheet)
+	// ── Sheet 1: Produk ──────────────────────────────────────────────────────
+	sheetProduk := "Produk"
+	f.SetSheetName("Sheet1", sheetProduk)
 
-	// Header row
-	for col, h := range headers {
+	prodHeaders := []string{"no", "nama", "deskripsi", "barcode", "kategori", "harga_beli", "harga_jual", "stok", "stok_minimum", "satuan"}
+	prodExample := []interface{}{1, "Contoh Produk A", "Deskripsi opsional", "", "Minuman", 5000, 7000, 100, 10, "pcs"}
+
+	headerStyle, _ := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{Bold: true, Color: "#FFFFFF"},
+		Fill: excelize.Fill{Type: "pattern", Color: []string{"#4472C4"}, Pattern: 1},
+	})
+	noteStyle, _ := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{Italic: true, Color: "#7F7F7F", Size: 9},
+	})
+
+	for col, h := range prodHeaders {
 		cell, _ := excelize.CoordinatesToCellName(col+1, 1)
-		f.SetCellValue(sheet, cell, h)
+		f.SetCellValue(sheetProduk, cell, h)
 	}
-
-	// Example row
-	for col, val := range example {
+	for col, val := range prodExample {
 		cell, _ := excelize.CoordinatesToCellName(col+1, 2)
-		f.SetCellValue(sheet, cell, val)
+		f.SetCellValue(sheetProduk, cell, val)
+	}
+	f.SetCellStyle(sheetProduk, "A1", "J1", headerStyle)
+
+	// Note baris 3
+	f.SetCellValue(sheetProduk, "A3", "* no: nomor unik dalam file ini (dipakai sheet Grosir). barcode & deskripsi opsional.")
+	f.SetCellStyle(sheetProduk, "A3", "J3", noteStyle)
+	f.MergeCell(sheetProduk, "A3", "J3")
+
+	prodColWidths := map[string]float64{
+		"A": 6, "B": 24, "C": 28, "D": 18, "E": 20,
+		"F": 14, "G": 14, "H": 10, "I": 14, "J": 14,
+	}
+	for col, w := range prodColWidths {
+		f.SetColWidth(sheetProduk, col, col, w)
 	}
 
-	// Style header: bold + background
-	style, _ := f.NewStyle(&excelize.Style{
+	// Dropdown kategori (kolom E) referensi Sheet3!$A$2:$A$N
+	if len(categoryNames) > 0 {
+		lastCatRow := len(categoryNames) + 1
+		catRef := fmt.Sprintf("Kategori!$A$2:$A$%d", lastCatRow)
+		dv := excelize.NewDataValidation(true)
+		dv.Sqref = "E2:E1000"
+		dv.SetDropList([]string{catRef})
+		dv.ShowDropDown = true
+		f.AddDataValidation(sheetProduk, dv)
+	}
+
+	// Dropdown satuan (kolom J) referensi Sheet4!$A$2:$A$N
+	if len(unitNames) > 0 {
+		lastUnitRow := len(unitNames) + 1
+		unitRef := fmt.Sprintf("Satuan!$A$2:$A$%d", lastUnitRow)
+		dv2 := excelize.NewDataValidation(true)
+		dv2.Sqref = "J2:J1000"
+		dv2.SetDropList([]string{unitRef})
+		dv2.ShowDropDown = true
+		f.AddDataValidation(sheetProduk, dv2)
+	}
+
+	// ── Sheet 2: Grosir ──────────────────────────────────────────────────────
+	sheetGrosir := "Grosir"
+	f.NewSheet(sheetGrosir)
+
+	grosirHeaders := []string{"no_produk", "nama_paket", "konversi", "harga_beli", "harga_jual"}
+	grosirExample := []interface{}{1, "Dus (12 pcs)", 12, 55000, 75000}
+
+	for col, h := range grosirHeaders {
+		cell, _ := excelize.CoordinatesToCellName(col+1, 1)
+		f.SetCellValue(sheetGrosir, cell, h)
+	}
+	for col, val := range grosirExample {
+		cell, _ := excelize.CoordinatesToCellName(col+1, 2)
+		f.SetCellValue(sheetGrosir, cell, val)
+	}
+	f.SetCellStyle(sheetGrosir, "A1", "E1", headerStyle)
+
+	f.SetCellValue(sheetGrosir, "A3", "* no_produk: isi dengan nilai kolom 'no' dari sheet Produk. Satu produk bisa punya banyak paket grosir.")
+	f.SetCellStyle(sheetGrosir, "A3", "E3", noteStyle)
+	f.MergeCell(sheetGrosir, "A3", "E3")
+
+	for _, col := range []string{"A", "B", "C", "D", "E"} {
+		f.SetColWidth(sheetGrosir, col, col, 20)
+	}
+
+	// ── Sheet 3: Kategori ────────────────────────────────────────────────────
+	sheetKategori := "Kategori"
+	f.NewSheet(sheetKategori)
+	f.SetCellValue(sheetKategori, "A1", "nama_kategori")
+
+	catHeaderStyle, _ := f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{Bold: true},
 		Fill: excelize.Fill{Type: "pattern", Color: []string{"#E2EFDA"}, Pattern: 1},
 	})
-	f.SetCellStyle(sheet, "A1", "H1", style)
+	f.SetCellStyle(sheetKategori, "A1", "A1", catHeaderStyle)
+	for i, name := range categoryNames {
+		cell, _ := excelize.CoordinatesToCellName(1, i+2)
+		f.SetCellValue(sheetKategori, cell, name)
+	}
+	f.SetColWidth(sheetKategori, "A", "A", 24)
 
-	// Set column widths
-	for col := range headers {
-		colName, _ := excelize.ColumnNumberToName(col + 1)
-		f.SetColWidth(sheet, colName, colName, 18)
+	// ── Sheet 4: Satuan ──────────────────────────────────────────────────────
+	sheetSatuan := "Satuan"
+	f.NewSheet(sheetSatuan)
+	f.SetCellValue(sheetSatuan, "A1", "nama_satuan")
+	f.SetCellStyle(sheetSatuan, "A1", "A1", catHeaderStyle)
+	for i, name := range unitNames {
+		cell, _ := excelize.CoordinatesToCellName(1, i+2)
+		f.SetCellValue(sheetSatuan, cell, name)
+	}
+	f.SetColWidth(sheetSatuan, "A", "A", 20)
+
+	// Aktifkan sheet Produk saat dibuka
+	if idx, err := f.GetSheetIndex(sheetProduk); err == nil {
+		f.SetActiveSheet(idx)
 	}
 
 	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")

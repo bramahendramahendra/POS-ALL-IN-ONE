@@ -12,18 +12,50 @@ import (
 	dto_product "pos_api/domain/product/dto"
 	model_product "pos_api/domain/product/model"
 	repo_product "pos_api/domain/product/repo"
+	repo_unit "pos_api/domain/product_unit/repo"
 	"pos_api/errors"
 
 	"github.com/xuri/excelize/v2"
 )
 
 type productService struct {
-	repo    repo_product.ProductRepo
-	catRepo repo_category.CategoryRepo
+	repo           repo_product.ProductRepo
+	catRepo        repo_category.CategoryRepo
+	unitRepo       repo_product.ProductUnitRepo
+	masterUnitRepo repo_unit.UnitRepo
 }
 
-func NewProductService(repo repo_product.ProductRepo, catRepo repo_category.CategoryRepo) ProductService {
-	return &productService{repo: repo, catRepo: catRepo}
+func NewProductService(
+	repo repo_product.ProductRepo,
+	catRepo repo_category.CategoryRepo,
+	unitRepo repo_product.ProductUnitRepo,
+	masterUnitRepo repo_unit.UnitRepo,
+) ProductService {
+	return &productService{repo: repo, catRepo: catRepo, unitRepo: unitRepo, masterUnitRepo: masterUnitRepo}
+}
+
+func (s *productService) GetCategoryNames() ([]string, error) {
+	cats, err := s.catRepo.GetAll()
+	if err != nil {
+		return nil, &errors.InternalServerError{Message: err.Error()}
+	}
+	names := make([]string, 0, len(cats))
+	for _, c := range cats {
+		names = append(names, c.Name)
+	}
+	return names, nil
+}
+
+func (s *productService) GetUnitNames() ([]string, error) {
+	units, err := s.masterUnitRepo.GetActive()
+	if err != nil {
+		return nil, &errors.InternalServerError{Message: err.Error()}
+	}
+	names := make([]string, 0, len(units))
+	for _, u := range units {
+		names = append(names, u.Name)
+	}
+	return names, nil
 }
 
 func (s *productService) GetAll(filter *dto_product.ProductFilter) ([]*dto_product.ProductResponse, int, error) {
@@ -358,13 +390,16 @@ func (s *productService) ImportFromFile(file *multipart.FileHeader) (*dto_produc
 	return result, nil
 }
 
-func (s *productService) ImportBulk(rows []dto_product.BulkImportRow) (*dto_product.BulkImportResult, error) {
+func (s *productService) ImportBulk(bulkReq dto_product.BulkImportRequest) (*dto_product.BulkImportResult, error) {
 	result := &dto_product.BulkImportResult{
 		Failed: []dto_product.BulkImportFailed{},
 	}
 
-	for i, row := range rows {
-		rowNum := i + 2 // baris Excel dimulai dari 2 (baris 1 = header)
+	// noToProductID maps the Excel row "no" to the saved product ID for grosir cross-reference
+	noToProductID := make(map[int]int)
+
+	for i, row := range bulkReq.Rows {
+		rowNum := i + 2
 
 		addFailed := func(alasan string) {
 			result.Failed = append(result.Failed, dto_product.BulkImportFailed{
@@ -413,7 +448,15 @@ func (s *productService) ImportBulk(rows []dto_product.BulkImportRow) (*dto_prod
 			}
 		}
 
-		if req.Barcode != "" {
+		// Auto-generate barcode jika kosong
+		if req.Barcode == "" {
+			gen, err := s.GenerateBarcode()
+			if err != nil {
+				addFailed("Gagal generate barcode")
+				continue
+			}
+			req.Barcode = gen.Barcode
+		} else {
 			exists, err := s.repo.CheckBarcodeExists(req.Barcode, 0)
 			if err != nil {
 				addFailed("Gagal memeriksa barcode")
@@ -425,12 +468,42 @@ func (s *productService) ImportBulk(rows []dto_product.BulkImportRow) (*dto_prod
 			}
 		}
 
-		if _, err := s.repo.Create(req); err != nil {
+		// Auto-generate SKU dari kategori
+		if req.CategoryID != nil {
+			skuResp, err := s.GenerateSku(*req.CategoryID)
+			if err == nil {
+				req.SKU = skuResp.SKU
+			}
+		}
+
+		productID, err := s.repo.Create(req)
+		if err != nil {
 			addFailed("Gagal menyimpan produk")
 			continue
 		}
 
+		if row.No > 0 {
+			noToProductID[row.No] = int(productID)
+		}
 		result.Success++
+	}
+
+	// Proses grosir/extra units
+	for _, g := range bulkReq.Grosir {
+		productID, ok := noToProductID[g.NoProduk]
+		if !ok {
+			continue
+		}
+		units := []dto_product.ProductUnitRequest{
+			{
+				UnitName:      strings.TrimSpace(g.NamaPaket),
+				ConversionQty: g.Konversi,
+				PurchasePrice: g.HargaBeli,
+				SellingPrice:  g.HargaJual,
+				IsDefault:     false,
+			},
+		}
+		_ = s.unitRepo.Save(productID, units)
 	}
 
 	return result, nil

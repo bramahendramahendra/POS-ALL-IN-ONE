@@ -18,7 +18,7 @@ export function validateImportRow(row: unknown): { valid: boolean; errors: strin
   const kategori = String(r['kategori'] ?? '').trim()
 
   if (!nama) errors.push('Nama produk wajib diisi')
-  if (!barcode) errors.push('Barcode wajib diisi')
+  if (!barcode) warnings.push('Barcode kosong — akan di-generate otomatis')
   if (hargaJual <= 0) errors.push('Harga jual harus lebih dari 0')
   if (hargaJual < hargaBeli) errors.push('Harga jual tidak boleh lebih rendah dari harga beli')
   if (!satuan) errors.push('Satuan wajib diisi')

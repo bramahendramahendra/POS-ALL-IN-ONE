@@ -5,6 +5,7 @@ import (
 	product_handler "pos_api/domain/product/handler"
 	product_repo "pos_api/domain/product/repo"
 	product_service "pos_api/domain/product/service"
+	unit_repo "pos_api/domain/product_unit/repo"
 	middleware "pos_api/middleware"
 	pkgdatabase "pos_api/pkg/database"
 
@@ -15,10 +16,10 @@ func ProductRoutes(r *gin.RouterGroup) {
 	categoryRepo := product_category_repo.NewCategoryRepo(pkgdatabase.DB)
 
 	productRepo := product_repo.NewProductRepo(pkgdatabase.DB)
-	productSvc := product_service.NewProductService(productRepo, categoryRepo)
-	productHand := product_handler.NewProductHandler(productSvc)
-
 	productUnitRepo := product_repo.NewProductUnitRepo(pkgdatabase.DB)
+	masterUnitRepo := unit_repo.NewUnitRepo(pkgdatabase.DB)
+	productSvc := product_service.NewProductService(productRepo, categoryRepo, productUnitRepo, masterUnitRepo)
+	productHand := product_handler.NewProductHandler(productSvc)
 	productUnitSvc := product_service.NewProductUnitService(productUnitRepo, productRepo)
 	productUnitHand := product_handler.NewProductUnitHandler(productUnitSvc)
 

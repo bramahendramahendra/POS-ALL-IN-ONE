@@ -66,11 +66,14 @@ type ImportErrorDetail struct {
 }
 
 type BulkImportRequest struct {
-	Rows []BulkImportRow `json:"rows"`
+	Rows   []BulkImportRow   `json:"rows"`
+	Grosir []GrosirImportRow `json:"grosir"`
 }
 
 type BulkImportRow struct {
+	No          int     `json:"no"`
 	Nama        string  `json:"nama"`
+	Deskripsi   string  `json:"deskripsi"`
 	Barcode     string  `json:"barcode"`
 	Kategori    string  `json:"kategori"`
 	HargaBeli   float64 `json:"harga_beli"`
@@ -78,6 +81,14 @@ type BulkImportRow struct {
 	Stok        float64 `json:"stok"`
 	StokMinimum float64 `json:"stok_minimum"`
 	Satuan      string  `json:"satuan"`
+}
+
+type GrosirImportRow struct {
+	NoProduk   int     `json:"no_produk"`
+	NamaPaket  string  `json:"nama_paket"`
+	Konversi   float64 `json:"konversi"`
+	HargaBeli  float64 `json:"harga_beli"`
+	HargaJual  float64 `json:"harga_jual"`
 }
 
 type BulkImportResult struct {

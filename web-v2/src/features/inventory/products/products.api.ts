@@ -26,7 +26,9 @@ import type {
 // ─── Import ───────────────────────────────────────────────────────────────────
 
 export interface ImportBulkRow {
+  no: number
   nama: string
+  deskripsi: string
   barcode: string
   kategori: string
   harga_beli: number
@@ -36,16 +38,29 @@ export interface ImportBulkRow {
   satuan: string
 }
 
+export interface GrosirImportRow {
+  no_produk: number
+  nama_paket: string
+  konversi: number
+  harga_beli: number
+  harga_jual: number
+}
+
 interface ImportBulkResult {
   success: number
   failed: { baris: number; data: ImportBulkRow; alasan: string }[]
 }
 
+export interface ImportBulkPayload {
+  rows: ImportBulkRow[]
+  grosir: GrosirImportRow[]
+}
+
 export function useImportProductsBulkMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (rows: ImportBulkRow[]) =>
-      api.post<ImportBulkResult>('/products/import-bulk', { rows }),
+    mutationFn: (payload: ImportBulkPayload) =>
+      api.post<ImportBulkResult>('/products/import-bulk', payload),
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: queryKeys.products.all() })
       const result = data as unknown as ImportBulkResult
