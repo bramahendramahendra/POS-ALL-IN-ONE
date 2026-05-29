@@ -67,12 +67,16 @@ function parseRows(rawRows: Record<string, unknown>[]): ParsedRow[] {
 
 function parseGrosirRows(rawRows: Record<string, unknown>[], validNos: Set<number>): ParsedGrosirRow[] {
   return rawRows.map((raw, i) => {
+    const refBeli = raw['ref_harga_beli'] !== '' ? Number(raw['ref_harga_beli']) : undefined
+    const refJual = raw['ref_harga_jual'] !== '' ? Number(raw['ref_harga_jual']) : undefined
     const data: GrosirImportRow = {
       no_produk: Number(raw['no_produk'] ?? 0),
       nama_paket: String(raw['nama_paket'] ?? '').trim(),
       konversi: Number(raw['konversi'] ?? 0),
       harga_beli: Number(raw['harga_beli'] ?? 0),
       harga_jual: Number(raw['harga_jual'] ?? 0),
+      ref_harga_beli: !isNaN(refBeli!) ? refBeli : undefined,
+      ref_harga_jual: !isNaN(refJual!) ? refJual : undefined,
     }
 
     const errors: string[] = []
@@ -91,12 +95,16 @@ function parseXlsx(buffer: ArrayBuffer): { produk: Record<string, unknown>[]; gr
 
   const sheetProduk = wb.Sheets['Produk'] ?? wb.Sheets[wb.SheetNames[0]]
   const produk = sheetProduk
-    ? XLSX.utils.sheet_to_json<Record<string, unknown>>(sheetProduk, { defval: '' })
+    ? XLSX.utils.sheet_to_json<Record<string, unknown>>(sheetProduk, { defval: '' }).filter(
+        (raw) => Number(raw['no']) > 0
+      )
     : []
 
   const sheetGrosir = wb.Sheets['Grosir'] ?? wb.Sheets[wb.SheetNames[1]]
   const grosir = sheetGrosir
-    ? XLSX.utils.sheet_to_json<Record<string, unknown>>(sheetGrosir, { defval: '' })
+    ? XLSX.utils.sheet_to_json<Record<string, unknown>>(sheetGrosir, { defval: '' }).filter(
+        (raw) => Number(raw['no_produk']) > 0
+      )
     : []
 
   return { produk, grosir }
@@ -380,6 +388,8 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
                       {h}
                     </th>
                   ))}
+                  <th className="px-2 py-2 text-left font-medium text-gray-400 whitespace-nowrap bg-gray-100">Ref H.Beli</th>
+                  <th className="px-2 py-2 text-left font-medium text-gray-400 whitespace-nowrap bg-gray-100">Ref H.Jual</th>
                 </tr>
               </thead>
               <tbody>
@@ -392,6 +402,12 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
                       <td className="px-2 py-1.5 text-right">{row.data.konversi}</td>
                       <td className="px-2 py-1.5 text-right">{row.data.harga_beli.toLocaleString('id-ID')}</td>
                       <td className="px-2 py-1.5 text-right">{row.data.harga_jual.toLocaleString('id-ID')}</td>
+                      <td className="px-2 py-1.5 text-right bg-gray-50 text-gray-400 italic">
+                        {row.data.ref_harga_beli != null ? row.data.ref_harga_beli.toLocaleString('id-ID') : '—'}
+                      </td>
+                      <td className="px-2 py-1.5 text-right bg-gray-50 text-gray-400 italic">
+                        {row.data.ref_harga_jual != null ? row.data.ref_harga_jual.toLocaleString('id-ID') : '—'}
+                      </td>
                       <td className="px-2 py-1.5">
                         {row.valid ? (
                           <span className="text-green-600 font-medium">✓</span>
@@ -402,7 +418,7 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
                     </tr>
                     {row.errors.length > 0 && (
                       <tr key={`${row.index}-detail`} className="bg-red-50">
-                        <td colSpan={7} className="px-2 pb-1.5 text-xs">
+                        <td colSpan={9} className="px-2 pb-1.5 text-xs">
                           <span className="text-red-600">↳ {row.errors.join(' · ')}</span>
                         </td>
                       </tr>

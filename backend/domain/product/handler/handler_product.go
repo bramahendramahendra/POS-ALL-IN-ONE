@@ -273,7 +273,7 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 	f.SetSheetName("Sheet1", sheetProduk)
 
 	prodHeaders := []string{"no", "nama", "deskripsi", "barcode", "kategori", "harga_beli", "harga_jual", "stok", "stok_minimum", "satuan"}
-	prodExample := []interface{}{1, "Contoh Produk A", "Deskripsi opsional", "", "Minuman", 5000, 7000, 100, 10, "pcs"}
+	prodExample := []interface{}{0, "Contoh Produk A", "Deskripsi opsional", "", "Minuman", 5000, 7000, 100, 10, "pcs"}
 
 	headerStyle, _ := f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{Bold: true, Color: "#FFFFFF"},
@@ -332,8 +332,17 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 	sheetGrosir := "Grosir"
 	f.NewSheet(sheetGrosir)
 
-	grosirHeaders := []string{"no_produk", "nama_paket", "konversi", "harga_beli", "harga_jual"}
-	grosirExample := []interface{}{1, "Dus (12 pcs)", 12, 55000, 75000}
+	grosirHeaders := []string{"no_produk", "nama_paket", "konversi", "harga_beli", "harga_jual", "ref_harga_beli", "ref_harga_jual"}
+	grosirExample := []interface{}{0, "Dus (12 pcs)", 12, 55000, 75000}
+
+	refHeaderStyle, _ := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{Bold: true, Color: "#FFFFFF"},
+		Fill: excelize.Fill{Type: "pattern", Color: []string{"#808080"}, Pattern: 1},
+	})
+	refCellStyle, _ := f.NewStyle(&excelize.Style{
+		Fill: excelize.Fill{Type: "pattern", Color: []string{"#F2F2F2"}, Pattern: 1},
+		Font: &excelize.Font{Color: "#7F7F7F"},
+	})
 
 	for col, h := range grosirHeaders {
 		cell, _ := excelize.CoordinatesToCellName(col+1, 1)
@@ -343,15 +352,29 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 		cell, _ := excelize.CoordinatesToCellName(col+1, 2)
 		f.SetCellValue(sheetGrosir, cell, val)
 	}
+	// Header: kolom input biru, kolom ref abu-abu
 	f.SetCellStyle(sheetGrosir, "A1", "E1", headerStyle)
+	f.SetCellStyle(sheetGrosir, "F1", "G1", refHeaderStyle)
+
+	// Formula VLOOKUP ref untuk baris data (2–501)
+	f.SetCellStyle(sheetGrosir, "F2", "G501", refCellStyle)
+	for row := 2; row <= 501; row++ {
+		cellA, _ := excelize.CoordinatesToCellName(1, row)
+		cellF, _ := excelize.CoordinatesToCellName(6, row)
+		cellG, _ := excelize.CoordinatesToCellName(7, row)
+		cellC, _ := excelize.CoordinatesToCellName(3, row)
+		f.SetCellFormula(sheetGrosir, cellF, fmt.Sprintf(`IFERROR(VLOOKUP(%s,Produk!$A:$J,6,0)*%s,"")`, cellA, cellC))
+		f.SetCellFormula(sheetGrosir, cellG, fmt.Sprintf(`IFERROR(VLOOKUP(%s,Produk!$A:$J,7,0)*%s,"")`, cellA, cellC))
+	}
 
 	f.SetCellValue(sheetGrosir, "A3", "* no_produk: isi dengan nilai kolom 'no' dari sheet Produk. Satu produk bisa punya banyak paket grosir.")
-	f.SetCellStyle(sheetGrosir, "A3", "E3", noteStyle)
-	f.MergeCell(sheetGrosir, "A3", "E3")
+	f.SetCellStyle(sheetGrosir, "A3", "G3", noteStyle)
+	f.MergeCell(sheetGrosir, "A3", "G3")
 
 	for _, col := range []string{"A", "B", "C", "D", "E"} {
 		f.SetColWidth(sheetGrosir, col, col, 20)
 	}
+	f.SetColWidth(sheetGrosir, "F", "G", 18)
 
 	// ── Sheet 3: Kategori ────────────────────────────────────────────────────
 	sheetKategori := "Kategori"

@@ -44,6 +44,8 @@ export interface GrosirImportRow {
   konversi: number
   harga_beli: number
   harga_jual: number
+  ref_harga_beli?: number
+  ref_harga_jual?: number
 }
 
 interface ImportBulkResult {
