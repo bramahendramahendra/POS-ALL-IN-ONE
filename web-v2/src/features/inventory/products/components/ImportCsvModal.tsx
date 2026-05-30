@@ -244,7 +244,7 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
             <table className="w-full">
               <thead className="sticky top-0 bg-gray-50">
                 <tr>
-                  {['No', 'Nama', 'Barcode', 'Kategori', 'H.Beli', 'H.Jual', 'Stok', 'Min', 'Satuan', 'Status'].map((h) => (
+                  {['No', 'Produk', 'Barcode', 'Kategori', 'H.Beli', 'H.Jual', 'Margin', 'Stok', 'Stok Min', 'Satuan', 'Status'].map((h) => (
                     <th key={h} className="px-2 py-2 text-left font-medium text-gray-600 whitespace-nowrap">
                       {h}
                     </th>
@@ -261,6 +261,19 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
                       <td className="px-2 py-1.5">{row.kategori || '—'}</td>
                       <td className="px-2 py-1.5 text-right">{row.harga_beli.toLocaleString('id-ID')}</td>
                       <td className="px-2 py-1.5 text-right">{row.harga_jual.toLocaleString('id-ID')}</td>
+                      <td className="px-2 py-1.5 text-center">
+                        <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-medium ${
+                          row.margin >= 30
+                            ? 'bg-green-100 text-green-700'
+                            : row.margin >= 15
+                              ? 'bg-amber-100 text-amber-700'
+                              : row.margin > 0
+                                ? 'bg-red-100 text-red-600'
+                                : 'bg-gray-100 text-gray-400'
+                        }`}>
+                          {row.margin}%
+                        </span>
+                      </td>
                       <td className="px-2 py-1.5 text-right">{row.stok}</td>
                       <td className="px-2 py-1.5 text-right">{row.stok_minimum}</td>
                       <td className="px-2 py-1.5">{row.satuan || '—'}</td>
@@ -274,7 +287,7 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
                     </tr>
                     {(row.errors.length > 0 || row.warnings.length > 0) && (
                       <tr className={row.errors.length > 0 ? 'bg-red-50' : 'bg-yellow-50'}>
-                        <td colSpan={10} className="px-2 pb-1.5 text-xs">
+                        <td colSpan={11} className="px-2 pb-1.5 text-xs">
                           {row.errors.length > 0 && (
                             <span className="text-red-600">↳ {row.errors.join(' · ')}</span>
                           )}
@@ -297,11 +310,12 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
             <table className="w-full">
               <thead className="sticky top-0 bg-gray-50">
                 <tr>
-                  {['No Produk', 'Nama Paket', 'Konversi', 'H.Beli', 'H.Jual', 'Status'].map((h) => (
-                    <th key={h} className="px-2 py-2 text-left font-medium text-gray-600 whitespace-nowrap">
-                      {h}
-                    </th>
-                  ))}
+                  <th className="px-2 py-2 text-left font-medium text-gray-600 whitespace-nowrap">No Produk</th>
+                  <th className="px-2 py-2 text-left font-medium text-gray-600 whitespace-nowrap">Nama Paket</th>
+                  <th className="px-2 py-2 text-left font-medium text-gray-600 whitespace-nowrap">Konversi</th>
+                  <th className="px-2 py-2 text-left font-medium text-gray-600 whitespace-nowrap">H.Beli</th>
+                  <th className="px-2 py-2 text-left font-medium text-gray-600 whitespace-nowrap">H.Jual</th>
+                  <th className="px-2 py-2 text-left font-medium text-gray-600 whitespace-nowrap">Status</th>
                 </tr>
               </thead>
               <tbody>

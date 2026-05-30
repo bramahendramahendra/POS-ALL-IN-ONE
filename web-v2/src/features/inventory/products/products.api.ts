@@ -33,6 +33,7 @@ export interface ImportPreviewRow {
   kategori: string
   harga_beli: number
   harga_jual: number
+  margin: number
   stok: number
   stok_minimum: number
   satuan: string

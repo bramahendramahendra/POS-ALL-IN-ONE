@@ -3,6 +3,7 @@ package service_product
 import (
 	"crypto/rand"
 	"fmt"
+	"math"
 	"math/big"
 	"mime/multipart"
 	"strconv"
@@ -586,16 +587,18 @@ func (s *productService) ImportPreview(file *multipart.FileHeader) (*dto_product
 		return v
 	}
 
-	colNo := colIdx(headerProduk, "no")
-	colNama := colIdx(headerProduk, "nama")
-	colDesc := colIdx(headerProduk, "deskripsi")
-	colBarcode := colIdx(headerProduk, "barcode")
-	colKategori := colIdx(headerProduk, "kategori")
-	colHargaBeli := colIdx(headerProduk, "harga_beli")
-	colHargaJual := colIdx(headerProduk, "harga_jual")
-	colStok := colIdx(headerProduk, "stok")
-	colStokMin := colIdx(headerProduk, "stok_minimum")
-	colSatuan := colIdx(headerProduk, "satuan")
+	// Urutan kolom: No, Produk, Deskripsi Produk, Barcode, Kategori, Harga Beli, Harga Jual, Margin(*), Stok, Stok Minimum, Satuan
+	// (*) Margin diabaikan — kolom formula, tidak dibaca
+	colNo := colIdx(headerProduk, "No")
+	colNama := colIdx(headerProduk, "Produk")
+	colDesc := colIdx(headerProduk, "Deskripsi Produk")
+	colBarcode := colIdx(headerProduk, "Barcode")
+	colKategori := colIdx(headerProduk, "Kategori")
+	colHargaBeli := colIdx(headerProduk, "Harga Beli")
+	colHargaJual := colIdx(headerProduk, "Harga Jual")
+	colStok := colIdx(headerProduk, "Stok")
+	colStokMin := colIdx(headerProduk, "Stok Minimum")
+	colSatuan := colIdx(headerProduk, "Satuan")
 
 	seenBarcodes := make(map[string]bool)
 	validNos := make(map[int]bool)
@@ -675,6 +678,11 @@ func (s *productService) ImportPreview(file *multipart.FileHeader) (*dto_product
 			validNos[no] = true
 		}
 
+		margin := 0
+		if hargaJual > 0 && hargaBeli >= 0 {
+			margin = int(math.Round(((hargaJual - hargaBeli) / hargaJual) * 100))
+		}
+
 		previewRows = append(previewRows, dto_product.ImportPreviewRow{
 			No:          no,
 			Nama:        nama,
@@ -683,6 +691,7 @@ func (s *productService) ImportPreview(file *multipart.FileHeader) (*dto_product
 			Kategori:    kategori,
 			HargaBeli:   hargaBeli,
 			HargaJual:   hargaJual,
+			Margin:      margin,
 			Stok:        stok,
 			StokMinimum: stokMin,
 			Satuan:      satuan,
@@ -702,11 +711,13 @@ func (s *productService) ImportPreview(file *multipart.FileHeader) (*dto_product
 	var previewGrosir []dto_product.ImportPreviewGrosirRow
 	if len(grosirRows) >= 2 {
 		headerGrosir := grosirRows[0]
-		gColNoProduk := colIdx(headerGrosir, "no_produk")
-		gColNamaPaket := colIdx(headerGrosir, "nama_paket")
-		gColKonversi := colIdx(headerGrosir, "konversi")
-		gColHargaBeli := colIdx(headerGrosir, "harga_beli")
-		gColHargaJual := colIdx(headerGrosir, "harga_jual")
+		// Urutan kolom: No Produk, Nama Paket, Konversi, Ref Harga Beli(*), Harga Beli, Ref Harga Jual(*), Harga Jual
+		// (*) Ref diabaikan — kolom formula, tidak dibaca
+		gColNoProduk := colIdx(headerGrosir, "No Produk")
+		gColNamaPaket := colIdx(headerGrosir, "Nama Paket")
+		gColKonversi := colIdx(headerGrosir, "Konversi")
+		gColHargaBeli := colIdx(headerGrosir, "Harga Beli")
+		gColHargaJual := colIdx(headerGrosir, "Harga Jual")
 
 		for _, row := range grosirRows[1:] {
 			noProduk := toInt(getCell(row, gColNoProduk))

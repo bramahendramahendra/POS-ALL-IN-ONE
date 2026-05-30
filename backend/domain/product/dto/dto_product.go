@@ -101,6 +101,7 @@ type ImportPreviewRow struct {
 	Kategori    string   `json:"kategori"`
 	HargaBeli   float64  `json:"harga_beli"`
 	HargaJual   float64  `json:"harga_jual"`
+	Margin      int      `json:"margin"`
 	Stok        float64  `json:"stok"`
 	StokMinimum float64  `json:"stok_minimum"`
 	Satuan      string   `json:"satuan"`
