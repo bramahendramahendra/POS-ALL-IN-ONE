@@ -328,24 +328,75 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 		f.SetColWidth(sheetProduk, col, col, w)
 	}
 
+	// Kolom A (no): harus angka bulat >= 1
+	dvNo := excelize.NewDataValidation(true)
+	dvNo.Sqref = "A2:A1000"
+	dvNo.SetRange(1, 999999, excelize.DataValidationTypeWhole, excelize.DataValidationOperatorGreaterThanOrEqual)
+	dvNo.SetError(excelize.DataValidationErrorStyleStop, "No tidak valid", "Kolom 'no' harus diisi dengan angka bulat minimal 1.")
+	f.AddDataValidation(sheetProduk, dvNo)
+
+	// Kolom B (nama): panjang teks 1–200 karakter
+	dvNama := excelize.NewDataValidation(true)
+	dvNama.Sqref = "B2:B1000"
+	dvNama.SetRange(1, 200, excelize.DataValidationTypeTextLength, excelize.DataValidationOperatorBetween)
+	dvNama.SetError(excelize.DataValidationErrorStyleStop, "Nama tidak valid", "Nama produk wajib diisi, maksimal 200 karakter.")
+	f.AddDataValidation(sheetProduk, dvNama)
+
+	// Kolom D (barcode): panjang teks maks 100 karakter
+	dvBarcode := excelize.NewDataValidation(true)
+	dvBarcode.Sqref = "D2:D1000"
+	dvBarcode.SetRange(0, 100, excelize.DataValidationTypeTextLength, excelize.DataValidationOperatorBetween)
+	dvBarcode.SetError(excelize.DataValidationErrorStyleStop, "Barcode tidak valid", "Barcode maksimal 100 karakter. Kosongkan jika ingin di-generate otomatis.")
+	f.AddDataValidation(sheetProduk, dvBarcode)
+
 	// Dropdown kategori (kolom E) referensi Kategori!$A$2:$A$N
 	if len(categoryNames) > 0 {
 		lastCatRow := len(categoryNames) + 1
-		dv := excelize.NewDataValidation(true)
-		dv.Sqref = "E2:E1000"
-		dv.Formula1 = fmt.Sprintf("Kategori!$A$2:$A$%d", lastCatRow)
-		dv.ShowDropDown = true
-		f.AddDataValidation(sheetProduk, dv)
+		dvKategori := excelize.NewDataValidation(true)
+		dvKategori.Sqref = "E2:E1000"
+		dvKategori.Formula1 = fmt.Sprintf("Kategori!$A$2:$A$%d", lastCatRow)
+		dvKategori.ShowDropDown = true
+		dvKategori.SetError(excelize.DataValidationErrorStyleStop, "Kategori tidak valid", "Pilih kategori dari daftar yang tersedia di sheet Kategori.")
+		f.AddDataValidation(sheetProduk, dvKategori)
 	}
+
+	// Kolom F (harga_beli): angka desimal >= 0
+	dvHargaBeli := excelize.NewDataValidation(true)
+	dvHargaBeli.Sqref = "F2:F1000"
+	dvHargaBeli.SetRange(0, 9999999999999.99, excelize.DataValidationTypeDecimal, excelize.DataValidationOperatorGreaterThanOrEqual)
+	dvHargaBeli.SetError(excelize.DataValidationErrorStyleStop, "Harga beli tidak valid", "Harga beli harus berupa angka >= 0.")
+	f.AddDataValidation(sheetProduk, dvHargaBeli)
+
+	// Kolom G (harga_jual): angka desimal > 0
+	dvHargaJual := excelize.NewDataValidation(true)
+	dvHargaJual.Sqref = "G2:G1000"
+	dvHargaJual.SetRange(0.01, 9999999999999.99, excelize.DataValidationTypeDecimal, excelize.DataValidationOperatorGreaterThanOrEqual)
+	dvHargaJual.SetError(excelize.DataValidationErrorStyleStop, "Harga jual tidak valid", "Harga jual harus berupa angka > 0.")
+	f.AddDataValidation(sheetProduk, dvHargaJual)
+
+	// Kolom H (stok): angka desimal >= 0
+	dvStok := excelize.NewDataValidation(true)
+	dvStok.Sqref = "H2:H1000"
+	dvStok.SetRange(0, 9999999999999.999, excelize.DataValidationTypeDecimal, excelize.DataValidationOperatorGreaterThanOrEqual)
+	dvStok.SetError(excelize.DataValidationErrorStyleStop, "Stok tidak valid", "Stok harus berupa angka >= 0.")
+	f.AddDataValidation(sheetProduk, dvStok)
+
+	// Kolom I (stok_minimum): angka desimal >= 0
+	dvStokMin := excelize.NewDataValidation(true)
+	dvStokMin.Sqref = "I2:I1000"
+	dvStokMin.SetRange(0, 9999999999999.999, excelize.DataValidationTypeDecimal, excelize.DataValidationOperatorGreaterThanOrEqual)
+	dvStokMin.SetError(excelize.DataValidationErrorStyleStop, "Stok minimum tidak valid", "Stok minimum harus berupa angka >= 0.")
+	f.AddDataValidation(sheetProduk, dvStokMin)
 
 	// Dropdown satuan (kolom J) referensi Satuan!$A$2:$A$N
 	if len(unitInfos) > 0 {
 		lastUnitRow := len(unitInfos) + 1
-		dv2 := excelize.NewDataValidation(true)
-		dv2.Sqref = "J2:J1000"
-		dv2.Formula1 = fmt.Sprintf("Satuan!$A$2:$A$%d", lastUnitRow)
-		dv2.ShowDropDown = true
-		f.AddDataValidation(sheetProduk, dv2)
+		dvSatuan := excelize.NewDataValidation(true)
+		dvSatuan.Sqref = "J2:J1000"
+		dvSatuan.Formula1 = fmt.Sprintf("Satuan!$A$2:$A$%d", lastUnitRow)
+		dvSatuan.ShowDropDown = true
+		dvSatuan.SetError(excelize.DataValidationErrorStyleStop, "Satuan tidak valid", "Pilih satuan dari daftar yang tersedia di sheet Satuan.")
+		f.AddDataValidation(sheetProduk, dvSatuan)
 	}
 
 	// ── Sheet 2: Grosir ──────────────────────────────────────────────────────
@@ -390,6 +441,41 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 	f.SetCellValue(sheetGrosir, "A3", "* no_produk: isi dengan nilai kolom 'no' dari sheet Produk. Satu produk bisa punya banyak paket grosir.")
 	f.SetCellStyle(sheetGrosir, "A3", "G3", noteStyle)
 	f.MergeCell(sheetGrosir, "A3", "G3")
+
+	// Kolom A (no_produk): angka bulat >= 1
+	dvGNoProduk := excelize.NewDataValidation(true)
+	dvGNoProduk.Sqref = "A2:A500"
+	dvGNoProduk.SetRange(1, 999999, excelize.DataValidationTypeWhole, excelize.DataValidationOperatorGreaterThanOrEqual)
+	dvGNoProduk.SetError(excelize.DataValidationErrorStyleStop, "No produk tidak valid", "Isi dengan angka 'no' dari sheet Produk (bulat >= 1).")
+	f.AddDataValidation(sheetGrosir, dvGNoProduk)
+
+	// Kolom B (nama_paket): panjang teks 1–50 karakter
+	dvGNamaPaket := excelize.NewDataValidation(true)
+	dvGNamaPaket.Sqref = "B2:B500"
+	dvGNamaPaket.SetRange(1, 50, excelize.DataValidationTypeTextLength, excelize.DataValidationOperatorBetween)
+	dvGNamaPaket.SetError(excelize.DataValidationErrorStyleStop, "Nama paket tidak valid", "Nama paket wajib diisi, maksimal 50 karakter.")
+	f.AddDataValidation(sheetGrosir, dvGNamaPaket)
+
+	// Kolom C (konversi): angka desimal > 0
+	dvGKonversi := excelize.NewDataValidation(true)
+	dvGKonversi.Sqref = "C2:C500"
+	dvGKonversi.SetRange(0.001, 9999999999999.999, excelize.DataValidationTypeDecimal, excelize.DataValidationOperatorGreaterThanOrEqual)
+	dvGKonversi.SetError(excelize.DataValidationErrorStyleStop, "Konversi tidak valid", "Konversi harus berupa angka > 0.")
+	f.AddDataValidation(sheetGrosir, dvGKonversi)
+
+	// Kolom D (harga_beli): angka desimal >= 0
+	dvGHargaBeli := excelize.NewDataValidation(true)
+	dvGHargaBeli.Sqref = "D2:D500"
+	dvGHargaBeli.SetRange(0, 9999999999999.99, excelize.DataValidationTypeDecimal, excelize.DataValidationOperatorGreaterThanOrEqual)
+	dvGHargaBeli.SetError(excelize.DataValidationErrorStyleStop, "Harga beli tidak valid", "Harga beli harus berupa angka >= 0.")
+	f.AddDataValidation(sheetGrosir, dvGHargaBeli)
+
+	// Kolom E (harga_jual): angka desimal > 0
+	dvGHargaJual := excelize.NewDataValidation(true)
+	dvGHargaJual.Sqref = "E2:E500"
+	dvGHargaJual.SetRange(0.01, 9999999999999.99, excelize.DataValidationTypeDecimal, excelize.DataValidationOperatorGreaterThanOrEqual)
+	dvGHargaJual.SetError(excelize.DataValidationErrorStyleStop, "Harga jual tidak valid", "Harga jual harus berupa angka > 0.")
+	f.AddDataValidation(sheetGrosir, dvGHargaJual)
 
 	for _, col := range []string{"A", "B", "C", "D", "E"} {
 		f.SetColWidth(sheetGrosir, col, col, 20)
