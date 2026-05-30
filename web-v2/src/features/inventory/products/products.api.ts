@@ -25,6 +25,37 @@ import type {
 
 // ─── Import ───────────────────────────────────────────────────────────────────
 
+export interface ImportPreviewRow {
+  no: number
+  nama: string
+  deskripsi: string
+  barcode: string
+  kategori: string
+  harga_beli: number
+  harga_jual: number
+  stok: number
+  stok_minimum: number
+  satuan: string
+  valid: boolean
+  errors: string[]
+  warnings: string[]
+}
+
+export interface ImportPreviewGrosirRow {
+  no_produk: number
+  nama_paket: string
+  konversi: number
+  harga_beli: number
+  harga_jual: number
+  valid: boolean
+  errors: string[]
+}
+
+export interface ImportPreviewResponse {
+  rows: ImportPreviewRow[]
+  grosir: ImportPreviewGrosirRow[]
+}
+
 export interface ImportBulkRow {
   no: number
   nama: string
@@ -44,8 +75,6 @@ export interface GrosirImportRow {
   konversi: number
   harga_beli: number
   harga_jual: number
-  ref_harga_beli?: number
-  ref_harga_jual?: number
 }
 
 interface ImportBulkResult {
@@ -56,6 +85,17 @@ interface ImportBulkResult {
 export interface ImportBulkPayload {
   rows: ImportBulkRow[]
   grosir: GrosirImportRow[]
+}
+
+export function useImportPreviewMutation() {
+  return useMutation({
+    mutationFn: (file: File) => {
+      const formData = new FormData()
+      formData.append('file', file)
+      return api.post<ImportPreviewResponse>('/products/import-preview', formData)
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
 }
 
 export function useImportProductsBulkMutation() {

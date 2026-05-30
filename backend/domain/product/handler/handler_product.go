@@ -252,6 +252,28 @@ func (h *ProductHandler) ImportBulk(c *gin.Context) {
 	})
 }
 
+// POST /api/products/import-preview
+func (h *ProductHandler) ImportPreview(c *gin.Context) {
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.Error(&errors.BadRequestError{Message: "File tidak ditemukan"})
+		return
+	}
+
+	result, err := h.service.ImportPreview(file)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	response_helper.WrapResponse(c, 200, "json", &global_dto.ResponseParams{
+		Code:    helper.StatusOk,
+		Status:  true,
+		Message: "Preview berhasil",
+		Data:    result,
+	})
+}
+
 // GET /api/products/import-template
 func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 	categoryNames, err := h.service.GetCategoryNames()

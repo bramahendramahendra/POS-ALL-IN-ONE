@@ -1,141 +1,44 @@
 import React, { useRef, useState } from 'react'
 import { Download, Upload } from 'lucide-react'
-import * as XLSX from 'xlsx'
-import { toast } from 'sonner'
 
 import { FormModal } from '@/shared/components'
 import { Button } from '@/shared/components/ui/button'
 import { apiClient } from '@/services/api.client'
 
 import {
+  useImportPreviewMutation,
   useImportProductsBulkMutation,
-  type ImportBulkRow,
-  type GrosirImportRow,
+  type ImportPreviewRow,
+  type ImportPreviewGrosirRow,
 } from '../products.api'
-import { validateImportRow } from '../products.utils'
 
 interface ImportCsvModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
-interface ParsedRow {
-  index: number
-  data: ImportBulkRow
-  valid: boolean
-  errors: string[]
-  warnings: string[]
-}
-
-interface ParsedGrosirRow {
-  index: number
-  data: GrosirImportRow
-  valid: boolean
-  errors: string[]
-}
-
-function parseRows(rawRows: Record<string, unknown>[]): ParsedRow[] {
-  const seenBarcodes = new Set<string>()
-  return rawRows.map((raw, i) => {
-    const data: ImportBulkRow = {
-      no: Number(raw['no'] ?? i + 1),
-      nama: String(raw['nama'] ?? '').trim(),
-      deskripsi: String(raw['deskripsi'] ?? '').trim(),
-      barcode: String(raw['barcode'] ?? '').trim(),
-      kategori: String(raw['kategori'] ?? '').trim(),
-      harga_beli: Number(raw['harga_beli'] ?? 0),
-      harga_jual: Number(raw['harga_jual'] ?? 0),
-      stok: Number(raw['stok'] ?? 0),
-      stok_minimum: Number(raw['stok_minimum'] ?? 0),
-      satuan: String(raw['satuan'] ?? '').trim(),
-    }
-
-    const { valid, errors, warnings } = validateImportRow(data)
-
-    if (data.barcode) {
-      const key = data.barcode.toLowerCase()
-      if (seenBarcodes.has(key)) {
-        errors.push(`Barcode "${data.barcode}" duplikat dalam file`)
-      } else {
-        seenBarcodes.add(key)
-      }
-    }
-
-    return { index: i + 2, data, valid: valid && errors.length === 0, errors, warnings }
-  })
-}
-
-function parseGrosirRows(rawRows: Record<string, unknown>[], validNos: Set<number>): ParsedGrosirRow[] {
-  return rawRows.map((raw, i) => {
-    const refBeli = raw['ref_harga_beli'] !== '' ? Number(raw['ref_harga_beli']) : undefined
-    const refJual = raw['ref_harga_jual'] !== '' ? Number(raw['ref_harga_jual']) : undefined
-    const data: GrosirImportRow = {
-      no_produk: Number(raw['no_produk'] ?? 0),
-      nama_paket: String(raw['nama_paket'] ?? '').trim(),
-      konversi: Number(raw['konversi'] ?? 0),
-      harga_beli: Number(raw['harga_beli'] ?? 0),
-      harga_jual: Number(raw['harga_jual'] ?? 0),
-      ref_harga_beli: !isNaN(refBeli!) ? refBeli : undefined,
-      ref_harga_jual: !isNaN(refJual!) ? refJual : undefined,
-    }
-
-    const errors: string[] = []
-    if (!data.no_produk) errors.push('no_produk kosong')
-    else if (!validNos.has(data.no_produk)) errors.push(`no_produk ${data.no_produk} tidak ditemukan di sheet Produk`)
-    if (!data.nama_paket) errors.push('Nama paket kosong')
-    if (data.konversi <= 0) errors.push('Konversi harus lebih dari 0')
-    if (data.harga_jual <= 0) errors.push('Harga jual harus lebih dari 0')
-
-    return { index: i + 2, data, valid: errors.length === 0, errors }
-  })
-}
-
-function parseXlsx(buffer: ArrayBuffer): { produk: Record<string, unknown>[]; grosir: Record<string, unknown>[] } {
-  const wb = XLSX.read(buffer, { type: 'array' })
-
-  const sheetProduk = wb.Sheets['Produk'] ?? wb.Sheets[wb.SheetNames[0]]
-  const produk = sheetProduk
-    ? XLSX.utils.sheet_to_json<Record<string, unknown>>(sheetProduk, { defval: '' }).filter(
-        (raw) => Number(raw['no']) > 0
-      )
-    : []
-
-  const sheetGrosir = wb.Sheets['Grosir'] ?? wb.Sheets[wb.SheetNames[1]]
-  const grosir = sheetGrosir
-    ? XLSX.utils.sheet_to_json<Record<string, unknown>>(sheetGrosir, { defval: '' }).filter(
-        (raw) => Number(raw['no_produk']) > 0
-      )
-    : []
-
-  return { produk, grosir }
-}
-
-async function downloadTemplate() {
-  try {
-    const response = await apiClient.get('/products/import-template', {
-      responseType: 'blob',
-    })
-    const url = URL.createObjectURL(response.data as Blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'template_import_produk.xlsx'
-    a.click()
-    URL.revokeObjectURL(url)
-  } catch {
-    toast.error('Gagal mengunduh template')
-  }
-}
-
 type FilterView = 'all' | 'valid' | 'error'
 type ActiveTab = 'produk' | 'grosir'
 
+async function downloadTemplate() {
+  const response = await apiClient.get('/products/import-template', { responseType: 'blob' })
+  const url = URL.createObjectURL(response.data as Blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'template_import_produk.xlsx'
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [rows, setRows] = useState<ParsedRow[]>([])
-  const [grosirRows, setGrosirRows] = useState<ParsedGrosirRow[]>([])
+  const [rows, setRows] = useState<ImportPreviewRow[]>([])
+  const [grosirRows, setGrosirRows] = useState<ImportPreviewGrosirRow[]>([])
   const [fileName, setFileName] = useState('')
   const [filterView, setFilterView] = useState<FilterView>('all')
   const [activeTab, setActiveTab] = useState<ActiveTab>('produk')
+
+  const { mutate: fetchPreview, isPending: isLoadingPreview } = useImportPreviewMutation()
   const { mutate: importBulk, isPending: isImporting } = useImportProductsBulkMutation()
 
   const validRows = rows.filter((r) => r.valid)
@@ -149,24 +52,28 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
     setFileName(file.name)
     setFilterView('all')
     setActiveTab('produk')
+    setRows([])
+    setGrosirRows([])
 
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      const buffer = ev.target?.result as ArrayBuffer
-      const { produk, grosir } = parseXlsx(buffer)
-      const parsedRows = parseRows(produk)
-      setRows(parsedRows)
-
-      const validNos = new Set(parsedRows.map((r) => r.data.no).filter(Boolean))
-      setGrosirRows(parseGrosirRows(grosir, validNos))
-    }
-    reader.readAsArrayBuffer(file)
+    fetchPreview(file, {
+      onSuccess: (data) => {
+        setRows(data.rows ?? [])
+        setGrosirRows(data.grosir ?? [])
+      },
+    })
   }
 
   const handleImport = () => {
     if (validRows.length === 0) return
     importBulk(
-      { rows: validRows.map((r) => r.data), grosir: validGrosirRows.map((r) => r.data) },
+      {
+        rows: validRows.map(({ no, nama, deskripsi, barcode, kategori, harga_beli, harga_jual, stok, stok_minimum, satuan }) => ({
+          no, nama, deskripsi, barcode, kategori, harga_beli, harga_jual, stok, stok_minimum, satuan,
+        })),
+        grosir: validGrosirRows.map(({ no_produk, nama_paket, konversi, harga_beli, harga_jual }) => ({
+          no_produk, nama_paket, konversi, harga_beli, harga_jual,
+        })),
+      },
       {
         onSuccess: () => {
           onOpenChange(false)
@@ -186,15 +93,21 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
   }
 
   const handleClose = (open: boolean) => {
-    if (!open && !isImporting) resetState()
+    if (!open && !isImporting && !isLoadingPreview) resetState()
     onOpenChange(open)
   }
 
   const displayRows =
     filterView === 'valid' ? validRows : filterView === 'error' ? invalidRows : rows
-
   const displayGrosirRows =
     filterView === 'valid' ? validGrosirRows : filterView === 'error' ? invalidGrosirRows : grosirRows
+
+  const isLoading = isLoadingPreview || isImporting
+  const submitLabel = isLoadingPreview
+    ? 'Memuat preview...'
+    : validRows.length > 0
+      ? `Import ${validRows.length} Produk Valid`
+      : 'Import'
 
   return (
     <FormModal
@@ -202,8 +115,8 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
       onOpenChange={handleClose}
       title="Import Produk"
       size="lg"
-      isLoading={isImporting}
-      submitLabel={validRows.length > 0 ? `Import ${validRows.length} Produk Valid` : 'Import'}
+      isLoading={isLoading}
+      submitLabel={submitLabel}
       onSubmit={handleImport}
     >
       <div className="space-y-4">
@@ -224,22 +137,23 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
         {/* Upload area */}
         <div
           className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 p-6 cursor-pointer hover:border-gray-300 transition-colors"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => !isLoading && fileInputRef.current?.click()}
         >
-          <Upload size={24} className="text-gray-400" />
+          <Upload size={24} className={isLoadingPreview ? 'text-blue-400 animate-pulse' : 'text-gray-400'} />
           <p className="text-sm text-gray-500">
-            {fileName ? (
+            {isLoadingPreview ? (
+              <span className="font-medium text-blue-600">Memvalidasi data...</span>
+            ) : fileName ? (
               <span className="font-medium text-gray-700">{fileName}</span>
             ) : (
               'Klik untuk pilih file Excel (.xlsx)'
             )}
           </p>
-          <p className="text-xs text-gray-400">
-            Sheet "Produk": no, nama, deskripsi, barcode, kategori, harga_beli, harga_jual, stok, stok_minimum, satuan
-          </p>
-          <p className="text-xs text-gray-400">
-            Sheet "Grosir" (opsional): no_produk, nama_paket, konversi, harga_beli, harga_jual
-          </p>
+          {!fileName && (
+            <p className="text-xs text-gray-400">
+              Sheet "Produk": no, nama, deskripsi, barcode, kategori, harga_beli, harga_jual, stok, stok_minimum, satuan
+            </p>
+          )}
           <input
             ref={fileInputRef}
             type="file"
@@ -339,17 +253,17 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
               </thead>
               <tbody>
                 {displayRows.map((row) => (
-                  <React.Fragment key={row.index}>
+                  <React.Fragment key={row.no}>
                     <tr className={row.valid ? 'bg-green-50' : 'bg-red-50'}>
-                      <td className="px-2 py-1.5 text-gray-400">{row.data.no || row.index}</td>
-                      <td className="px-2 py-1.5 font-medium">{row.data.nama || '—'}</td>
-                      <td className="px-2 py-1.5 font-mono">{row.data.barcode || <span className="text-gray-400 italic">auto</span>}</td>
-                      <td className="px-2 py-1.5">{row.data.kategori || '—'}</td>
-                      <td className="px-2 py-1.5 text-right">{row.data.harga_beli.toLocaleString('id-ID')}</td>
-                      <td className="px-2 py-1.5 text-right">{row.data.harga_jual.toLocaleString('id-ID')}</td>
-                      <td className="px-2 py-1.5 text-right">{row.data.stok}</td>
-                      <td className="px-2 py-1.5 text-right">{row.data.stok_minimum}</td>
-                      <td className="px-2 py-1.5">{row.data.satuan || '—'}</td>
+                      <td className="px-2 py-1.5 text-gray-400">{row.no}</td>
+                      <td className="px-2 py-1.5 font-medium">{row.nama || '—'}</td>
+                      <td className="px-2 py-1.5 font-mono">{row.barcode || <span className="text-gray-400 italic">auto</span>}</td>
+                      <td className="px-2 py-1.5">{row.kategori || '—'}</td>
+                      <td className="px-2 py-1.5 text-right">{row.harga_beli.toLocaleString('id-ID')}</td>
+                      <td className="px-2 py-1.5 text-right">{row.harga_jual.toLocaleString('id-ID')}</td>
+                      <td className="px-2 py-1.5 text-right">{row.stok}</td>
+                      <td className="px-2 py-1.5 text-right">{row.stok_minimum}</td>
+                      <td className="px-2 py-1.5">{row.satuan || '—'}</td>
                       <td className="px-2 py-1.5">
                         {row.valid ? (
                           <span className="text-green-600 font-medium">✓</span>
@@ -383,32 +297,22 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
             <table className="w-full">
               <thead className="sticky top-0 bg-gray-50">
                 <tr>
-                  {['#', 'No Produk', 'Nama Paket', 'Konversi', 'H.Beli', 'H.Jual'].map((h) => (
+                  {['No Produk', 'Nama Paket', 'Konversi', 'H.Beli', 'H.Jual', 'Status'].map((h) => (
                     <th key={h} className="px-2 py-2 text-left font-medium text-gray-600 whitespace-nowrap">
                       {h}
                     </th>
                   ))}
-                  <th className="px-2 py-2 text-left font-medium text-gray-400 whitespace-nowrap bg-gray-100">Ref H.Beli</th>
-                  <th className="px-2 py-2 text-left font-medium text-gray-400 whitespace-nowrap bg-gray-100">Ref H.Jual</th>
-                  <th className="px-2 py-2 text-left font-medium text-gray-600 whitespace-nowrap">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {displayGrosirRows.map((row) => (
-                  <React.Fragment key={row.index}>
+                {displayGrosirRows.map((row, i) => (
+                  <React.Fragment key={i}>
                     <tr className={row.valid ? 'bg-green-50' : 'bg-red-50'}>
-                      <td className="px-2 py-1.5 text-gray-400">{row.index}</td>
-                      <td className="px-2 py-1.5">{row.data.no_produk || '—'}</td>
-                      <td className="px-2 py-1.5 font-medium">{row.data.nama_paket || '—'}</td>
-                      <td className="px-2 py-1.5 text-right">{row.data.konversi}</td>
-                      <td className="px-2 py-1.5 text-right">{row.data.harga_beli.toLocaleString('id-ID')}</td>
-                      <td className="px-2 py-1.5 text-right">{row.data.harga_jual.toLocaleString('id-ID')}</td>
-                      <td className="px-2 py-1.5 text-right bg-gray-50 text-gray-400 italic">
-                        {row.data.ref_harga_beli != null ? row.data.ref_harga_beli.toLocaleString('id-ID') : '—'}
-                      </td>
-                      <td className="px-2 py-1.5 text-right bg-gray-50 text-gray-400 italic">
-                        {row.data.ref_harga_jual != null ? row.data.ref_harga_jual.toLocaleString('id-ID') : '—'}
-                      </td>
+                      <td className="px-2 py-1.5">{row.no_produk || '—'}</td>
+                      <td className="px-2 py-1.5 font-medium">{row.nama_paket || '—'}</td>
+                      <td className="px-2 py-1.5 text-right">{row.konversi}</td>
+                      <td className="px-2 py-1.5 text-right">{row.harga_beli.toLocaleString('id-ID')}</td>
+                      <td className="px-2 py-1.5 text-right">{row.harga_jual.toLocaleString('id-ID')}</td>
                       <td className="px-2 py-1.5">
                         {row.valid ? (
                           <span className="text-green-600 font-medium">✓</span>
@@ -419,7 +323,7 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
                     </tr>
                     {row.errors.length > 0 && (
                       <tr className="bg-red-50">
-                        <td colSpan={9} className="px-2 pb-1.5 text-xs">
+                        <td colSpan={6} className="px-2 pb-1.5 text-xs">
                           <span className="text-red-600">↳ {row.errors.join(' · ')}</span>
                         </td>
                       </tr>

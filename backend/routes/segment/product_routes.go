@@ -35,6 +35,7 @@ func ProductRoutes(r *gin.RouterGroup) {
 		g.GET("/generate-sku", middleware.RoleMiddleware("owner", "admin"), productHand.GenerateSku)
 		g.GET("/import-template", middleware.RoleMiddleware("owner", "admin"), productHand.DownloadImportTemplate)
 		g.POST("/import", middleware.RoleMiddleware("owner", "admin"), productHand.Import)
+		g.POST("/import-preview", middleware.RoleMiddleware("owner", "admin"), productHand.ImportPreview)
 		g.POST("/import-bulk", middleware.RoleMiddleware("owner", "admin"), productHand.ImportBulk)
 		g.GET("/barcode/:barcode", productHand.GetByBarcode)
 		g.GET("/:id", productHand.GetByID)

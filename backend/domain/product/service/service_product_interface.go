@@ -23,4 +23,5 @@ type ProductService interface {
 	ToggleStatus(id int) error
 	ImportFromFile(file *multipart.FileHeader) (*dto_product.ImportResult, error)
 	ImportBulk(req dto_product.BulkImportRequest) (*dto_product.BulkImportResult, error)
+	ImportPreview(file *multipart.FileHeader) (*dto_product.ImportPreviewResponse, error)
 }

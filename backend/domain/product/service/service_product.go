@@ -521,6 +521,242 @@ func (s *productService) ImportBulk(bulkReq dto_product.BulkImportRequest) (*dto
 	return result, nil
 }
 
+func (s *productService) ImportPreview(file *multipart.FileHeader) (*dto_product.ImportPreviewResponse, error) {
+	src, err := file.Open()
+	if err != nil {
+		return nil, fmt.Errorf("Gagal membuka file")
+	}
+	defer src.Close()
+
+	f, err := excelize.OpenReader(src)
+	if err != nil {
+		return nil, fmt.Errorf("Gagal membaca file Excel")
+	}
+	defer f.Close()
+
+	// Fetch master data untuk validasi
+	validCategories := make(map[string]bool)
+	if cats, err := s.catRepo.GetAll(); err == nil {
+		for _, c := range cats {
+			validCategories[strings.ToLower(strings.TrimSpace(c.Name))] = true
+		}
+	}
+
+	validUnits := make(map[string]bool)
+	if units, err := s.masterUnitRepo.GetAll(); err == nil {
+		for _, u := range units {
+			validUnits[strings.ToLower(strings.TrimSpace(u.Name))] = true
+		}
+	}
+
+	// Parse sheet Produk
+	sheetProduk := "Produk"
+	if idx, _ := f.GetSheetIndex(sheetProduk); idx == -1 {
+		sheetProduk = f.GetSheetName(0)
+	}
+	produkRows, err := f.GetRows(sheetProduk)
+	if err != nil || len(produkRows) < 2 {
+		return &dto_product.ImportPreviewResponse{
+			Rows:   []dto_product.ImportPreviewRow{},
+			Grosir: []dto_product.ImportPreviewGrosirRow{},
+		}, nil
+	}
+
+	headerProduk := produkRows[0]
+	colIdx := func(headers []string, name string) int {
+		for i, h := range headers {
+			if strings.EqualFold(strings.TrimSpace(h), name) {
+				return i
+			}
+		}
+		return -1
+	}
+	getCell := func(row []string, idx int) string {
+		if idx < 0 || idx >= len(row) {
+			return ""
+		}
+		return strings.TrimSpace(row[idx])
+	}
+	toFloat := func(s string) float64 {
+		v, _ := strconv.ParseFloat(strings.ReplaceAll(s, ",", "."), 64)
+		return v
+	}
+	toInt := func(s string) int {
+		v, _ := strconv.Atoi(s)
+		return v
+	}
+
+	colNo := colIdx(headerProduk, "no")
+	colNama := colIdx(headerProduk, "nama")
+	colDesc := colIdx(headerProduk, "deskripsi")
+	colBarcode := colIdx(headerProduk, "barcode")
+	colKategori := colIdx(headerProduk, "kategori")
+	colHargaBeli := colIdx(headerProduk, "harga_beli")
+	colHargaJual := colIdx(headerProduk, "harga_jual")
+	colStok := colIdx(headerProduk, "stok")
+	colStokMin := colIdx(headerProduk, "stok_minimum")
+	colSatuan := colIdx(headerProduk, "satuan")
+
+	seenBarcodes := make(map[string]bool)
+	validNos := make(map[int]bool)
+
+	var previewRows []dto_product.ImportPreviewRow
+	for _, row := range produkRows[1:] {
+		no := toInt(getCell(row, colNo))
+		if no <= 0 {
+			continue
+		}
+
+		errs := []string{}
+		warns := []string{}
+
+		nama := getCell(row, colNama)
+		barcode := getCell(row, colBarcode)
+		kategori := getCell(row, colKategori)
+		satuan := getCell(row, colSatuan)
+		hargaBeli := toFloat(getCell(row, colHargaBeli))
+		hargaJual := toFloat(getCell(row, colHargaJual))
+		stok := toFloat(getCell(row, colStok))
+		stokMin := toFloat(getCell(row, colStokMin))
+
+		// Validasi wajib
+		if nama == "" {
+			errs = append(errs, "Nama produk wajib diisi")
+		}
+		if satuan == "" {
+			errs = append(errs, "Satuan wajib diisi")
+		} else if !validUnits[strings.ToLower(satuan)] {
+			errs = append(errs, fmt.Sprintf("Satuan \"%s\" tidak ditemukan di master data", satuan))
+		}
+		if hargaJual <= 0 {
+			errs = append(errs, "Harga jual harus lebih dari 0")
+		}
+		if hargaJual > 0 && hargaBeli > 0 && hargaJual < hargaBeli {
+			errs = append(errs, "Harga jual tidak boleh lebih rendah dari harga beli")
+		}
+		if stok < 0 {
+			errs = append(errs, "Stok tidak boleh negatif")
+		}
+		if stokMin < 0 {
+			errs = append(errs, "Stok minimum tidak boleh negatif")
+		}
+
+		// Validasi kategori
+		if kategori == "" {
+			warns = append(warns, "Kategori kosong — produk akan masuk tanpa kategori")
+		} else if !validCategories[strings.ToLower(kategori)] {
+			errs = append(errs, fmt.Sprintf("Kategori \"%s\" tidak ditemukan di master data", kategori))
+		}
+
+		// Validasi & generate barcode
+		if barcode == "" {
+			gen, genErr := s.GenerateBarcode()
+			if genErr == nil {
+				barcode = gen.Barcode
+				warns = append(warns, "Barcode kosong — di-generate otomatis")
+			} else {
+				errs = append(errs, "Gagal generate barcode")
+			}
+		} else {
+			barcodeKey := strings.ToLower(barcode)
+			if seenBarcodes[barcodeKey] {
+				errs = append(errs, fmt.Sprintf("Barcode \"%s\" duplikat dalam file", barcode))
+			} else {
+				exists, checkErr := s.repo.CheckBarcodeExists(barcode, 0)
+				if checkErr == nil && exists {
+					errs = append(errs, fmt.Sprintf("Barcode \"%s\" sudah digunakan produk lain", barcode))
+				}
+			}
+		}
+		seenBarcodes[strings.ToLower(barcode)] = true
+
+		valid := len(errs) == 0
+		if valid {
+			validNos[no] = true
+		}
+
+		previewRows = append(previewRows, dto_product.ImportPreviewRow{
+			No:          no,
+			Nama:        nama,
+			Deskripsi:   getCell(row, colDesc),
+			Barcode:     barcode,
+			Kategori:    kategori,
+			HargaBeli:   hargaBeli,
+			HargaJual:   hargaJual,
+			Stok:        stok,
+			StokMinimum: stokMin,
+			Satuan:      satuan,
+			Valid:        valid,
+			Errors:      errs,
+			Warnings:    warns,
+		})
+	}
+
+	// Parse sheet Grosir
+	sheetGrosir := "Grosir"
+	if idx, _ := f.GetSheetIndex(sheetGrosir); idx == -1 {
+		sheetGrosir = f.GetSheetName(1)
+	}
+	grosirRows, _ := f.GetRows(sheetGrosir)
+
+	var previewGrosir []dto_product.ImportPreviewGrosirRow
+	if len(grosirRows) >= 2 {
+		headerGrosir := grosirRows[0]
+		gColNoProduk := colIdx(headerGrosir, "no_produk")
+		gColNamaPaket := colIdx(headerGrosir, "nama_paket")
+		gColKonversi := colIdx(headerGrosir, "konversi")
+		gColHargaBeli := colIdx(headerGrosir, "harga_beli")
+		gColHargaJual := colIdx(headerGrosir, "harga_jual")
+
+		for _, row := range grosirRows[1:] {
+			noProduk := toInt(getCell(row, gColNoProduk))
+			if noProduk <= 0 {
+				continue
+			}
+			errs := []string{}
+			namaPaket := getCell(row, gColNamaPaket)
+			konversi := toFloat(getCell(row, gColKonversi))
+			hargaBeli := toFloat(getCell(row, gColHargaBeli))
+			hargaJual := toFloat(getCell(row, gColHargaJual))
+
+			if !validNos[noProduk] {
+				errs = append(errs, fmt.Sprintf("No produk %d tidak ditemukan atau tidak valid di sheet Produk", noProduk))
+			}
+			if namaPaket == "" {
+				errs = append(errs, "Nama paket wajib diisi")
+			}
+			if konversi <= 0 {
+				errs = append(errs, "Konversi harus lebih dari 0")
+			}
+			if hargaJual <= 0 {
+				errs = append(errs, "Harga jual harus lebih dari 0")
+			}
+
+			previewGrosir = append(previewGrosir, dto_product.ImportPreviewGrosirRow{
+				NoProduk:  noProduk,
+				NamaPaket: namaPaket,
+				Konversi:  konversi,
+				HargaBeli: hargaBeli,
+				HargaJual: hargaJual,
+				Valid:      len(errs) == 0,
+				Errors:    errs,
+			})
+		}
+	}
+
+	if previewRows == nil {
+		previewRows = []dto_product.ImportPreviewRow{}
+	}
+	if previewGrosir == nil {
+		previewGrosir = []dto_product.ImportPreviewGrosirRow{}
+	}
+
+	return &dto_product.ImportPreviewResponse{
+		Rows:   previewRows,
+		Grosir: previewGrosir,
+	}, nil
+}
+
 func toProductResponse(p *model_product.Product, categoryName string) *dto_product.ProductResponse {
 	catName := categoryName
 	if catName == "" {
