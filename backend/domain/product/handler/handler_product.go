@@ -294,7 +294,7 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 	sheetProduk := "Produk"
 	f.SetSheetName("Sheet1", sheetProduk)
 
-	prodHeaders := []string{"no", "nama", "deskripsi", "barcode", "kategori", "harga_beli", "harga_jual", "stok", "stok_minimum", "satuan"}
+	prodHeaders := []string{"no", "nama", "deskripsi", "barcode", "kategori", "harga_beli", "harga_jual", "stok", "stok_minimum", "satuan", "margin"}
 	prodExample := []any{0, "Contoh Produk A", "Deskripsi opsional", "", "Minuman", 5000, 7000, 100, 10, "pcs"}
 
 	headerStyle, _ := f.NewStyle(&excelize.Style{
@@ -303,6 +303,21 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 	})
 	noteStyle, _ := f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{Italic: true, Color: "#7F7F7F", Size: 9},
+	})
+	// Format ribuan tanpa desimal: 1000 → 1.000 (mengikuti locale Excel user)
+	currencyStyle, _ := f.NewStyle(&excelize.Style{
+		NumFmt: 3, // built-in Excel format #,##0
+	})
+	// Kolom margin: read-only, latar abu, teks gelap, format 0%
+	marginHeaderStyle, _ := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{Bold: true, Color: "#FFFFFF"},
+		Fill: excelize.Fill{Type: "pattern", Color: []string{"#808080"}, Pattern: 1},
+	})
+	marginCellStyle, _ := f.NewStyle(&excelize.Style{
+		Fill:      excelize.Fill{Type: "pattern", Color: []string{"#F2F2F2"}, Pattern: 1},
+		Font:      &excelize.Font{Color: "#595959"},
+		Alignment: &excelize.Alignment{Horizontal: "center"},
+		NumFmt:    9, // built-in Excel format 0%
 	})
 
 	for col, h := range prodHeaders {
@@ -314,15 +329,28 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 		f.SetCellValue(sheetProduk, cell, val)
 	}
 	f.SetCellStyle(sheetProduk, "A1", "J1", headerStyle)
+	f.SetCellStyle(sheetProduk, "K1", "K1", marginHeaderStyle)
+
+	// Format uang: harga_beli (F) dan harga_jual (G)
+	f.SetCellStyle(sheetProduk, "F2", "F1000", currencyStyle)
+	f.SetCellStyle(sheetProduk, "G2", "G1000", currencyStyle)
+
+	// Kolom K (margin): formula otomatis, read-only, format persentase
+	// Rumus: =IFERROR(ROUND(((harga_jual-harga_beli)/harga_jual)*100,0),0)
+	f.SetCellStyle(sheetProduk, "K2", "K1000", marginCellStyle)
+	for row := 2; row <= 1000; row++ {
+		cellK, _ := excelize.CoordinatesToCellName(11, row)
+		f.SetCellFormula(sheetProduk, cellK, fmt.Sprintf(`IFERROR(ROUND(((G%d-F%d)/G%d)*100,0),0)`, row, row, row))
+	}
 
 	// Note baris 3
-	f.SetCellValue(sheetProduk, "A3", "* no: nomor unik dalam file ini (dipakai sheet Grosir). barcode & deskripsi opsional.")
-	f.SetCellStyle(sheetProduk, "A3", "J3", noteStyle)
-	f.MergeCell(sheetProduk, "A3", "J3")
+	f.SetCellValue(sheetProduk, "A3", "* no: nomor unik dalam file ini (dipakai sheet Grosir). barcode, deskripsi & margin (K) opsional/otomatis.")
+	f.SetCellStyle(sheetProduk, "A3", "K3", noteStyle)
+	f.MergeCell(sheetProduk, "A3", "K3")
 
 	prodColWidths := map[string]float64{
 		"A": 6, "B": 24, "C": 28, "D": 18, "E": 20,
-		"F": 14, "G": 14, "H": 10, "I": 14, "J": 14,
+		"F": 14, "G": 14, "H": 10, "I": 14, "J": 14, "K": 10,
 	}
 	for col, w := range prodColWidths {
 		f.SetColWidth(sheetProduk, col, col, w)
@@ -411,8 +439,12 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 		Fill: excelize.Fill{Type: "pattern", Color: []string{"#808080"}, Pattern: 1},
 	})
 	refCellStyle, _ := f.NewStyle(&excelize.Style{
-		Fill: excelize.Fill{Type: "pattern", Color: []string{"#F2F2F2"}, Pattern: 1},
-		Font: &excelize.Font{Color: "#7F7F7F"},
+		Fill:   excelize.Fill{Type: "pattern", Color: []string{"#F2F2F2"}, Pattern: 1},
+		Font:   &excelize.Font{Color: "#7F7F7F"},
+		NumFmt: 3,
+	})
+	grosirCurrencyStyle, _ := f.NewStyle(&excelize.Style{
+		NumFmt: 3,
 	})
 
 	for col, h := range grosirHeaders {
@@ -426,6 +458,10 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 	// Header: kolom input biru, kolom ref abu-abu
 	f.SetCellStyle(sheetGrosir, "A1", "E1", headerStyle)
 	f.SetCellStyle(sheetGrosir, "F1", "G1", refHeaderStyle)
+
+	// Format uang: harga_beli (D) dan harga_jual (E)
+	f.SetCellStyle(sheetGrosir, "D2", "D500", grosirCurrencyStyle)
+	f.SetCellStyle(sheetGrosir, "E2", "E500", grosirCurrencyStyle)
 
 	// Formula VLOOKUP ref untuk baris data (2–501)
 	f.SetCellStyle(sheetGrosir, "F2", "G501", refCellStyle)
