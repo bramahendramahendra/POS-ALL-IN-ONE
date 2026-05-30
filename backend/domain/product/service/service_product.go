@@ -58,6 +58,18 @@ func (s *productService) GetUnitNames() ([]string, error) {
 	return names, nil
 }
 
+func (s *productService) GetUnitInfos() ([]*dto_product.UnitInfo, error) {
+	units, err := s.masterUnitRepo.GetActive()
+	if err != nil {
+		return nil, &errors.InternalServerError{Message: err.Error()}
+	}
+	infos := make([]*dto_product.UnitInfo, 0, len(units))
+	for _, u := range units {
+		infos = append(infos, &dto_product.UnitInfo{Name: u.Name, Abbreviation: u.Abbreviation})
+	}
+	return infos, nil
+}
+
 func (s *productService) GetAll(filter *dto_product.ProductFilter) ([]*dto_product.ProductResponse, int, error) {
 	products, total, err := s.repo.GetAll(filter)
 	if err != nil {

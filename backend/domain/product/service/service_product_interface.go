@@ -10,6 +10,7 @@ type ProductService interface {
 	GetAll(filter *dto_product.ProductFilter) ([]*dto_product.ProductResponse, int, error)
 	GetCategoryNames() ([]string, error)
 	GetUnitNames() ([]string, error)
+	GetUnitInfos() ([]*dto_product.UnitInfo, error)
 	GetByID(id int) (*dto_product.ProductResponse, error)
 	GetByBarcode(barcode string) (*dto_product.ProductResponse, error)
 	Search(keyword string, limit int) ([]*dto_product.ProductSearchResult, error)

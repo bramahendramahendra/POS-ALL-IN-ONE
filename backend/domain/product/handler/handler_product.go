@@ -259,7 +259,7 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 		c.Error(err)
 		return
 	}
-	unitNames, err := h.service.GetUnitNames()
+	unitInfos, err := h.service.GetUnitInfos()
 	if err != nil {
 		c.Error(err)
 		return
@@ -273,7 +273,7 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 	f.SetSheetName("Sheet1", sheetProduk)
 
 	prodHeaders := []string{"no", "nama", "deskripsi", "barcode", "kategori", "harga_beli", "harga_jual", "stok", "stok_minimum", "satuan"}
-	prodExample := []interface{}{0, "Contoh Produk A", "Deskripsi opsional", "", "Minuman", 5000, 7000, 100, 10, "pcs"}
+	prodExample := []any{0, "Contoh Produk A", "Deskripsi opsional", "", "Minuman", 5000, 7000, 100, 10, "pcs"}
 
 	headerStyle, _ := f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{Bold: true, Color: "#FFFFFF"},
@@ -306,24 +306,22 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 		f.SetColWidth(sheetProduk, col, col, w)
 	}
 
-	// Dropdown kategori (kolom E) referensi Sheet3!$A$2:$A$N
+	// Dropdown kategori (kolom E) referensi Kategori!$A$2:$A$N
 	if len(categoryNames) > 0 {
 		lastCatRow := len(categoryNames) + 1
-		catRef := fmt.Sprintf("Kategori!$A$2:$A$%d", lastCatRow)
 		dv := excelize.NewDataValidation(true)
 		dv.Sqref = "E2:E1000"
-		dv.SetDropList([]string{catRef})
+		dv.Formula1 = fmt.Sprintf("Kategori!$A$2:$A$%d", lastCatRow)
 		dv.ShowDropDown = true
 		f.AddDataValidation(sheetProduk, dv)
 	}
 
-	// Dropdown satuan (kolom J) referensi Sheet4!$A$2:$A$N
-	if len(unitNames) > 0 {
-		lastUnitRow := len(unitNames) + 1
-		unitRef := fmt.Sprintf("Satuan!$A$2:$A$%d", lastUnitRow)
+	// Dropdown satuan (kolom J) referensi Satuan!$A$2:$A$N
+	if len(unitInfos) > 0 {
+		lastUnitRow := len(unitInfos) + 1
 		dv2 := excelize.NewDataValidation(true)
 		dv2.Sqref = "J2:J1000"
-		dv2.SetDropList([]string{unitRef})
+		dv2.Formula1 = fmt.Sprintf("Satuan!$A$2:$A$%d", lastUnitRow)
 		dv2.ShowDropDown = true
 		f.AddDataValidation(sheetProduk, dv2)
 	}
@@ -333,7 +331,7 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 	f.NewSheet(sheetGrosir)
 
 	grosirHeaders := []string{"no_produk", "nama_paket", "konversi", "harga_beli", "harga_jual", "ref_harga_beli", "ref_harga_jual"}
-	grosirExample := []interface{}{0, "Dus (12 pcs)", 12, 55000, 75000}
+	grosirExample := []any{0, "Dus (12 pcs)", 12, 55000, 75000}
 
 	refHeaderStyle, _ := f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{Bold: true, Color: "#FFFFFF"},
@@ -396,12 +394,16 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 	sheetSatuan := "Satuan"
 	f.NewSheet(sheetSatuan)
 	f.SetCellValue(sheetSatuan, "A1", "nama_satuan")
-	f.SetCellStyle(sheetSatuan, "A1", "A1", catHeaderStyle)
-	for i, name := range unitNames {
-		cell, _ := excelize.CoordinatesToCellName(1, i+2)
-		f.SetCellValue(sheetSatuan, cell, name)
+	f.SetCellValue(sheetSatuan, "B1", "singkatan")
+	f.SetCellStyle(sheetSatuan, "A1", "B1", catHeaderStyle)
+	for i, u := range unitInfos {
+		cellA, _ := excelize.CoordinatesToCellName(1, i+2)
+		cellB, _ := excelize.CoordinatesToCellName(2, i+2)
+		f.SetCellValue(sheetSatuan, cellA, u.Name)
+		f.SetCellValue(sheetSatuan, cellB, u.Abbreviation)
 	}
 	f.SetColWidth(sheetSatuan, "A", "A", 20)
+	f.SetColWidth(sheetSatuan, "B", "B", 14)
 
 	// Aktifkan sheet Produk saat dibuka
 	if idx, err := f.GetSheetIndex(sheetProduk); err == nil {

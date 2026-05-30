@@ -102,6 +102,11 @@ type BulkImportFailed struct {
 	Alasan string        `json:"alasan"`
 }
 
+type UnitInfo struct {
+	Name         string
+	Abbreviation string
+}
+
 type ProductFilter struct {
 	Search     string
 	CategoryID *int

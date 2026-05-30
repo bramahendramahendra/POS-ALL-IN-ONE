@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { Download, Upload } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { toast } from 'sonner'
@@ -339,8 +339,8 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
               </thead>
               <tbody>
                 {displayRows.map((row) => (
-                  <>
-                    <tr key={row.index} className={row.valid ? 'bg-green-50' : 'bg-red-50'}>
+                  <React.Fragment key={row.index}>
+                    <tr className={row.valid ? 'bg-green-50' : 'bg-red-50'}>
                       <td className="px-2 py-1.5 text-gray-400">{row.data.no || row.index}</td>
                       <td className="px-2 py-1.5 font-medium">{row.data.nama || '—'}</td>
                       <td className="px-2 py-1.5 font-mono">{row.data.barcode || <span className="text-gray-400 italic">auto</span>}</td>
@@ -359,7 +359,7 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
                       </td>
                     </tr>
                     {(row.errors.length > 0 || row.warnings.length > 0) && (
-                      <tr key={`${row.index}-detail`} className={row.errors.length > 0 ? 'bg-red-50' : 'bg-yellow-50'}>
+                      <tr className={row.errors.length > 0 ? 'bg-red-50' : 'bg-yellow-50'}>
                         <td colSpan={10} className="px-2 pb-1.5 text-xs">
                           {row.errors.length > 0 && (
                             <span className="text-red-600">↳ {row.errors.join(' · ')}</span>
@@ -370,7 +370,7 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
@@ -383,19 +383,20 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
             <table className="w-full">
               <thead className="sticky top-0 bg-gray-50">
                 <tr>
-                  {['#', 'No Produk', 'Nama Paket', 'Konversi', 'H.Beli', 'H.Jual', 'Status'].map((h) => (
+                  {['#', 'No Produk', 'Nama Paket', 'Konversi', 'H.Beli', 'H.Jual'].map((h) => (
                     <th key={h} className="px-2 py-2 text-left font-medium text-gray-600 whitespace-nowrap">
                       {h}
                     </th>
                   ))}
                   <th className="px-2 py-2 text-left font-medium text-gray-400 whitespace-nowrap bg-gray-100">Ref H.Beli</th>
                   <th className="px-2 py-2 text-left font-medium text-gray-400 whitespace-nowrap bg-gray-100">Ref H.Jual</th>
+                  <th className="px-2 py-2 text-left font-medium text-gray-600 whitespace-nowrap">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {displayGrosirRows.map((row) => (
-                  <>
-                    <tr key={row.index} className={row.valid ? 'bg-green-50' : 'bg-red-50'}>
+                  <React.Fragment key={row.index}>
+                    <tr className={row.valid ? 'bg-green-50' : 'bg-red-50'}>
                       <td className="px-2 py-1.5 text-gray-400">{row.index}</td>
                       <td className="px-2 py-1.5">{row.data.no_produk || '—'}</td>
                       <td className="px-2 py-1.5 font-medium">{row.data.nama_paket || '—'}</td>
@@ -417,13 +418,13 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
                       </td>
                     </tr>
                     {row.errors.length > 0 && (
-                      <tr key={`${row.index}-detail`} className="bg-red-50">
+                      <tr className="bg-red-50">
                         <td colSpan={9} className="px-2 pb-1.5 text-xs">
                           <span className="text-red-600">↳ {row.errors.join(' · ')}</span>
                         </td>
                       </tr>
                     )}
-                  </>
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
