@@ -76,7 +76,6 @@ type BulkImportRequest struct {
 type BulkImportRow struct {
 	No          int     `json:"no"`
 	Nama        string  `json:"nama"`
-	Deskripsi   string  `json:"deskripsi"`
 	Barcode     string  `json:"barcode"`
 	Kategori    string  `json:"kategori"`
 	HargaBeli   float64 `json:"harga_beli"`
@@ -90,6 +89,8 @@ type BulkImportRow struct {
 type GrosirImportRow struct {
 	NoProduk  int     `json:"no_produk"`
 	NamaPaket string  `json:"nama_paket"`
+	Satuan    string  `json:"satuan"`
+	SatuanID  int     `json:"satuan_id"`
 	Konversi  float64 `json:"konversi"`
 	HargaBeli float64 `json:"harga_beli"`
 	HargaJual float64 `json:"harga_jual"`
@@ -100,7 +101,6 @@ type GrosirImportRow struct {
 type ImportPreviewRow struct {
 	No          int      `json:"no"`
 	Nama        string   `json:"nama"`
-	Deskripsi   string   `json:"deskripsi"`
 	Barcode     string   `json:"barcode"`
 	Kategori    string   `json:"kategori"`
 	HargaBeli   float64  `json:"harga_beli"`
@@ -118,6 +118,8 @@ type ImportPreviewRow struct {
 type ImportPreviewGrosirRow struct {
 	NoProduk  int      `json:"no_produk"`
 	NamaPaket string   `json:"nama_paket"`
+	Satuan    string   `json:"satuan"`
+	SatuanID  int      `json:"satuan_id"`
 	Konversi  float64  `json:"konversi"`
 	HargaBeli float64  `json:"harga_beli"`
 	HargaJual float64  `json:"harga_jual"`

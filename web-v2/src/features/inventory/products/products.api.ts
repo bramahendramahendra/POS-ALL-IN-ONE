@@ -27,7 +27,6 @@ import type {
 export interface ImportPreviewRow {
   no: number
   nama: string
-  deskripsi: string
   barcode: string
   kategori: string
   harga_beli: number
@@ -36,6 +35,7 @@ export interface ImportPreviewRow {
   stok: number
   stok_minimum: number
   satuan: string
+  satuan_id: number
   valid: boolean
   errors: string[]
   warnings: string[]
@@ -44,6 +44,8 @@ export interface ImportPreviewRow {
 export interface ImportPreviewGrosirRow {
   no_produk: number
   nama_paket: string
+  satuan: string
+  satuan_id: number
   konversi: number
   harga_beli: number
   harga_jual: number
@@ -59,7 +61,6 @@ export interface ImportPreviewResponse {
 export interface ImportBulkRow {
   no: number
   nama: string
-  deskripsi: string
   barcode: string
   kategori: string
   harga_beli: number
@@ -67,11 +68,14 @@ export interface ImportBulkRow {
   stok: number
   stok_minimum: number
   satuan: string
+  satuan_id: number
 }
 
 export interface GrosirImportRow {
   no_produk: number
   nama_paket: string
+  satuan: string
+  satuan_id: number
   konversi: number
   harga_beli: number
   harga_jual: number

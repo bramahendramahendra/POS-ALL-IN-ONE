@@ -294,9 +294,9 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 	sheetProduk := "Produk"
 	f.SetSheetName("Sheet1", sheetProduk)
 
-	// Urutan: No, Produk, Deskripsi Produk, Barcode, Kategori, Harga Beli, Harga Jual, Margin, Stok, Stok Minimum, Satuan
-	prodHeaders := []string{"No", "Produk", "Deskripsi Produk", "Barcode", "Kategori", "Harga Beli", "Harga Jual", "Margin", "Stok", "Stok Minimum", "Satuan"}
-	prodExample := []any{0, "Contoh Produk A", "Deskripsi opsional", "", "Minuman", 5000, 7000, "", 100, 10, "pcs"}
+	// Urutan: No, Produk, Barcode, Kategori, Harga Beli, Harga Jual, Margin, Stok, Stok Minimum, Satuan
+	prodHeaders := []string{"No", "Produk", "Barcode", "Kategori", "Harga Beli", "Harga Jual", "Margin", "Stok", "Stok Minimum", "Satuan"}
+	prodExample := []any{0, "Contoh Produk A", "", "Minuman", 5000, 7000, "", 100, 10, "pcs"}
 
 	headerStyle, _ := f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{Bold: true, Color: "#FFFFFF"},
@@ -309,7 +309,7 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 	currencyStyle, _ := f.NewStyle(&excelize.Style{
 		NumFmt: 3, // built-in Excel format #,##0
 	})
-	// Kolom margin: read-only, latar abu, teks gelap, format 0%
+	// Kolom margin & ref: read-only, latar abu, teks gelap
 	marginHeaderStyle, _ := f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{Bold: true, Color: "#FFFFFF"},
 		Fill: excelize.Fill{Type: "pattern", Color: []string{"#808080"}, Pattern: 1},
@@ -329,31 +329,31 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 		cell, _ := excelize.CoordinatesToCellName(col+1, 2)
 		f.SetCellValue(sheetProduk, cell, val)
 	}
-	// A–G biru, H (Margin) abu, I–K biru
-	f.SetCellStyle(sheetProduk, "A1", "G1", headerStyle)
-	f.SetCellStyle(sheetProduk, "H1", "H1", marginHeaderStyle)
-	f.SetCellStyle(sheetProduk, "I1", "K1", headerStyle)
+	// A–F biru, G (Margin) abu, H–J biru
+	f.SetCellStyle(sheetProduk, "A1", "F1", headerStyle)
+	f.SetCellStyle(sheetProduk, "G1", "G1", marginHeaderStyle)
+	f.SetCellStyle(sheetProduk, "H1", "J1", headerStyle)
 
-	// Format uang: Harga Beli (F) dan Harga Jual (G) — posisi tidak berubah
+	// Format uang: Harga Beli (E) dan Harga Jual (F)
+	f.SetCellStyle(sheetProduk, "E2", "E1000", currencyStyle)
 	f.SetCellStyle(sheetProduk, "F2", "F1000", currencyStyle)
-	f.SetCellStyle(sheetProduk, "G2", "G1000", currencyStyle)
 
-	// Kolom H (Margin): formula otomatis, read-only, format persentase
-	// Rumus: =IFERROR(ROUND((G-F)/G,2),0) — hasilnya desimal (misal 0.29), NumFmt 9 menampilkan sebagai 29%
-	f.SetCellStyle(sheetProduk, "H2", "H1000", marginCellStyle)
+	// Kolom G (Margin): formula otomatis, read-only, format persentase
+	// Rumus: =IFERROR(ROUND((F-E)/F,2),0) — hasilnya desimal (misal 0.29), NumFmt 9 menampilkan sebagai 29%
+	f.SetCellStyle(sheetProduk, "G2", "G1000", marginCellStyle)
 	for row := 2; row <= 1000; row++ {
-		cellH, _ := excelize.CoordinatesToCellName(8, row)
-		f.SetCellFormula(sheetProduk, cellH, fmt.Sprintf(`IFERROR(ROUND((G%d-F%d)/G%d,2),0)`, row, row, row))
+		cellG, _ := excelize.CoordinatesToCellName(7, row)
+		f.SetCellFormula(sheetProduk, cellG, fmt.Sprintf(`IFERROR(ROUND((F%d-E%d)/F%d,2),0)`, row, row, row))
 	}
 
 	// Note baris 3
-	f.SetCellValue(sheetProduk, "A3", "* No: nomor unik dalam file ini (dipakai sheet Grosir). Barcode & Deskripsi Produk opsional. Kolom Margin otomatis.")
-	f.SetCellStyle(sheetProduk, "A3", "K3", noteStyle)
-	f.MergeCell(sheetProduk, "A3", "K3")
+	f.SetCellValue(sheetProduk, "A3", "* No: nomor unik dalam file ini (dipakai sheet Grosir). Barcode opsional (di-generate otomatis jika kosong). Kolom Margin otomatis.")
+	f.SetCellStyle(sheetProduk, "A3", "J3", noteStyle)
+	f.MergeCell(sheetProduk, "A3", "J3")
 
 	prodColWidths := map[string]float64{
-		"A": 6, "B": 24, "C": 28, "D": 18, "E": 20,
-		"F": 14, "G": 14, "H": 10, "I": 10, "J": 16, "K": 14,
+		"A": 6, "B": 26, "C": 18, "D": 20,
+		"E": 14, "F": 14, "G": 10, "H": 10, "I": 16, "J": 14,
 	}
 	for col, w := range prodColWidths {
 		f.SetColWidth(sheetProduk, col, col, w)
@@ -373,57 +373,57 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 	dvNama.SetError(excelize.DataValidationErrorStyleStop, "Nama tidak valid", "Nama produk wajib diisi, maksimal 200 karakter.")
 	f.AddDataValidation(sheetProduk, dvNama)
 
-	// Kolom D (Barcode): panjang teks maks 100 karakter
+	// Kolom C (Barcode): panjang teks maks 100 karakter
 	dvBarcode := excelize.NewDataValidation(true)
-	dvBarcode.Sqref = "D4:D1000"
+	dvBarcode.Sqref = "C4:C1000"
 	dvBarcode.SetRange(0, 100, excelize.DataValidationTypeTextLength, excelize.DataValidationOperatorBetween)
 	dvBarcode.SetError(excelize.DataValidationErrorStyleStop, "Barcode tidak valid", "Barcode maksimal 100 karakter. Kosongkan jika ingin di-generate otomatis.")
 	f.AddDataValidation(sheetProduk, dvBarcode)
 
-	// Kolom E (Kategori): dropdown dari sheet Kategori
+	// Kolom D (Kategori): dropdown dari sheet Kategori
 	if len(categoryNames) > 0 {
 		lastCatRow := len(categoryNames) + 1
 		dvKategori := excelize.NewDataValidation(true)
-		dvKategori.Sqref = "E4:E1000"
+		dvKategori.Sqref = "D4:D1000"
 		dvKategori.Formula1 = fmt.Sprintf("Kategori!$A$2:$A$%d", lastCatRow)
 		dvKategori.ShowDropDown = true
 		dvKategori.SetError(excelize.DataValidationErrorStyleStop, "Kategori tidak valid", "Pilih kategori dari daftar yang tersedia di sheet Kategori.")
 		f.AddDataValidation(sheetProduk, dvKategori)
 	}
 
-	// Kolom F (Harga Beli): angka desimal >= 0
+	// Kolom E (Harga Beli): angka desimal >= 0
 	dvHargaBeli := excelize.NewDataValidation(true)
-	dvHargaBeli.Sqref = "F4:F1000"
+	dvHargaBeli.Sqref = "E4:E1000"
 	dvHargaBeli.SetRange(0, 9999999999999.99, excelize.DataValidationTypeDecimal, excelize.DataValidationOperatorGreaterThanOrEqual)
 	dvHargaBeli.SetError(excelize.DataValidationErrorStyleStop, "Harga beli tidak valid", "Harga beli harus berupa angka >= 0.")
 	f.AddDataValidation(sheetProduk, dvHargaBeli)
 
-	// Kolom G (Harga Jual): angka desimal > 0
+	// Kolom F (Harga Jual): angka desimal > 0
 	dvHargaJual := excelize.NewDataValidation(true)
-	dvHargaJual.Sqref = "G4:G1000"
+	dvHargaJual.Sqref = "F4:F1000"
 	dvHargaJual.SetRange(0.01, 9999999999999.99, excelize.DataValidationTypeDecimal, excelize.DataValidationOperatorGreaterThanOrEqual)
 	dvHargaJual.SetError(excelize.DataValidationErrorStyleStop, "Harga jual tidak valid", "Harga jual harus berupa angka > 0.")
 	f.AddDataValidation(sheetProduk, dvHargaJual)
 
-	// Kolom I (Stok): angka desimal >= 0
+	// Kolom H (Stok): angka desimal >= 0
 	dvStok := excelize.NewDataValidation(true)
-	dvStok.Sqref = "I4:I1000"
+	dvStok.Sqref = "H4:H1000"
 	dvStok.SetRange(0, 9999999999999.999, excelize.DataValidationTypeDecimal, excelize.DataValidationOperatorGreaterThanOrEqual)
 	dvStok.SetError(excelize.DataValidationErrorStyleStop, "Stok tidak valid", "Stok harus berupa angka >= 0.")
 	f.AddDataValidation(sheetProduk, dvStok)
 
-	// Kolom J (Stok Minimum): angka desimal >= 0
+	// Kolom I (Stok Minimum): angka desimal >= 0
 	dvStokMin := excelize.NewDataValidation(true)
-	dvStokMin.Sqref = "J4:J1000"
+	dvStokMin.Sqref = "I4:I1000"
 	dvStokMin.SetRange(0, 9999999999999.999, excelize.DataValidationTypeDecimal, excelize.DataValidationOperatorGreaterThanOrEqual)
 	dvStokMin.SetError(excelize.DataValidationErrorStyleStop, "Stok minimum tidak valid", "Stok minimum harus berupa angka >= 0.")
 	f.AddDataValidation(sheetProduk, dvStokMin)
 
-	// Kolom K (Satuan): dropdown dari sheet Satuan
+	// Kolom J (Satuan): dropdown dari sheet Satuan
 	if len(unitInfos) > 0 {
 		lastUnitRow := len(unitInfos) + 1
 		dvSatuan := excelize.NewDataValidation(true)
-		dvSatuan.Sqref = "K4:K1000"
+		dvSatuan.Sqref = "J4:J1000"
 		dvSatuan.Formula1 = fmt.Sprintf("Satuan!$A$2:$A$%d", lastUnitRow)
 		dvSatuan.ShowDropDown = true
 		dvSatuan.SetError(excelize.DataValidationErrorStyleStop, "Satuan tidak valid", "Pilih satuan dari daftar yang tersedia di sheet Satuan.")
@@ -434,9 +434,9 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 	sheetGrosir := "Grosir"
 	f.NewSheet(sheetGrosir)
 
-	// Urutan: No Produk, Nama Paket, Konversi, Ref Harga Beli, Harga Beli, Ref Harga Jual, Harga Jual
-	grosirHeaders := []string{"No Produk", "Nama Paket", "Konversi", "Ref Harga Beli", "Harga Beli", "Ref Harga Jual", "Harga Jual"}
-	grosirExample := []any{0, "Dus (12 pcs)", 12, "", 55000, "", 75000}
+	// Urutan: No Produk, Nama Paket, Satuan, Konversi, Ref Harga Beli, Harga Beli, Ref Harga Jual, Harga Jual
+	grosirHeaders := []string{"No Produk", "Nama Paket", "Satuan", "Konversi", "Ref Harga Beli", "Harga Beli", "Ref Harga Jual", "Harga Jual"}
+	grosirExample := []any{0, "1 Dus", "Dus", 12, "", 55000, "", 75000}
 
 	refHeaderStyle, _ := f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{Bold: true, Color: "#FFFFFF"},
@@ -459,33 +459,34 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 		cell, _ := excelize.CoordinatesToCellName(col+1, 2)
 		f.SetCellValue(sheetGrosir, cell, val)
 	}
-	// Header: A,B,C,E,G biru (input) — D,F abu (ref/otomatis)
-	f.SetCellStyle(sheetGrosir, "A1", "C1", headerStyle)
-	f.SetCellStyle(sheetGrosir, "D1", "D1", refHeaderStyle)
-	f.SetCellStyle(sheetGrosir, "E1", "E1", headerStyle)
-	f.SetCellStyle(sheetGrosir, "F1", "F1", refHeaderStyle)
-	f.SetCellStyle(sheetGrosir, "G1", "G1", headerStyle)
+	// Header: A,B,C,D,F,H biru (input) — E,G abu (ref/otomatis)
+	f.SetCellStyle(sheetGrosir, "A1", "D1", headerStyle)
+	f.SetCellStyle(sheetGrosir, "E1", "E1", refHeaderStyle)
+	f.SetCellStyle(sheetGrosir, "F1", "F1", headerStyle)
+	f.SetCellStyle(sheetGrosir, "G1", "G1", refHeaderStyle)
+	f.SetCellStyle(sheetGrosir, "H1", "H1", headerStyle)
 
-	// Format uang: Harga Beli (E) dan Harga Jual (G)
-	f.SetCellStyle(sheetGrosir, "E2", "E500", grosirCurrencyStyle)
-	f.SetCellStyle(sheetGrosir, "G2", "G500", grosirCurrencyStyle)
+	// Format uang: Harga Beli (F) dan Harga Jual (H)
+	f.SetCellStyle(sheetGrosir, "F2", "F500", grosirCurrencyStyle)
+	f.SetCellStyle(sheetGrosir, "H2", "H500", grosirCurrencyStyle)
 
-	// Kolom D (Ref Harga Beli) dan F (Ref Harga Jual): formula VLOOKUP otomatis
-	// D = harga_beli produk × konversi, F = harga_jual produk × konversi
-	f.SetCellStyle(sheetGrosir, "D2", "D500", refCellStyle)
-	f.SetCellStyle(sheetGrosir, "F2", "F500", refCellStyle)
+	// Kolom E (Ref Harga Beli) dan G (Ref Harga Jual): formula VLOOKUP otomatis
+	// Produk sheet kolom E=Harga Beli (index 5), F=Harga Jual (index 6)
+	// VLOOKUP cari No Produk di kolom A sheet Produk, ambil kolom ke-5 (E=Harga Beli) atau ke-6 (F=Harga Jual)
+	f.SetCellStyle(sheetGrosir, "E2", "E500", refCellStyle)
+	f.SetCellStyle(sheetGrosir, "G2", "G500", refCellStyle)
 	for row := 2; row <= 500; row++ {
 		cellA, _ := excelize.CoordinatesToCellName(1, row)
-		cellC, _ := excelize.CoordinatesToCellName(3, row)
 		cellD, _ := excelize.CoordinatesToCellName(4, row)
-		cellF, _ := excelize.CoordinatesToCellName(6, row)
-		f.SetCellFormula(sheetGrosir, cellD, fmt.Sprintf(`IFERROR(VLOOKUP(%s,Produk!$A:$K,6,0)*%s,"")`, cellA, cellC))
-		f.SetCellFormula(sheetGrosir, cellF, fmt.Sprintf(`IFERROR(VLOOKUP(%s,Produk!$A:$K,7,0)*%s,"")`, cellA, cellC))
+		cellE, _ := excelize.CoordinatesToCellName(5, row)
+		cellG, _ := excelize.CoordinatesToCellName(7, row)
+		f.SetCellFormula(sheetGrosir, cellE, fmt.Sprintf(`IFERROR(VLOOKUP(%s,Produk!$A:$J,5,0)*%s,"")`, cellA, cellD))
+		f.SetCellFormula(sheetGrosir, cellG, fmt.Sprintf(`IFERROR(VLOOKUP(%s,Produk!$A:$J,6,0)*%s,"")`, cellA, cellD))
 	}
 
-	f.SetCellValue(sheetGrosir, "A3", "* No Produk: isi dengan nilai kolom 'No' dari sheet Produk. Kolom Ref otomatis. Satu produk bisa punya banyak paket.")
-	f.SetCellStyle(sheetGrosir, "A3", "G3", noteStyle)
-	f.MergeCell(sheetGrosir, "A3", "G3")
+	f.SetCellValue(sheetGrosir, "A3", "* No Produk: isi dengan nilai kolom 'No' dari sheet Produk. Satuan dipilih dari dropdown. Kolom Ref otomatis.")
+	f.SetCellStyle(sheetGrosir, "A3", "H3", noteStyle)
+	f.MergeCell(sheetGrosir, "A3", "H3")
 
 	// Kolom A (No Produk): angka bulat >= 1
 	dvGNoProduk := excelize.NewDataValidation(true)
@@ -494,38 +495,49 @@ func (h *ProductHandler) DownloadImportTemplate(c *gin.Context) {
 	dvGNoProduk.SetError(excelize.DataValidationErrorStyleStop, "No produk tidak valid", "Isi dengan angka 'No' dari sheet Produk (bulat >= 1).")
 	f.AddDataValidation(sheetGrosir, dvGNoProduk)
 
-	// Kolom B (Nama Paket): panjang teks 1–50 karakter
+	// Kolom B (Nama Paket): panjang teks maks 100 karakter (opsional)
 	dvGNamaPaket := excelize.NewDataValidation(true)
 	dvGNamaPaket.Sqref = "B4:B500"
-	dvGNamaPaket.SetRange(1, 50, excelize.DataValidationTypeTextLength, excelize.DataValidationOperatorBetween)
-	dvGNamaPaket.SetError(excelize.DataValidationErrorStyleStop, "Nama paket tidak valid", "Nama paket wajib diisi, maksimal 50 karakter.")
+	dvGNamaPaket.SetRange(0, 100, excelize.DataValidationTypeTextLength, excelize.DataValidationOperatorBetween)
+	dvGNamaPaket.SetError(excelize.DataValidationErrorStyleStop, "Nama paket tidak valid", "Nama paket maksimal 100 karakter.")
 	f.AddDataValidation(sheetGrosir, dvGNamaPaket)
 
-	// Kolom C (Konversi): angka desimal > 0
+	// Kolom C (Satuan): dropdown dari sheet Satuan
+	if len(unitInfos) > 0 {
+		lastUnitRow := len(unitInfos) + 1
+		dvGSatuan := excelize.NewDataValidation(true)
+		dvGSatuan.Sqref = "C4:C500"
+		dvGSatuan.Formula1 = fmt.Sprintf("Satuan!$A$2:$A$%d", lastUnitRow)
+		dvGSatuan.ShowDropDown = true
+		dvGSatuan.SetError(excelize.DataValidationErrorStyleStop, "Satuan tidak valid", "Pilih satuan dari daftar yang tersedia di sheet Satuan.")
+		f.AddDataValidation(sheetGrosir, dvGSatuan)
+	}
+
+	// Kolom D (Konversi): angka desimal > 0
 	dvGKonversi := excelize.NewDataValidation(true)
-	dvGKonversi.Sqref = "C4:C500"
+	dvGKonversi.Sqref = "D4:D500"
 	dvGKonversi.SetRange(0.001, 9999999999999.999, excelize.DataValidationTypeDecimal, excelize.DataValidationOperatorGreaterThanOrEqual)
 	dvGKonversi.SetError(excelize.DataValidationErrorStyleStop, "Konversi tidak valid", "Konversi harus berupa angka > 0.")
 	f.AddDataValidation(sheetGrosir, dvGKonversi)
 
-	// Kolom E (Harga Beli): angka desimal >= 0
+	// Kolom F (Harga Beli): angka desimal >= 0
 	dvGHargaBeli := excelize.NewDataValidation(true)
-	dvGHargaBeli.Sqref = "E4:E500"
+	dvGHargaBeli.Sqref = "F4:F500"
 	dvGHargaBeli.SetRange(0, 9999999999999.99, excelize.DataValidationTypeDecimal, excelize.DataValidationOperatorGreaterThanOrEqual)
 	dvGHargaBeli.SetError(excelize.DataValidationErrorStyleStop, "Harga beli tidak valid", "Harga beli harus berupa angka >= 0.")
 	f.AddDataValidation(sheetGrosir, dvGHargaBeli)
 
-	// Kolom G (Harga Jual): angka desimal > 0
+	// Kolom H (Harga Jual): angka desimal > 0
 	dvGHargaJual := excelize.NewDataValidation(true)
-	dvGHargaJual.Sqref = "G4:G500"
+	dvGHargaJual.Sqref = "H4:H500"
 	dvGHargaJual.SetRange(0.01, 9999999999999.99, excelize.DataValidationTypeDecimal, excelize.DataValidationOperatorGreaterThanOrEqual)
 	dvGHargaJual.SetError(excelize.DataValidationErrorStyleStop, "Harga jual tidak valid", "Harga jual harus berupa angka > 0.")
 	f.AddDataValidation(sheetGrosir, dvGHargaJual)
 
-	for _, col := range []string{"A", "B", "C", "E", "G"} {
+	for _, col := range []string{"A", "B", "C", "D", "F", "H"} {
 		f.SetColWidth(sheetGrosir, col, col, 16)
 	}
-	for _, col := range []string{"D", "F"} {
+	for _, col := range []string{"E", "G"} {
 		f.SetColWidth(sheetGrosir, col, col, 18)
 	}
 

@@ -67,11 +67,11 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
     if (validRows.length === 0) return
     importBulk(
       {
-        rows: validRows.map(({ no, nama, deskripsi, barcode, kategori, harga_beli, harga_jual, stok, stok_minimum, satuan }) => ({
-          no, nama, deskripsi, barcode, kategori, harga_beli, harga_jual, stok, stok_minimum, satuan,
+        rows: validRows.map(({ no, nama, barcode, kategori, harga_beli, harga_jual, stok, stok_minimum, satuan, satuan_id }) => ({
+          no, nama, barcode, kategori, harga_beli, harga_jual, stok, stok_minimum, satuan, satuan_id,
         })),
-        grosir: validGrosirRows.map(({ no_produk, nama_paket, konversi, harga_beli, harga_jual }) => ({
-          no_produk, nama_paket, konversi, harga_beli, harga_jual,
+        grosir: validGrosirRows.map(({ no_produk, nama_paket, satuan, satuan_id, konversi, harga_beli, harga_jual }) => ({
+          no_produk, nama_paket, satuan, satuan_id, konversi, harga_beli, harga_jual,
         })),
       },
       {
@@ -328,6 +328,7 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
                 <tr>
                   <th className="px-2 py-2 text-left font-medium text-gray-600 whitespace-nowrap">No Produk</th>
                   <th className="px-2 py-2 text-left font-medium text-gray-600 whitespace-nowrap">Nama Paket</th>
+                  <th className="px-2 py-2 text-left font-medium text-gray-600 whitespace-nowrap">Satuan</th>
                   <th className="px-2 py-2 text-left font-medium text-gray-600 whitespace-nowrap">Konversi</th>
                   <th className="px-2 py-2 text-left font-medium text-gray-600 whitespace-nowrap">H.Beli</th>
                   <th className="px-2 py-2 text-left font-medium text-gray-600 whitespace-nowrap">H.Jual</th>
@@ -340,6 +341,7 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
                     <tr className={row.valid ? 'bg-green-50' : 'bg-red-50'}>
                       <td className="px-2 py-1.5">{row.no_produk || '—'}</td>
                       <td className="px-2 py-1.5 font-medium">{row.nama_paket || '—'}</td>
+                      <td className="px-2 py-1.5">{row.satuan || '—'}</td>
                       <td className="px-2 py-1.5 text-right">{row.konversi}</td>
                       <td className="px-2 py-1.5 text-right">{row.harga_beli.toLocaleString('id-ID')}</td>
                       <td className="px-2 py-1.5 text-right">{row.harga_jual.toLocaleString('id-ID')}</td>
@@ -353,7 +355,7 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
                     </tr>
                     {row.errors.length > 0 && (
                       <tr className="bg-red-50">
-                        <td colSpan={6} className="px-2 pb-1.5 text-xs">
+                        <td colSpan={7} className="px-2 pb-1.5 text-xs">
                           <span className="text-red-600">↳ {row.errors.join(' · ')}</span>
                         </td>
                       </tr>

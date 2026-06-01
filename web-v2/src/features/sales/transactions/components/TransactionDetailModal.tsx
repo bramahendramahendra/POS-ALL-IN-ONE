@@ -45,6 +45,7 @@ function buildReceiptData(t: Transaction): {
     product_name: item.product_name,
     unit_id: 0,
     unit_name: item.unit_name,
+    conversion_qty: item.conversion_qty ?? 1,
     qty: item.qty,
     price: item.price,
     subtotal: item.subtotal,

@@ -177,12 +177,12 @@ export function ProductTable({
       ),
     },
     {
-      key: 'unit',
+      key: 'unit_name',
       header: 'Satuan',
       width: '80px',
       cell: (row) =>
-        row.unit ? (
-          <span className="text-sm text-gray-600">{row.unit}</span>
+        row.unit_name ? (
+          <span className="text-sm text-gray-600">{row.unit_name}</span>
         ) : (
           <span className="text-gray-400 text-sm">—</span>
         ),

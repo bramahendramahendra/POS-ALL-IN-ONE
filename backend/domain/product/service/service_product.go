@@ -505,31 +505,56 @@ func (s *productService) ImportBulk(bulkReq dto_product.BulkImportRequest) (*dto
 		if row.No > 0 {
 			noToProductID[row.No] = int(productID)
 		}
+
+		// Simpan default package (satuan dasar, is_default=true, conversion=1)
+		// persis seperti alur tambah produk manual
+		defaultPkg := dto_product.ProductPackageRequest{
+			UnitID:        resolvedUnitID,
+			ConversionQty: 1,
+			PurchasePrice: row.HargaBeli,
+			SellingPrice:  row.HargaJual,
+			IsDefault:     true,
+		}
+		_ = s.packageRepo.Save(int(productID), []dto_product.ProductPackageRequest{defaultPkg})
+
 		result.Success++
 	}
 
-	// Proses grosir/extra units
+	// Proses grosir/extra packages — gabungkan default + grosir per produk, simpan sekaligus
+	// Kumpulkan dulu semua grosir per productID
+	grosirByProduct := make(map[int][]dto_product.ProductPackageRequest)
 	for _, g := range bulkReq.Grosir {
 		productID, ok := noToProductID[g.NoProduk]
-		if !ok {
+		if !ok || g.SatuanID == 0 {
 			continue
 		}
-		// Ambil unit_id dari produk sebagai fallback untuk paket grosir
+		grosirByProduct[productID] = append(grosirByProduct[productID], dto_product.ProductPackageRequest{
+			UnitID:        g.SatuanID,
+			PackageName:   strings.TrimSpace(g.NamaPaket),
+			ConversionQty: g.Konversi,
+			PurchasePrice: g.HargaBeli,
+			SellingPrice:  g.HargaJual,
+			IsDefault:     false,
+		})
+	}
+
+	// Untuk setiap produk yang punya grosir, simpan ulang: default dulu baru grosir
+	for productID, grosirPkgs := range grosirByProduct {
 		prod, err := s.repo.GetByID(productID)
-		if err != nil || prod == nil || prod.UnitID == 0 {
+		if err != nil || prod == nil {
 			continue
 		}
-		packages := []dto_product.ProductPackageRequest{
+		allPkgs := []dto_product.ProductPackageRequest{
 			{
 				UnitID:        prod.UnitID,
-				PackageName:   strings.TrimSpace(g.NamaPaket),
-				ConversionQty: g.Konversi,
-				PurchasePrice: g.HargaBeli,
-				SellingPrice:  g.HargaJual,
-				IsDefault:     false,
+				ConversionQty: 1,
+				PurchasePrice: prod.PurchasePrice,
+				SellingPrice:  prod.SellingPrice,
+				IsDefault:     true,
 			},
 		}
-		_ = s.packageRepo.Save(productID, packages)
+		allPkgs = append(allPkgs, grosirPkgs...)
+		_ = s.packageRepo.Save(productID, allPkgs)
 	}
 
 	return result, nil
@@ -594,7 +619,10 @@ func (s *productService) ImportPreview(file *multipart.FileHeader) (*dto_product
 		return strings.TrimSpace(row[idx])
 	}
 	toFloat := func(s string) float64 {
-		v, _ := strconv.ParseFloat(strings.ReplaceAll(s, ",", "."), 64)
+		// excelize memformat NumFmt 3 (#,##0) dengan koma sebagai pemisah ribuan: "20,000"
+		// Hapus koma agar "20,000" → "20000" sebelum di-parse
+		s = strings.ReplaceAll(s, ",", "")
+		v, _ := strconv.ParseFloat(s, 64)
 		return v
 	}
 	toInt := func(s string) int {
@@ -602,11 +630,10 @@ func (s *productService) ImportPreview(file *multipart.FileHeader) (*dto_product
 		return v
 	}
 
-	// Urutan kolom: No, Produk, Deskripsi Produk, Barcode, Kategori, Harga Beli, Harga Jual, Margin(*), Stok, Stok Minimum, Satuan
+	// Urutan kolom: No, Produk, Barcode, Kategori, Harga Beli, Harga Jual, Margin(*), Stok, Stok Minimum, Satuan
 	// (*) Margin diabaikan — kolom formula, tidak dibaca
 	colNo := colIdx(headerProduk, "No")
 	colNama := colIdx(headerProduk, "Produk")
-	colDesc := colIdx(headerProduk, "Deskripsi Produk")
 	colBarcode := colIdx(headerProduk, "Barcode")
 	colKategori := colIdx(headerProduk, "Kategori")
 	colHargaBeli := colIdx(headerProduk, "Harga Beli")
@@ -702,7 +729,6 @@ func (s *productService) ImportPreview(file *multipart.FileHeader) (*dto_product
 		previewRows = append(previewRows, dto_product.ImportPreviewRow{
 			No:          no,
 			Nama:        nama,
-			Deskripsi:   getCell(row, colDesc),
 			Barcode:     barcode,
 			Kategori:    kategori,
 			HargaBeli:   hargaBeli,
@@ -728,10 +754,11 @@ func (s *productService) ImportPreview(file *multipart.FileHeader) (*dto_product
 	var previewGrosir []dto_product.ImportPreviewGrosirRow
 	if len(grosirRows) >= 2 {
 		headerGrosir := grosirRows[0]
-		// Urutan kolom: No Produk, Nama Paket, Konversi, Ref Harga Beli(*), Harga Beli, Ref Harga Jual(*), Harga Jual
+		// Urutan kolom: No Produk, Nama Paket, Satuan, Konversi, Ref Harga Beli(*), Harga Beli, Ref Harga Jual(*), Harga Jual
 		// (*) Ref diabaikan — kolom formula, tidak dibaca
 		gColNoProduk := colIdx(headerGrosir, "No Produk")
 		gColNamaPaket := colIdx(headerGrosir, "Nama Paket")
+		gColSatuan := colIdx(headerGrosir, "Satuan")
 		gColKonversi := colIdx(headerGrosir, "Konversi")
 		gColHargaBeli := colIdx(headerGrosir, "Harga Beli")
 		gColHargaJual := colIdx(headerGrosir, "Harga Jual")
@@ -743,6 +770,7 @@ func (s *productService) ImportPreview(file *multipart.FileHeader) (*dto_product
 			}
 			errs := []string{}
 			namaPaket := getCell(row, gColNamaPaket)
+			satuan := getCell(row, gColSatuan)
 			konversi := toFloat(getCell(row, gColKonversi))
 			hargaBeli := toFloat(getCell(row, gColHargaBeli))
 			hargaJual := toFloat(getCell(row, gColHargaJual))
@@ -750,8 +778,11 @@ func (s *productService) ImportPreview(file *multipart.FileHeader) (*dto_product
 			if !validNos[noProduk] {
 				errs = append(errs, fmt.Sprintf("No produk %d tidak ditemukan atau tidak valid di sheet Produk", noProduk))
 			}
-			if namaPaket == "" {
-				errs = append(errs, "Nama paket wajib diisi")
+			satuanID := unitIDMap[strings.ToLower(satuan)]
+			if satuan == "" {
+				errs = append(errs, "Satuan wajib diisi")
+			} else if satuanID == 0 {
+				errs = append(errs, fmt.Sprintf("Satuan \"%s\" tidak ditemukan di master data", satuan))
 			}
 			if konversi <= 0 {
 				errs = append(errs, "Konversi harus lebih dari 0")
@@ -763,6 +794,8 @@ func (s *productService) ImportPreview(file *multipart.FileHeader) (*dto_product
 			previewGrosir = append(previewGrosir, dto_product.ImportPreviewGrosirRow{
 				NoProduk:  noProduk,
 				NamaPaket: namaPaket,
+				Satuan:    satuan,
+				SatuanID:  satuanID,
 				Konversi:  konversi,
 				HargaBeli: hargaBeli,
 				HargaJual: hargaJual,

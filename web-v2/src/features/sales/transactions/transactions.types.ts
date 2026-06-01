@@ -5,6 +5,7 @@ export type { DiscountType, PaymentMethod }
 export interface TransactionItem {
   product_name: string
   unit_name: string
+  conversion_qty: number
   qty: number
   price: number
   subtotal: number
