@@ -20,7 +20,7 @@ export type {
   Product,
   Category,
   Unit,
-  ProductUnit,
+  ProductPackage,
   PriceTier,
   ProductFilter,
   CreateProductPayload,

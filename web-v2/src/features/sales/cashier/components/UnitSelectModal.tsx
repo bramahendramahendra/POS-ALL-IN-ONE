@@ -18,13 +18,13 @@ export function UnitSelectModal() {
 
   const handleSelectUnit = (unitId: number, unitName: string) => {
     const price = getApplicablePrice(product.prices, unitId, qty) ?? 0
-    const unit = availableUnits.find((u) => u.unit_id === unitId)
+    const pkg = availableUnits.find((u) => u.unit_id === unitId)
     addToCart({
       product_id: product.id,
       product_name: product.name,
       unit_id: unitId,
       unit_name: unitName,
-      barcode: unit?.barcode,
+      conversion_qty: pkg?.conversion_qty ?? 1,
       qty,
       price,
       subtotal: qty * price,

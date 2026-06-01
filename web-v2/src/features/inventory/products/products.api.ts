@@ -8,18 +8,17 @@ import type {
   Category,
   CreateCategoryPayload,
   CreatePriceTierPayload,
+  CreateProductPackagePayload,
   CreateProductPayload,
-  CreateProductUnitPayload,
   CreateUnitPayload,
   PriceTier,
   Product,
   ProductFilter,
-  ProductUnit,
+  ProductPackage,
   Unit,
   UpdateCategoryPayload,
   UpdatePriceTierPayload,
   UpdateProductPayload,
-  UpdateProductUnitPayload,
   UpdateUnitPayload,
 } from './products.types'
 
@@ -185,10 +184,10 @@ export function useUnitListQuery() {
   })
 }
 
-export function useProductUnitsQuery(productId: number) {
+export function useProductPackagesQuery(productId: number) {
   return useQuery({
     queryKey: queryKeys.products.productUnits(productId),
-    queryFn: () => api.get<ProductUnit[]>(`/products/${productId}/units`),
+    queryFn: () => api.get<ProductPackage[]>(`/products/${productId}/packages`),
     enabled: productId > 0,
   })
 }
@@ -357,21 +356,13 @@ export function useBulkToggleProductStatusMutation() {
   })
 }
 
-// ─── Save Product Units Bulk (untuk create mode) ─────────────────────────────
+// ─── Product Package Mutations ────────────────────────────────────────────────
 
-export interface GrosirRow {
-  unit_name: string
-  conversion_qty: number
-  purchase_price: number
-  selling_price: number
-  is_default: boolean
-}
-
-export function useSaveProductUnitsBulkMutation() {
+export function useSaveProductPackagesBulkMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ productId, units }: { productId: number; units: GrosirRow[] }) =>
-      api.post<void>(`/products/${productId}/units`, { units }),
+    mutationFn: ({ productId, packages }: { productId: number; packages: CreateProductPackagePayload[] }) =>
+      api.post<void>(`/products/${productId}/packages`, { packages }),
     onSuccess: (_data, { productId }) => {
       qc.invalidateQueries({ queryKey: queryKeys.products.productUnits(productId) })
     },
@@ -379,13 +370,11 @@ export function useSaveProductUnitsBulkMutation() {
   })
 }
 
-// ─── Product Unit Mutations ───────────────────────────────────────────────────
-
-export function useAddProductUnitMutation(productId: number) {
+export function useAddProductPackageMutation(productId: number) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (payload: CreateProductUnitPayload) =>
-      api.post<ProductUnit>(`/products/${productId}/units`, payload),
+    mutationFn: (payload: CreateProductPackagePayload) =>
+      api.post<ProductPackage>(`/products/${productId}/packages`, { packages: [payload] }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.products.productUnits(productId) })
     },
@@ -393,22 +382,10 @@ export function useAddProductUnitMutation(productId: number) {
   })
 }
 
-export function useUpdateProductUnitMutation(productId: number) {
+export function useDeleteProductPackageMutation(productId: number) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ unitId, ...payload }: UpdateProductUnitPayload) =>
-      api.put<ProductUnit>(`/products/${productId}/units/${unitId}`, payload),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.products.productUnits(productId) })
-    },
-    onError: (e: Error) => toast.error(e.message),
-  })
-}
-
-export function useDeleteProductUnitMutation(productId: number) {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (unitId: number) => api.delete<void>(`/products/${productId}/units/${unitId}`),
+    mutationFn: (packageId: number) => api.delete<void>(`/products/${productId}/packages/${packageId}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.products.productUnits(productId) })
     },

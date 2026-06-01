@@ -2,7 +2,7 @@ import { FormModal, StatusBadge } from '@/shared/components'
 import { Button } from '@/shared/components/ui/button'
 import { formatRupiah } from '@/shared/utils'
 
-import { useProductDetailQuery, useProductUnitsQuery } from '../products.api'
+import { useProductDetailQuery, useProductPackagesQuery } from '../products.api'
 
 interface ProductDetailModalProps {
   open: boolean
@@ -18,7 +18,7 @@ function calcMargin(purchasePrice: number, sellingPrice: number): number {
 export function ProductDetailModal({ open, onOpenChange, productId }: ProductDetailModalProps) {
   const enabled = open && (productId ?? 0) > 0
   const { data: product, isLoading } = useProductDetailQuery(enabled ? (productId as number) : 0)
-  const { data: units = [] } = useProductUnitsQuery(enabled ? (productId as number) : 0)
+  const { data: units = [] } = useProductPackagesQuery(enabled ? (productId as number) : 0)
 
   const margin = product ? calcMargin(product.purchase_price, product.selling_price) : 0
   const grosirUnits = units.filter((u) => !u.is_default)
@@ -58,7 +58,7 @@ export function ProductDetailModal({ open, onOpenChange, productId }: ProductDet
 
           <div className="grid grid-cols-2 gap-3">
             <DetailField label="Kategori" value={product.category_name || '—'} />
-            <DetailField label="Satuan" value={product.unit || '—'} />
+            <DetailField label="Satuan" value={product.unit_name || '—'} />
           </div>
 
           {product.description && (
@@ -119,7 +119,7 @@ export function ProductDetailModal({ open, onOpenChange, productId }: ProductDet
                     {grosirUnits.map((u) => (
                       <tr key={u.id} className="border-t">
                         <td className="px-2 py-1.5 font-medium">{u.unit_name}</td>
-                        <td className="px-2 py-1.5 text-gray-600">{u.conversion_qty} {product.unit}</td>
+                        <td className="px-2 py-1.5 text-gray-600">{u.conversion_qty} {product.unit_name}</td>
                         <td className="px-2 py-1.5">{formatRupiah(u.purchase_price)}</td>
                         <td className="px-2 py-1.5">{formatRupiah(u.selling_price)}</td>
                       </tr>

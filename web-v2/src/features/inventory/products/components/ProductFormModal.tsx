@@ -24,13 +24,12 @@ import {
   useGenerateBarcodeQuery,
   useGenerateSkuQuery,
   useProductDetailQuery,
-  useProductUnitsQuery,
+  useProductPackagesQuery,
   useUnitListQuery,
   useUpdateProductMutation,
-  useSaveProductUnitsBulkMutation,
-  type GrosirRow,
+  useSaveProductPackagesBulkMutation,
 } from '../products.api'
-import type { Product } from '../products.types'
+import type { CreateProductPackagePayload, Product } from '../products.types'
 
 const productSchema = z
   .object({
@@ -43,7 +42,7 @@ const productSchema = z
     selling_price: z.number().min(1, 'Harga jual harus lebih dari 0'),
     stock: z.number().min(0, 'Stok tidak boleh negatif'),
     min_stock: z.number().min(0, 'Stok minimum tidak boleh negatif'),
-    unit: z.string().min(1, 'Satuan wajib dipilih'),
+    unit_id: z.number({ error: 'Satuan wajib dipilih' }).min(1, 'Satuan wajib dipilih'),
     is_active: z.boolean(),
   })
   .refine((v) => v.selling_price >= v.purchase_price, {
@@ -75,7 +74,7 @@ function mapProductToForm(product: Product): ProductFormValues {
     selling_price: product.selling_price,
     stock: product.stock,
     min_stock: product.min_stock,
-    unit: product.unit ?? '',
+    unit_id: product.unit_id ?? 0,
     is_active: product.is_active,
   }
 }
@@ -83,7 +82,8 @@ function mapProductToForm(product: Product): ProductFormValues {
 // ─── Grosiran row form ────────────────────────────────────────────────────────
 
 const grosirSchema = z.object({
-  unit_name: z.string().min(1, 'Nama paket wajib diisi'),
+  unit_id: z.number({ error: 'Satuan wajib dipilih' }).min(1, 'Satuan wajib dipilih'),
+  package_name: z.string().optional(),
   conversion_qty: z.number().min(1, 'Konversi harus > 0'),
   purchase_price: z.number().min(0),
   selling_price: z.number().min(1, 'Harga jual harus > 0'),
@@ -91,16 +91,18 @@ const grosirSchema = z.object({
 type GrosirFormValues = z.infer<typeof grosirSchema>
 
 function GrosirRowForm({
-  baseUnit,
+  baseUnitName,
   basePurchase,
   baseSelling,
+  availableUnits,
   initialValues,
   onSave,
   onCancel,
 }: {
-  baseUnit: string
+  baseUnitName: string
   basePurchase: number
   baseSelling: number
+  availableUnits: { id: number; name: string; abbreviation: string }[]
   initialValues?: GrosirFormValues
   onSave: (v: GrosirFormValues) => void
   onCancel: () => void
@@ -109,14 +111,16 @@ function GrosirRowForm({
     register,
     handleSubmit,
     watch,
+    setValue: setGrosirValue,
     control: grosirControl,
     formState: { errors },
   } = useForm<GrosirFormValues>({
     resolver: zodResolver(grosirSchema),
-    defaultValues: initialValues ?? { unit_name: '', conversion_qty: 1, purchase_price: 0, selling_price: 0 },
+    defaultValues: initialValues ?? { unit_id: 0, package_name: '', conversion_qty: 1, purchase_price: 0, selling_price: 0 },
   })
 
   const convQty = watch('conversion_qty') || 0
+  const unitIdVal = watch('unit_id')
   const refPurchase = basePurchase * convQty
   const refSelling = baseSelling * convQty
 
@@ -124,27 +128,45 @@ function GrosirRowForm({
     <div className="rounded-md border bg-gray-50 p-3 space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
-          <Label className="text-xs">Nama Paket *</Label>
-          <Input
-            {...register('unit_name')}
-            placeholder="Contoh: 1 Dus, 3 Botol"
-            className="h-8 text-sm"
-          />
-          {errors.unit_name && <p className="text-xs text-red-500">{errors.unit_name.message}</p>}
+          <Label className="text-xs">Satuan *</Label>
+          <Select
+            value={unitIdVal > 0 ? String(unitIdVal) : ''}
+            onValueChange={(v) => setGrosirValue('unit_id', Number(v))}
+          >
+            <SelectTrigger className={`h-8 text-sm ${errors.unit_id ? 'border-red-500' : ''}`}>
+              <SelectValue placeholder="Pilih Satuan" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableUnits.filter((u) => u.id > 0).map((u) => (
+                <SelectItem key={u.id} value={String(u.id)}>
+                  {u.name} ({u.abbreviation})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.unit_id && <p className="text-xs text-red-500">{errors.unit_id.message}</p>}
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Konversi ke {baseUnit || 'Satuan Dasar'} *</Label>
+          <Label className="text-xs">Nama Paket</Label>
           <Input
-            type="number"
-            min={1}
-            {...register('conversion_qty', { valueAsNumber: true })}
+            {...register('package_name')}
+            placeholder="Opsional, misal: 1 Dus, 3 Botol"
             className="h-8 text-sm"
           />
-          {convQty > 0 && baseUnit && (
-            <p className="text-xs text-blue-600">1 paket ini = {convQty} {baseUnit}</p>
-          )}
-          {errors.conversion_qty && <p className="text-xs text-red-500">{errors.conversion_qty.message}</p>}
         </div>
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs">Konversi ke {baseUnitName || 'Satuan Dasar'} *</Label>
+        <Input
+          type="number"
+          min={1}
+          {...register('conversion_qty', { valueAsNumber: true })}
+          className="h-8 text-sm"
+        />
+        {convQty > 0 && baseUnitName && (
+          <p className="text-xs text-blue-600">1 paket ini = {convQty} {baseUnitName}</p>
+        )}
+        {errors.conversion_qty && <p className="text-xs text-red-500">{errors.conversion_qty.message}</p>}
       </div>
 
       {convQty > 0 && (basePurchase > 0 || baseSelling > 0) && (
@@ -192,8 +214,8 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
   const isEdit = productId !== undefined
   const [generateSkuEnabled, setGenerateSkuEnabled] = useState(false)
 
-  // Grosiran state (create mode only)
-  const [grosirRows, setGrosirRows] = useState<GrosirRow[]>([])
+  // Grosiran state
+  const [grosirRows, setGrosirRows] = useState<CreateProductPackagePayload[]>([])
   const [showGrosirForm, setShowGrosirForm] = useState(false)
   const [editingGrosirIdx, setEditingGrosirIdx] = useState<number | null>(null)
 
@@ -204,7 +226,7 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
   const { data: detailData, isLoading: isLoadingDetail } = useProductDetailQuery(
     isEdit && open ? (productId as number) : 0
   )
-  const { data: existingUnits = [] } = useProductUnitsQuery(
+  const { data: existingPackages = [] } = useProductPackagesQuery(
     isEdit && open ? (productId as number) : 0
   )
   const { data: categories = [] } = useCategoryListQuery()
@@ -212,7 +234,7 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
 
   const { mutate: createProduct, isPending: isCreating } = useCreateProductMutation()
   const { mutate: updateProduct, isPending: isUpdating } = useUpdateProductMutation()
-  const { mutate: saveGrosir } = useSaveProductUnitsBulkMutation()
+  const { mutate: savePackages } = useSaveProductPackagesBulkMutation()
   const isPending = isCreating || isUpdating
 
   const form = useForm<ProductFormValues>({
@@ -227,7 +249,7 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
       selling_price: 0,
       stock: 0,
       min_stock: 5,
-      unit: '',
+      unit_id: 0,
       is_active: true,
     },
   })
@@ -235,7 +257,7 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
   const { register, handleSubmit, reset, setValue, watch, control, formState: { errors } } = form
 
   const categoryIdValue = watch('category_id')
-  const unitValue = watch('unit')
+  const unitIdValue = watch('unit_id')
   const purchasePriceValue = watch('purchase_price')
   const sellingPriceValue = watch('selling_price')
   const margin = calcMargin(purchasePriceValue, sellingPriceValue)
@@ -266,26 +288,27 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
   }, [detailData, isEdit])
 
   useEffect(() => {
-    if (isEdit && existingUnits.length > 0) {
+    if (isEdit && existingPackages.length > 0) {
       setGrosirRows(
-        existingUnits
-          .filter((u) => !u.is_default)
-          .map((u) => ({
-            unit_name: u.unit_name,
-            conversion_qty: u.conversion_qty,
-            purchase_price: u.purchase_price,
-            selling_price: u.selling_price,
+        existingPackages
+          .filter((p) => !p.is_default)
+          .map((p) => ({
+            unit_id: p.unit_id,
+            package_name: p.package_name,
+            conversion_qty: p.conversion_qty,
+            purchase_price: p.purchase_price,
+            selling_price: p.selling_price,
             is_default: false,
           }))
       )
     }
-  }, [isEdit, existingUnits])
+  }, [isEdit, existingPackages])
 
   useEffect(() => {
     if (!open) {
       reset({
         name: '', sku: '', barcode: '', category_id: undefined, description: '',
-        purchase_price: 0, selling_price: 0, stock: 0, min_stock: 5, unit: '', is_active: true,
+        purchase_price: 0, selling_price: 0, stock: 0, min_stock: 5, unit_id: 0, is_active: true,
       })
       setGenerateSkuEnabled(false)
       setGrosirRows([])
@@ -315,18 +338,28 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
       selling_price: pendingValues.selling_price,
       stock: pendingValues.stock,
       min_stock: pendingValues.min_stock,
-      unit: pendingValues.unit,
+      unit_id: pendingValues.unit_id,
       is_active: pendingValues.is_active,
     }
+
+    // Paket default (satuan dasar) selalu dimasukkan sebagai is_default=true
+    const allPackages: CreateProductPackagePayload[] = [
+      {
+        unit_id: pendingValues.unit_id,
+        conversion_qty: 1,
+        purchase_price: pendingValues.purchase_price,
+        selling_price: pendingValues.selling_price,
+        is_default: true,
+      },
+      ...grosirRows,
+    ]
 
     if (isEdit) {
       updateProduct(
         { id: productId, ...payload },
         {
           onSuccess: () => {
-            if (grosirRows.length > 0) {
-              saveGrosir({ productId: productId as number, units: grosirRows })
-            }
+            savePackages({ productId: productId as number, packages: allPackages })
             toast.success('Produk berhasil diperbarui')
             setIsConfirming(false)
             onOpenChange(false)
@@ -338,8 +371,8 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
       createProduct(payload, {
         onSuccess: (data) => {
           const newId = (data as unknown as { id: number })?.id
-          if (newId && grosirRows.length > 0) {
-            saveGrosir({ productId: newId, units: grosirRows })
+          if (newId) {
+            savePackages({ productId: newId, packages: allPackages })
           }
           toast.success('Produk berhasil ditambahkan')
           setIsConfirming(false)
@@ -351,7 +384,7 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
   }
 
   const handleAddGrosir = (values: GrosirFormValues) => {
-    const row: GrosirRow = { ...values, is_default: false }
+    const row: CreateProductPackagePayload = { ...values, is_default: false }
     if (editingGrosirIdx !== null) {
       setGrosirRows((prev) => prev.map((r, i) => (i === editingGrosirIdx ? row : r)))
       setEditingGrosirIdx(null)
@@ -431,24 +464,24 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
                   </div>
                   <div className="space-y-1.5">
                     <Label>
-                      Satuan <span className="text-red-500">*</span>
+                      Satuan Dasar <span className="text-red-500">*</span>
                     </Label>
                     <Select
-                      value={unitValue || ''}
-                      onValueChange={(v) => setValue('unit', v)}
+                      value={unitIdValue > 0 ? String(unitIdValue) : ''}
+                      onValueChange={(v) => setValue('unit_id', Number(v))}
                     >
-                      <SelectTrigger className={errors.unit ? 'border-red-500' : ''}>
+                      <SelectTrigger className={errors.unit_id ? 'border-red-500' : ''}>
                         <SelectValue placeholder="Pilih Satuan" />
                       </SelectTrigger>
                       <SelectContent>
                         {units.filter((u) => u.is_active).map((u) => (
-                          <SelectItem key={u.id} value={u.name}>
+                          <SelectItem key={u.id} value={String(u.id)}>
                             {u.name} ({u.abbreviation})
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    {errors.unit && <p className="text-xs text-red-500">{errors.unit.message}</p>}
+                    {errors.unit_id && <p className="text-xs text-red-500">{errors.unit_id.message}</p>}
                   </div>
                 </div>
 
@@ -644,9 +677,12 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
                           <tbody>
                             {grosirRows.map((row, idx) => (
                               <tr key={idx} className="border-t">
-                                <td className="px-2 py-1.5 font-medium">{row.unit_name}</td>
+                                <td className="px-2 py-1.5 font-medium">
+                                  {units.find((u) => u.id === row.unit_id)?.name ?? '—'}
+                                  {row.package_name && <span className="text-gray-400 ml-1">({row.package_name})</span>}
+                                </td>
                                 <td className="px-2 py-1.5 text-gray-600">
-                                  {row.conversion_qty} {unitValue || 'satuan dasar'}
+                                  {row.conversion_qty} {units.find((u) => u.id === unitIdValue)?.name || 'satuan dasar'}
                                 </td>
                                 <td className="px-2 py-1.5">Rp {row.purchase_price.toLocaleString('id-ID')}</td>
                                 <td className="px-2 py-1.5">Rp {row.selling_price.toLocaleString('id-ID')}</td>
@@ -684,13 +720,15 @@ export function ProductFormModal({ open, onOpenChange, productId }: ProductFormM
 
                     {showGrosirForm && (
                       <GrosirRowForm
-                        baseUnit={unitValue}
+                        baseUnitName={units.find((u) => u.id === unitIdValue)?.name ?? ''}
                         basePurchase={purchasePriceValue}
                         baseSelling={sellingPriceValue}
+                        availableUnits={units.filter((u) => u.is_active)}
                         initialValues={
                           editingGrosirIdx !== null
                             ? {
-                                unit_name: grosirRows[editingGrosirIdx].unit_name,
+                                unit_id: grosirRows[editingGrosirIdx].unit_id,
+                                package_name: grosirRows[editingGrosirIdx].package_name ?? '',
                                 conversion_qty: grosirRows[editingGrosirIdx].conversion_qty,
                                 purchase_price: grosirRows[editingGrosirIdx].purchase_price,
                                 selling_price: grosirRows[editingGrosirIdx].selling_price,

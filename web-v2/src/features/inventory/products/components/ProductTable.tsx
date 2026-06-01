@@ -66,7 +66,7 @@ export function ProductTable({
       'Harga Jual': p.selling_price,
       'Stok': p.stock,
       'Stok Minimum': p.min_stock,
-      'Satuan': p.unit ?? '',
+      'Satuan': p.unit_name ?? '',
       'Status': p.is_active ? 'Aktif' : 'Nonaktif',
     }))
     const ws = XLSX.utils.json_to_sheet(rows)

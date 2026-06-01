@@ -9,7 +9,7 @@ type ProductRequest struct {
 	SellingPrice  float64 `json:"selling_price" validate:"required,min=0"`
 	Stock         float64 `json:"stock" validate:"min=0"`
 	MinStock      float64 `json:"min_stock" validate:"min=0"`
-	Unit          string  `json:"unit" validate:"required"`
+	UnitID        int     `json:"unit_id" validate:"required,min=1"`
 }
 
 type ProductResponse struct {
@@ -23,9 +23,11 @@ type ProductResponse struct {
 	SellingPrice    float64 `json:"selling_price"`
 	Stock           float64 `json:"stock"`
 	MinStock        float64 `json:"min_stock"`
-	Unit            string  `json:"unit"`
+	UnitID          int     `json:"unit_id"`
+	UnitName        string  `json:"unit_name"`
+	UnitAbbreviation string `json:"unit_abbreviation"`
 	IsActive        bool    `json:"is_active"`
-	ExtraUnitsCount int     `json:"extra_units_count"`
+	ExtraPackages   int     `json:"extra_packages"`
 	PriceTiersCount int     `json:"price_tiers_count"`
 }
 
@@ -43,7 +45,8 @@ type ProductSearchResult struct {
 	Name         string  `json:"name"`
 	SellingPrice float64 `json:"selling_price"`
 	Stock        float64 `json:"stock"`
-	Unit         string  `json:"unit"`
+	UnitID       int     `json:"unit_id"`
+	UnitName     string  `json:"unit_name"`
 }
 
 type LowStockProduct struct {
@@ -51,7 +54,7 @@ type LowStockProduct struct {
 	Name     string  `json:"name"`
 	Stock    float64 `json:"stock"`
 	MinStock float64 `json:"min_stock"`
-	Unit     string  `json:"unit"`
+	UnitName string  `json:"unit_name"`
 }
 
 type ImportResult struct {
@@ -81,6 +84,7 @@ type BulkImportRow struct {
 	Stok        float64 `json:"stok"`
 	StokMinimum float64 `json:"stok_minimum"`
 	Satuan      string  `json:"satuan"`
+	SatuanID    int     `json:"satuan_id"`
 }
 
 type GrosirImportRow struct {
@@ -105,6 +109,7 @@ type ImportPreviewRow struct {
 	Stok        float64  `json:"stok"`
 	StokMinimum float64  `json:"stok_minimum"`
 	Satuan      string   `json:"satuan"`
+	SatuanID    int      `json:"satuan_id"`
 	Valid        bool     `json:"valid"`
 	Errors      []string `json:"errors"`
 	Warnings    []string `json:"warnings"`

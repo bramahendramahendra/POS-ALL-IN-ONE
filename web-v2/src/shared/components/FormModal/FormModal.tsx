@@ -27,6 +27,7 @@ interface FormModalProps {
   description?: string
   size?: keyof typeof SIZE_MAP
   isLoading?: boolean
+  submitDisabled?: boolean
   onSubmit?: () => void
   submitLabel?: string
   cancelLabel?: string
@@ -41,6 +42,7 @@ export function FormModal({
   description,
   size = 'md',
   isLoading,
+  submitDisabled,
   onSubmit,
   submitLabel = 'Simpan',
   cancelLabel = 'Batal',
@@ -87,7 +89,7 @@ export function FormModal({
             >
               {cancelLabel}
             </Button>
-            <Button type="button" onClick={onSubmit} disabled={isLoading}>
+            <Button type="button" onClick={onSubmit} disabled={isLoading || submitDisabled}>
               {isLoading && <Loader2 size={14} className="animate-spin" />}
               {submitLabel}
             </Button>

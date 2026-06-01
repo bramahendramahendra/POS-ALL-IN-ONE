@@ -112,7 +112,7 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
     setValue(`items.${index}.product_id`, id)
     const product = products.find((p) => p.id === id)
     if (product) {
-      setValue(`items.${index}.unit`, product.unit ?? 'pcs')
+      setValue(`items.${index}.unit`, product.unit_name ?? 'pcs')
       setValue(`items.${index}.price`, product.purchase_price ?? 0)
     }
   }

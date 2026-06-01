@@ -70,6 +70,8 @@ function buildPayload(
     items: cart.map((i) => ({
       product_id: i.product_id,
       unit_id: i.unit_id,
+      unit_name: i.unit_name,
+      conversion_qty: i.conversion_qty,
       qty: i.qty,
       price: i.price,
       subtotal: i.subtotal,

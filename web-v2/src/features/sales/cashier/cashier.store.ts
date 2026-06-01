@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-import type { Product, ProductUnit } from '@/features/inventory/products'
+import type { Product, ProductPackage } from '@/features/inventory/products'
 
 import type { CartItem, Discount, DiscountType, Tax } from './cashier.types'
 import { calcDiscountAmount, calcItemSubtotal, calcTaxAmount, calculateItemDiscount } from './cashier.utils'
@@ -19,7 +19,7 @@ interface CashierState {
   // UI State (not persisted)
   paymentModalOpen: boolean
   unitSelectModalOpen: boolean
-  pendingProduct: { product: Product; availableUnits: ProductUnit[] } | null
+  pendingProduct: { product: Product; availableUnits: ProductPackage[] } | null
 
   // Actions — Cart
   addToCart: (item: CartItem) => void
@@ -40,7 +40,7 @@ interface CashierState {
   // Actions — Modal
   openPaymentModal: () => void
   closePaymentModal: () => void
-  openUnitSelectModal: (product: Product, units: ProductUnit[]) => void
+  openUnitSelectModal: (product: Product, units: ProductPackage[]) => void
   closeUnitSelectModal: () => void
 }
 

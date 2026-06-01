@@ -199,7 +199,7 @@ func (s *reportService) ExportStockReport() (*bytes.Buffer, error) {
 			status = "Stok Rendah"
 		}
 		vals := []interface{}{idx + 1, item.Name, item.CategoryName, item.Stock, item.MinStock,
-			item.Unit, item.PurchasePrice, item.StockValue, status}
+			item.UnitName, item.PurchasePrice, item.StockValue, status}
 		for col, v := range vals {
 			cell, _ := excelize.CoordinatesToCellName(col+1, row)
 			f.SetCellValue(sheet, cell, v)

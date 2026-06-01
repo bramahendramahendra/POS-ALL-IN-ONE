@@ -43,11 +43,13 @@ const (
 		GROUP BY category`
 
 	stockReportQuery = `
-		SELECT p.id, p.name, COALESCE(c.name,'') as category_name, p.stock, p.min_stock, p.unit,
+		SELECT p.id, p.name, COALESCE(c.name,'') as category_name, p.stock, p.min_stock,
+		       COALESCE(u.name,'') as unit_name,
 		       p.purchase_price, (p.stock * p.purchase_price) as stock_value,
 		       CASE WHEN p.stock <= p.min_stock THEN 1 ELSE 0 END as is_low_stock
 		FROM products p
 		LEFT JOIN categories c ON p.category_id = c.id
+		LEFT JOIN units u ON u.id = p.unit_id
 		WHERE p.is_active = 1`
 
 	cashierReportQuery = `
@@ -179,7 +181,7 @@ func (r *reportRepo) GetStockItems() ([]dto_report.StockItem, error) {
 		var item dto_report.StockItem
 		var isLowInt int
 		if err := rows.Scan(&item.ID, &item.Name, &item.CategoryName, &item.Stock, &item.MinStock,
-			&item.Unit, &item.PurchasePrice, &item.StockValue, &isLowInt); err != nil {
+			&item.UnitName, &item.PurchasePrice, &item.StockValue, &isLowInt); err != nil {
 			return nil, err
 		}
 		item.IsLowStock = isLowInt == 1

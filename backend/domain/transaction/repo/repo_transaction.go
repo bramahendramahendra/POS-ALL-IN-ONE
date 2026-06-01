@@ -13,6 +13,7 @@ import (
 )
 
 const (
+	getPackageByIDQuery          = `SELECT pp.conversion_qty, COALESCE(u.name, '') AS unit_name FROM product_packages pp JOIN units u ON u.id = pp.unit_id WHERE pp.id = ? LIMIT 1`
 	generateTransactionCodeQuery = `SELECT COUNT(*) FROM transactions WHERE DATE(transaction_date) = CURDATE() AND device_source = ?`
 	createTransactionQuery       = `INSERT INTO transactions (transaction_code, user_id, shift_id, transaction_date, subtotal, discount, tax, total_amount, payment_method, payment_amount, change_amount, customer_id, is_credit, status, device_source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	createTransactionItemQuery   = `INSERT INTO transaction_items (transaction_id, product_id, product_name, quantity, unit, price, subtotal, discount_item, conversion_qty, unit_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -180,14 +181,34 @@ func (r *transactionRepo) Create(req *dto_transaction.CreateTransactionRequest, 
 
 		// 3. Loop items
 		for _, item := range req.Items {
+			// Resolve conversion_qty dan unit_name dari product_packages
+			conversionQty := item.ConversionQty
+			unitName := item.Unit
+			if item.UnitID != nil && *item.UnitID > 0 {
+				var pkgData struct {
+					ConversionQty float64
+					UnitName      string
+				}
+				if err := tx.Raw(getPackageByIDQuery, *item.UnitID).Scan(&pkgData).Error; err == nil && pkgData.ConversionQty > 0 {
+					conversionQty = pkgData.ConversionQty
+					unitName = pkgData.UnitName
+				}
+			}
+			if conversionQty <= 0 {
+				conversionQty = 1
+			}
+
+			// Stok yang dikurangi = qty × conversion_qty (konversi ke satuan dasar)
+			stockDeduct := item.Quantity * conversionQty
+
 			// Ambil stok sebelumnya
 			var stockBefore float64
 			if err := tx.Raw(getProductStockQuery, item.ProductID).Scan(&stockBefore).Error; err != nil {
 				return err
 			}
 
-			// Kurangi stok (atomic dengan cek stok >= qty)
-			result := tx.Exec(updateProductStockQuery, item.Quantity, item.ProductID, item.Quantity)
+			// Kurangi stok (atomic dengan cek stok >= qty dalam satuan dasar)
+			result := tx.Exec(updateProductStockQuery, stockDeduct, item.ProductID, stockDeduct)
 			if result.Error != nil {
 				return result.Error
 			}
@@ -195,20 +216,20 @@ func (r *transactionRepo) Create(req *dto_transaction.CreateTransactionRequest, 
 				return fmt.Errorf("stok_insufficient:%s", item.ProductName)
 			}
 
-			// Simpan item
+			// Simpan item dengan unit_name dari master dan conversion_qty yang benar
 			if err := tx.Exec(createTransactionItemQuery,
 				transactionID, item.ProductID, item.ProductName,
-				item.Quantity, item.Unit, item.Price, item.Subtotal,
-				item.DiscountItem, item.ConversionQty, item.UnitID,
+				item.Quantity, unitName, item.Price, item.Subtotal,
+				item.DiscountItem, conversionQty, item.UnitID,
 			).Error; err != nil {
 				return err
 			}
 
-			// Catat mutasi stok
-			stockAfter := stockBefore - item.Quantity
+			// Catat mutasi stok (dalam satuan dasar)
+			stockAfter := stockBefore - stockDeduct
 			notes := fmt.Sprintf("Transaksi %s", code)
 			if err := tx.Exec(createStockMutationQuery,
-				item.ProductID, "out", item.Quantity, stockBefore, stockAfter,
+				item.ProductID, "out", stockDeduct, stockBefore, stockAfter,
 				"transaction", transactionID, notes, userID,
 			).Error; err != nil {
 				return err

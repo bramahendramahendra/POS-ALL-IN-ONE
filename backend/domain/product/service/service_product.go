@@ -22,17 +22,17 @@ import (
 type productService struct {
 	repo           repo_product.ProductRepo
 	catRepo        repo_category.CategoryRepo
-	unitRepo       repo_product.ProductUnitRepo
+	packageRepo    repo_product.ProductPackageRepo
 	masterUnitRepo repo_unit.UnitRepo
 }
 
 func NewProductService(
 	repo repo_product.ProductRepo,
 	catRepo repo_category.CategoryRepo,
-	unitRepo repo_product.ProductUnitRepo,
+	packageRepo repo_product.ProductPackageRepo,
 	masterUnitRepo repo_unit.UnitRepo,
 ) ProductService {
-	return &productService{repo: repo, catRepo: catRepo, unitRepo: unitRepo, masterUnitRepo: masterUnitRepo}
+	return &productService{repo: repo, catRepo: catRepo, packageRepo: packageRepo, masterUnitRepo: masterUnitRepo}
 }
 
 func (s *productService) GetCategoryNames() ([]string, error) {
@@ -322,7 +322,6 @@ func (s *productService) ImportFromFile(file *multipart.FileHeader) (*dto_produc
 			Barcode:      getCol(1),
 			Name:         name,
 			SellingPrice: sellingPrice,
-			Unit:         getCol(7),
 		}
 
 		if v := getCol(3); v != "" {
@@ -422,6 +421,23 @@ func (s *productService) ImportBulk(bulkReq dto_product.BulkImportRequest) (*dto
 			})
 		}
 
+		if strings.TrimSpace(row.Nama) == "" {
+			addFailed("Nama produk kosong")
+			continue
+		}
+
+		// Resolve unit_id dari nama atau singkatan satuan
+		satuanKey := strings.ToLower(strings.TrimSpace(row.Satuan))
+		if satuanKey == "" {
+			addFailed("Satuan kosong")
+			continue
+		}
+		resolvedUnitID := row.SatuanID // sudah di-resolve saat ImportPreview
+		if resolvedUnitID == 0 {
+			addFailed(fmt.Sprintf("Satuan \"%s\" tidak ditemukan di master data", row.Satuan))
+			continue
+		}
+
 		req := &dto_product.ProductRequest{
 			Barcode:       strings.TrimSpace(row.Barcode),
 			Name:          strings.TrimSpace(row.Nama),
@@ -429,16 +445,7 @@ func (s *productService) ImportBulk(bulkReq dto_product.BulkImportRequest) (*dto
 			SellingPrice:  row.HargaJual,
 			Stock:         row.Stok,
 			MinStock:      row.StokMinimum,
-			Unit:          strings.TrimSpace(row.Satuan),
-		}
-
-		if req.Name == "" {
-			addFailed("Nama produk kosong")
-			continue
-		}
-		if req.Unit == "" {
-			addFailed("Satuan kosong")
-			continue
+			UnitID:        resolvedUnitID,
 		}
 
 		kategori := strings.TrimSpace(row.Kategori)
@@ -507,16 +514,22 @@ func (s *productService) ImportBulk(bulkReq dto_product.BulkImportRequest) (*dto
 		if !ok {
 			continue
 		}
-		units := []dto_product.ProductUnitRequest{
+		// Ambil unit_id dari produk sebagai fallback untuk paket grosir
+		prod, err := s.repo.GetByID(productID)
+		if err != nil || prod == nil || prod.UnitID == 0 {
+			continue
+		}
+		packages := []dto_product.ProductPackageRequest{
 			{
-				UnitName:      strings.TrimSpace(g.NamaPaket),
+				UnitID:        prod.UnitID,
+				PackageName:   strings.TrimSpace(g.NamaPaket),
 				ConversionQty: g.Konversi,
 				PurchasePrice: g.HargaBeli,
 				SellingPrice:  g.HargaJual,
 				IsDefault:     false,
 			},
 		}
-		_ = s.unitRepo.Save(productID, units)
+		_ = s.packageRepo.Save(productID, packages)
 	}
 
 	return result, nil
@@ -543,10 +556,12 @@ func (s *productService) ImportPreview(file *multipart.FileHeader) (*dto_product
 		}
 	}
 
-	validUnits := make(map[string]bool)
+	// unitIDMap: key = lowercase nama/singkatan → unit_id
+	unitIDMap := make(map[string]int)
 	if units, err := s.masterUnitRepo.GetAll(); err == nil {
 		for _, u := range units {
-			validUnits[strings.ToLower(strings.TrimSpace(u.Name))] = true
+			unitIDMap[strings.ToLower(strings.TrimSpace(u.Name))] = u.ID
+			unitIDMap[strings.ToLower(strings.TrimSpace(u.Abbreviation))] = u.ID
 		}
 	}
 
@@ -626,9 +641,10 @@ func (s *productService) ImportPreview(file *multipart.FileHeader) (*dto_product
 		if nama == "" {
 			errs = append(errs, "Nama produk wajib diisi")
 		}
+		satuanID := unitIDMap[strings.ToLower(satuan)]
 		if satuan == "" {
 			errs = append(errs, "Satuan wajib diisi")
-		} else if !validUnits[strings.ToLower(satuan)] {
+		} else if satuanID == 0 {
 			errs = append(errs, fmt.Sprintf("Satuan \"%s\" tidak ditemukan di master data", satuan))
 		}
 		if hargaJual <= 0 {
@@ -695,6 +711,7 @@ func (s *productService) ImportPreview(file *multipart.FileHeader) (*dto_product
 			Stok:        stok,
 			StokMinimum: stokMin,
 			Satuan:      satuan,
+			SatuanID:    satuanID,
 			Valid:        valid,
 			Errors:      errs,
 			Warnings:    warns,
@@ -774,17 +791,19 @@ func toProductResponse(p *model_product.Product, categoryName string) *dto_produ
 		catName = p.CategoryName
 	}
 	return &dto_product.ProductResponse{
-		ID:            p.ID,
-		Barcode:       p.Barcode,
-		SKU:           p.SKU,
-		Name:          p.Name,
-		CategoryID:    p.CategoryID,
-		CategoryName:  catName,
-		PurchasePrice: p.PurchasePrice,
-		SellingPrice:  p.SellingPrice,
-		Stock:         p.Stock,
-		MinStock:      p.MinStock,
-		Unit:          p.Unit,
-		IsActive:      p.IsActive,
+		ID:               p.ID,
+		Barcode:          p.Barcode,
+		SKU:              p.SKU,
+		Name:             p.Name,
+		CategoryID:       p.CategoryID,
+		CategoryName:     catName,
+		PurchasePrice:    p.PurchasePrice,
+		SellingPrice:     p.SellingPrice,
+		Stock:            p.Stock,
+		MinStock:         p.MinStock,
+		UnitID:           p.UnitID,
+		UnitName:         p.UnitName,
+		UnitAbbreviation: p.UnitAbbreviation,
+		IsActive:         p.IsActive,
 	}
 }

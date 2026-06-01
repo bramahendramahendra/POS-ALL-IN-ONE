@@ -37,13 +37,13 @@ export function ProductSearch() {
 
   const addItemToCart = (product: Product, unitId: number, unitName: string) => {
     const price = getApplicablePrice(product.prices, unitId, 1) ?? 0
-    const unit = product.units.find((u) => u.unit_id === unitId)
+    const pkg = product.units.find((u) => u.unit_id === unitId)
     addToCart({
       product_id: product.id,
       product_name: product.name,
       unit_id: unitId,
       unit_name: unitName,
-      barcode: unit?.barcode,
+      conversion_qty: pkg?.conversion_qty ?? 1,
       qty: 1,
       price,
       subtotal: price,

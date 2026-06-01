@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 
 import { api } from '@/services/api.client'
 import { queryKeys } from '@/shared/constants'
-import type { Product, ProductUnit } from '@/features/inventory/products'
+import type { Product, ProductPackage } from '@/features/inventory/products'
 
 export const useBarcodeScan = () => {
   const [isScanning, setIsScanning] = useState(false)
@@ -11,16 +11,16 @@ export const useBarcodeScan = () => {
 
   const handleBarcodeEnter = async (
     code: string
-  ): Promise<{ product: Product; units: ProductUnit[] }> => {
+  ): Promise<{ product: Product; units: ProductPackage[] }> => {
     setIsScanning(true)
     try {
       const result = await qc.fetchQuery({
         queryKey: queryKeys.products.barcode(code),
         queryFn: () =>
-          api.get<{ product: Product; units: ProductUnit[] }>(`/products/barcode/${code}`),
+          api.get<{ product: Product; units: ProductPackage[] }>(`/products/barcode/${code}`),
         staleTime: 30_000,
       })
-      return result as { product: Product; units: ProductUnit[] }
+      return result as { product: Product; units: ProductPackage[] }
     } finally {
       setIsScanning(false)
     }

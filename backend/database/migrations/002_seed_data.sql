@@ -5,12 +5,29 @@
 -- =============================================================
 
 -- -------------------------------------------------------------
+-- Payment Statuses
+-- -------------------------------------------------------------
+INSERT IGNORE INTO payment_statuses (code, label, is_active, sort_order) VALUES
+    ('unpaid',  'Hutang',         1, 1),
+    ('partial', 'Bayar Sebagian', 1, 2),
+    ('paid',    'Lunas',          1, 3);
+
+-- -------------------------------------------------------------
+-- Payment Methods
+-- -------------------------------------------------------------
+INSERT IGNORE INTO payment_methods (code, label, is_active, sort_order) VALUES
+    ('tunai',    'Tunai',         1, 1),
+    ('transfer', 'Transfer Bank', 1, 2),
+    ('debit',    'Kartu Debit',   1, 3),
+    ('qris',     'QRIS',          1, 4);
+
+-- -------------------------------------------------------------
 -- Roles (3 role sistem, tidak bisa dihapus)
 -- -------------------------------------------------------------
 INSERT IGNORE INTO roles (name, display_name, description, is_system, is_active) VALUES
-('owner', 'Owner', 'Akses penuh ke seluruh sistem',             1, 1),
-('admin', 'Admin', 'Akses manajemen tanpa pengaturan sistem',    1, 1),
-('kasir', 'Kasir', 'Akses terbatas hanya untuk transaksi kasir', 1, 1);
+    ('owner', 'Owner', 'Akses penuh ke seluruh sistem',             1, 1),
+    ('admin', 'Admin', 'Akses manajemen tanpa pengaturan sistem',    1, 1),
+    ('kasir', 'Kasir', 'Akses terbatas hanya untuk transaksi kasir', 1, 1);
 
 -- -------------------------------------------------------------
 -- Users default
@@ -29,14 +46,14 @@ FROM roles WHERE name = 'admin';
 -- Pengaturan default toko
 -- -------------------------------------------------------------
 INSERT IGNORE INTO settings (setting_key, setting_value) VALUES
-('store_name',                 'Toko Retail'),
-('store_address',              ''),
-('store_phone',                ''),
-('store_email',                ''),
-('tax_enabled',                '0'),
-('tax_percent',                '11'),
-('receipt_footer',             'Terima kasih telah berbelanja'),
-('stock_notification_enabled', '1');
+    ('store_name',                 'Toko Retail'),
+    ('store_address',              ''),
+    ('store_phone',                ''),
+    ('store_email',                ''),
+    ('tax_enabled',                '0'),
+    ('tax_percent',                '11'),
+    ('receipt_footer',             'Terima kasih telah berbelanja'),
+    ('stock_notification_enabled', '1');
 
 -- -------------------------------------------------------------
 -- Menus — mengikuti struktur navigasi web-v2
@@ -45,7 +62,7 @@ INSERT IGNORE INTO settings (setting_key, setting_value) VALUES
 
 -- Group: Beranda
 INSERT IGNORE INTO menus (key_name, label, icon, path, order_index) VALUES
-('beranda', 'Beranda', 'Home', NULL, 1);
+    ('beranda', 'Beranda', 'Home', NULL, 1);
 
 INSERT IGNORE INTO menus (parent_id, key_name, label, icon, path, order_index)
 SELECT m.id, 'beranda.dashboard', 'Dashboard', 'LayoutDashboard', '/dashboard', 1
@@ -53,7 +70,7 @@ FROM menus m WHERE m.key_name = 'beranda';
 
 -- Group: Penjualan
 INSERT IGNORE INTO menus (key_name, label, icon, path, order_index) VALUES
-('penjualan', 'Penjualan', 'ShoppingCart', NULL, 2);
+    ('penjualan', 'Penjualan', 'ShoppingCart', NULL, 2);
 
 INSERT IGNORE INTO menus (parent_id, key_name, label, icon, path, order_index)
 SELECT m.id, 'penjualan.kasir', 'Kasir', 'ShoppingCart', '/kasir', 1
@@ -65,7 +82,7 @@ FROM menus m WHERE m.key_name = 'penjualan';
 
 -- Group: Produk
 INSERT IGNORE INTO menus (key_name, label, icon, path, order_index) VALUES
-('produk', 'Produk', 'Package', NULL, 3);
+    ('produk', 'Produk', 'Package', NULL, 3);
 
 INSERT IGNORE INTO menus (parent_id, key_name, label, icon, path, order_index)
 SELECT m.id, 'produk.produk', 'Produk', 'Package', '/products', 1
@@ -81,7 +98,7 @@ FROM menus m WHERE m.key_name = 'produk';
 
 -- Group: Pengadaan
 INSERT IGNORE INTO menus (key_name, label, icon, path, order_index) VALUES
-('pengadaan', 'Pengadaan', 'Truck', NULL, 4);
+    ('pengadaan', 'Pengadaan', 'Truck', NULL, 4);
 
 INSERT IGNORE INTO menus (parent_id, key_name, label, icon, path, order_index)
 SELECT m.id, 'pengadaan.supplier', 'Supplier', 'Truck', '/suppliers', 1
@@ -97,7 +114,7 @@ FROM menus m WHERE m.key_name = 'pengadaan';
 
 -- Group: Pelanggan
 INSERT IGNORE INTO menus (key_name, label, icon, path, order_index) VALUES
-('pelanggan', 'Pelanggan', 'Users', NULL, 5);
+    ('pelanggan', 'Pelanggan', 'Users', NULL, 5);
 
 INSERT IGNORE INTO menus (parent_id, key_name, label, icon, path, order_index)
 SELECT m.id, 'pelanggan.pelanggan', 'Pelanggan', 'Users', '/customers', 1
@@ -109,7 +126,7 @@ FROM menus m WHERE m.key_name = 'pelanggan';
 
 -- Group: Keuangan
 INSERT IGNORE INTO menus (key_name, label, icon, path, order_index) VALUES
-('keuangan', 'Keuangan', 'Wallet', NULL, 6);
+    ('keuangan', 'Keuangan', 'Wallet', NULL, 6);
 
 INSERT IGNORE INTO menus (parent_id, key_name, label, icon, path, order_index)
 SELECT m.id, 'keuangan.dashboard', 'Dashboard Keuangan', 'Wallet', '/finance', 1
@@ -133,7 +150,7 @@ FROM menus m WHERE m.key_name = 'keuangan';
 
 -- Group: Pelaporan
 INSERT IGNORE INTO menus (key_name, label, icon, path, order_index) VALUES
-('pelaporan', 'Pelaporan', 'BarChart2', NULL, 7);
+    ('pelaporan', 'Pelaporan', 'BarChart2', NULL, 7);
 
 INSERT IGNORE INTO menus (parent_id, key_name, label, icon, path, order_index)
 SELECT m.id, 'pelaporan.penjualan', 'Penjualan', 'TrendingUp', '/reports/sales', 1
@@ -153,7 +170,7 @@ FROM menus m WHERE m.key_name = 'pelaporan';
 
 -- Group: Operasional
 INSERT IGNORE INTO menus (key_name, label, icon, path, order_index) VALUES
-('operasional', 'Operasional', 'Clock', NULL, 8);
+    ('operasional', 'Operasional', 'Clock', NULL, 8);
 
 INSERT IGNORE INTO menus (parent_id, key_name, label, icon, path, order_index)
 SELECT m.id, 'operasional.shift', 'Shift', 'Clock', '/shifts', 1
@@ -165,7 +182,7 @@ FROM menus m WHERE m.key_name = 'operasional';
 
 -- Group: Sistem
 INSERT IGNORE INTO menus (key_name, label, icon, path, order_index) VALUES
-('sistem', 'Sistem', 'Settings', NULL, 9);
+    ('sistem', 'Sistem', 'Settings', NULL, 9);
 
 INSERT IGNORE INTO menus (parent_id, key_name, label, icon, path, order_index)
 SELECT m.id, 'sistem.profil_toko', 'Profil Toko', 'Settings', '/settings/store', 1

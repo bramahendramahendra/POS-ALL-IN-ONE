@@ -16,18 +16,17 @@ export interface Unit {
   is_active: boolean
 }
 
-export interface ProductUnit {
+export interface ProductPackage {
   id: number
   product_id: number
   unit_id: number
   unit_name: string
   abbreviation: string
+  package_name: string
   conversion_qty: number
   purchase_price: number
   selling_price: number
   is_default: boolean
-  barcode?: string
-  cost_price?: number
 }
 
 export interface PriceTier {
@@ -52,11 +51,15 @@ export interface Product {
   selling_price: number
   stock: number
   min_stock: number
-  unit?: string
+  unit_id: number
+  unit_name: string
+  unit_abbreviation: string
   is_active: boolean
   created_at: string
-  units: ProductUnit[]
+  units: ProductPackage[]
   prices: PriceTier[]
+  extra_packages: number
+  price_tiers_count: number
 }
 
 export interface ProductFilter {
@@ -78,7 +81,7 @@ export interface CreateProductPayload {
   selling_price: number
   stock: number
   min_stock: number
-  unit: string
+  unit_id: number
   is_active: boolean
 }
 
@@ -100,15 +103,13 @@ export interface CreateUnitPayload {
 }
 export type UpdateUnitPayload = Partial<CreateUnitPayload>
 
-export interface CreateProductUnitPayload {
+export interface CreateProductPackagePayload {
   unit_id: number
-  barcode?: string
-  cost_price: number
+  package_name?: string
+  conversion_qty: number
+  purchase_price: number
+  selling_price: number
   is_default: boolean
-}
-
-export interface UpdateProductUnitPayload extends Partial<CreateProductUnitPayload> {
-  unitId: number
 }
 
 export interface CreatePriceTierPayload {

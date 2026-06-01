@@ -6,7 +6,7 @@ import { api } from '@/services/api.client'
 import { queryKeys } from '@/shared/constants'
 import { ROUTES } from '@/shared/constants/routes'
 import type { ApiResponse } from '@/shared/types'
-import type { Product, ProductUnit } from '@/features/inventory/products'
+import type { Product, ProductPackage } from '@/features/inventory/products'
 
 import { useCashierStore } from './cashier.store'
 import type { CheckoutResponse, PaymentPayload } from './cashier.types'
@@ -24,7 +24,7 @@ export function useProductSearchQuery(keyword: string, enabled: boolean) {
 export function useProductBarcodeSearchQuery(code: string, enabled: boolean) {
   return useQuery({
     queryKey: queryKeys.products.barcode(code),
-    queryFn: () => api.get<{ product: Product; units: ProductUnit[] }>(`/products/barcode/${code}`),
+    queryFn: () => api.get<{ product: Product; units: ProductPackage[] }>(`/products/barcode/${code}`),
     enabled: enabled && code.length > 0,
   })
 }

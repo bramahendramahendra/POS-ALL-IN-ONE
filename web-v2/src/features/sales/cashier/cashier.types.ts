@@ -4,8 +4,9 @@ export type PaymentMethod = 'cash' | 'transfer' | 'qris' | 'card' | 'kredit'
 export interface CartItem {
   product_id: number
   product_name: string
-  unit_id: number
-  unit_name: string
+  unit_id: number      // product_packages.id
+  unit_name: string    // snapshot nama satuan untuk struk
+  conversion_qty: number
   barcode?: string
   qty: number
   price: number
@@ -41,6 +42,8 @@ export interface PaymentPayload {
   items: Array<{
     product_id: number
     unit_id: number
+    unit_name: string
+    conversion_qty: number
     qty: number
     price: number
     subtotal: number

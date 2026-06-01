@@ -128,18 +128,24 @@ CREATE TABLE IF NOT EXISTS products (
     selling_price  DECIMAL(15,2) DEFAULT 0,
     stock          DECIMAL(15,3) DEFAULT 0,
     min_stock      DECIMAL(15,3) DEFAULT 0,
-    unit           VARCHAR(50)   DEFAULT 'pcs',
+    unit_id        INT           NULL,
     is_active      TINYINT(1)    DEFAULT 1,
     created_at     DATETIME      DEFAULT CURRENT_TIMESTAMP,
     updated_at     DATETIME      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
+    FOREIGN KEY (unit_id)     REFERENCES units(id)      ON DELETE SET NULL
 ) DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS product_units (
+-- product_packages: varian satuan jual produk (grosir, konversi, dll)
+-- unit_id  : FK ke master units (wajib, NOT NULL)
+-- package_name : label deskriptif opsional, misal "1 Dus", "3 Botol"
+-- conversion_qty: kelipatan konversi ke satuan dasar (is_default=true selalu = 1)
+-- is_default=1  : paket satuan dasar produk
+CREATE TABLE IF NOT EXISTS product_packages (
     id             INT AUTO_INCREMENT PRIMARY KEY,
     product_id     INT           NOT NULL,
-    unit_id        INT           NULL,
-    unit_name      VARCHAR(50)   NOT NULL,
+    unit_id        INT           NOT NULL,
+    package_name   VARCHAR(100)  NULL,
     conversion_qty DECIMAL(15,3) NOT NULL DEFAULT 1,
     selling_price  DECIMAL(15,2) NOT NULL DEFAULT 0,
     purchase_price DECIMAL(15,2) NOT NULL DEFAULT 0,
@@ -147,7 +153,7 @@ CREATE TABLE IF NOT EXISTS product_units (
     created_at     DATETIME      DEFAULT CURRENT_TIMESTAMP,
     updated_at     DATETIME      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-    FOREIGN KEY (unit_id)    REFERENCES units(id)    ON DELETE SET NULL
+    FOREIGN KEY (unit_id)    REFERENCES units(id)    ON DELETE RESTRICT
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS product_prices (
@@ -189,11 +195,6 @@ CREATE TABLE IF NOT EXISTS payment_statuses (
     updated_at DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) DEFAULT CHARSET=utf8mb4;
 
-INSERT IGNORE INTO payment_statuses (code, label, is_active, sort_order) VALUES
-    ('unpaid',  'Hutang',         1, 1),
-    ('partial', 'Bayar Sebagian', 1, 2),
-    ('paid',    'Lunas',          1, 3);
-
 CREATE TABLE IF NOT EXISTS payment_methods (
     id         INT AUTO_INCREMENT PRIMARY KEY,
     code       VARCHAR(30)  NOT NULL UNIQUE,
@@ -203,12 +204,6 @@ CREATE TABLE IF NOT EXISTS payment_methods (
     created_at DATETIME     DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) DEFAULT CHARSET=utf8mb4;
-
-INSERT IGNORE INTO payment_methods (code, label, is_active, sort_order) VALUES
-    ('tunai',    'Tunai',         1, 1),
-    ('transfer', 'Transfer Bank', 1, 2),
-    ('debit',    'Kartu Debit',   1, 3),
-    ('qris',     'QRIS',          1, 4);
 
 CREATE TABLE IF NOT EXISTS purchases (
     id               INT AUTO_INCREMENT PRIMARY KEY,
@@ -374,6 +369,9 @@ CREATE TABLE IF NOT EXISTS transactions (
     FOREIGN KEY (shift_id)    REFERENCES shifts(id)    ON DELETE SET NULL
 ) DEFAULT CHARSET=utf8mb4;
 
+-- unit        : snapshot nama satuan saat transaksi (tidak berubah meski master unit diedit)
+-- unit_id     : FK ke product_packages.id untuk traceability
+-- conversion_qty: kelipatan konversi ke satuan dasar, dipakai hitung pengurangan stok
 CREATE TABLE IF NOT EXISTS transaction_items (
     id             INT AUTO_INCREMENT PRIMARY KEY,
     transaction_id INT           NOT NULL,
@@ -540,36 +538,41 @@ CREATE TABLE IF NOT EXISTS log_requests (
 -- =============================================================
 
 -- Products
-CREATE INDEX idx_products_category       ON products(category_id);
+CREATE INDEX idx_products_category        ON products(category_id);
+CREATE INDEX idx_products_unit            ON products(unit_id);
+
+-- Product Packages
+CREATE INDEX idx_product_packages_product ON product_packages(product_id);
+CREATE INDEX idx_product_packages_unit    ON product_packages(unit_id);
 
 -- Transactions
-CREATE INDEX idx_transactions_date       ON transactions(transaction_date);
-CREATE INDEX idx_transactions_user       ON transactions(user_id);
-CREATE INDEX idx_transaction_items_trx   ON transaction_items(transaction_id);
-CREATE INDEX idx_transaction_items_prod  ON transaction_items(product_id);
+CREATE INDEX idx_transactions_date        ON transactions(transaction_date);
+CREATE INDEX idx_transactions_user        ON transactions(user_id);
+CREATE INDEX idx_transaction_items_trx    ON transaction_items(transaction_id);
+CREATE INDEX idx_transaction_items_prod   ON transaction_items(product_id);
 
 -- Purchases
-CREATE INDEX idx_purchases_supplier      ON purchases(supplier_id);
-CREATE INDEX idx_purchases_date          ON purchases(purchase_date);
-CREATE INDEX idx_purchase_payments       ON purchase_payments(purchase_id);
+CREATE INDEX idx_purchases_supplier       ON purchases(supplier_id);
+CREATE INDEX idx_purchases_date           ON purchases(purchase_date);
+CREATE INDEX idx_purchase_payments        ON purchase_payments(purchase_id);
 
 -- Stock
-CREATE INDEX idx_stock_mutations_product ON stock_mutations(product_id);
-CREATE INDEX idx_stock_mutations_ref     ON stock_mutations(reference_type, reference_id);
+CREATE INDEX idx_stock_mutations_product  ON stock_mutations(product_id);
+CREATE INDEX idx_stock_mutations_ref      ON stock_mutations(reference_type, reference_id);
 
 -- Receivables
-CREATE INDEX idx_receivables_customer    ON receivables(customer_id);
+CREATE INDEX idx_receivables_customer     ON receivables(customer_id);
 
 -- RBAC
-CREATE INDEX idx_menus_parent            ON menus(parent_id);
-CREATE INDEX idx_menus_order             ON menus(order_index);
-CREATE INDEX idx_role_menu_role_id       ON role_menu_access(role_id);
-CREATE INDEX idx_role_menu_menu_id       ON role_menu_access(menu_id);
+CREATE INDEX idx_menus_parent             ON menus(parent_id);
+CREATE INDEX idx_menus_order              ON menus(order_index);
+CREATE INDEX idx_role_menu_role_id        ON role_menu_access(role_id);
+CREATE INDEX idx_role_menu_menu_id        ON role_menu_access(menu_id);
 
 -- Sync
-CREATE INDEX idx_sync_queue_status       ON sync_queue(status);
-CREATE INDEX idx_sync_queue_device       ON sync_queue(device_id);
-CREATE INDEX idx_sync_conflicts_status   ON sync_conflicts(status);
-CREATE INDEX idx_sync_conflicts_entity   ON sync_conflicts(entity_type, entity_id);
-CREATE INDEX idx_sync_history_device     ON sync_history(device_id);
-CREATE INDEX idx_sync_history_started    ON sync_history(started_at);
+CREATE INDEX idx_sync_queue_status        ON sync_queue(status);
+CREATE INDEX idx_sync_queue_device        ON sync_queue(device_id);
+CREATE INDEX idx_sync_conflicts_status    ON sync_conflicts(status);
+CREATE INDEX idx_sync_conflicts_entity    ON sync_conflicts(entity_type, entity_id);
+CREATE INDEX idx_sync_history_device      ON sync_history(device_id);
+CREATE INDEX idx_sync_history_started     ON sync_history(started_at);

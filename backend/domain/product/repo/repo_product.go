@@ -13,38 +13,55 @@ import (
 const (
 	getAllProductsBase = `
 		SELECT p.id, p.barcode, COALESCE(p.sku, '') as sku, p.name, p.category_id, COALESCE(c.name, '') as category_name,
-		       p.purchase_price, p.selling_price, p.stock, p.min_stock, p.unit, p.is_active,
-		       (SELECT COUNT(*) FROM product_units pu WHERE pu.product_id = p.id AND pu.is_default = 0) AS extra_units_count,
-		       (SELECT COUNT(*) FROM product_prices pp WHERE pp.product_id = p.id) AS price_tiers_count
+		       p.purchase_price, p.selling_price, p.stock, p.min_stock,
+		       COALESCE(p.unit_id, 0) as unit_id, COALESCE(u.name, '') as unit_name, COALESCE(u.abbreviation, '') as unit_abbreviation,
+		       p.is_active,
+		       (SELECT COUNT(*) FROM product_packages pp WHERE pp.product_id = p.id AND pp.is_default = 0) AS extra_packages,
+		       (SELECT COUNT(*) FROM product_prices pr WHERE pr.product_id = p.id) AS price_tiers_count
 		FROM products p
 		LEFT JOIN categories c ON p.category_id = c.id
+		LEFT JOIN units u ON u.id = p.unit_id
 		WHERE 1=1`
 
 	getProductByIDQuery = `
 		SELECT p.id, p.barcode, COALESCE(p.sku, '') as sku, p.name, p.category_id, COALESCE(c.name, '') as category_name,
-		       p.purchase_price, p.selling_price, p.stock, p.min_stock, p.unit, p.is_active, p.created_at, p.updated_at
-		FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.id = ? LIMIT 1`
+		       p.purchase_price, p.selling_price, p.stock, p.min_stock,
+		       COALESCE(p.unit_id, 0) as unit_id, COALESCE(u.name, '') as unit_name, COALESCE(u.abbreviation, '') as unit_abbreviation,
+		       p.is_active, p.created_at, p.updated_at
+		FROM products p
+		LEFT JOIN categories c ON p.category_id = c.id
+		LEFT JOIN units u ON u.id = p.unit_id
+		WHERE p.id = ? LIMIT 1`
 
 	getProductByBarcodeQuery = `
 		SELECT p.id, p.barcode, COALESCE(p.sku, '') as sku, p.name, p.category_id, COALESCE(c.name, '') as category_name,
-		       p.purchase_price, p.selling_price, p.stock, p.min_stock, p.unit, p.is_active, p.created_at, p.updated_at
-		FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.barcode = ? LIMIT 1`
+		       p.purchase_price, p.selling_price, p.stock, p.min_stock,
+		       COALESCE(p.unit_id, 0) as unit_id, COALESCE(u.name, '') as unit_name, COALESCE(u.abbreviation, '') as unit_abbreviation,
+		       p.is_active, p.created_at, p.updated_at
+		FROM products p
+		LEFT JOIN categories c ON p.category_id = c.id
+		LEFT JOIN units u ON u.id = p.unit_id
+		WHERE p.barcode = ? LIMIT 1`
 
 	searchProductsQuery = `
-		SELECT id, barcode, name, selling_price, stock, unit
-		FROM products WHERE is_active = 1
-		AND (name LIKE ? OR barcode LIKE ?) LIMIT ?`
+		SELECT p.id, p.barcode, p.name, p.selling_price, p.stock,
+		       COALESCE(p.unit_id, 0) as unit_id, COALESCE(u.name, '') as unit_name
+		FROM products p
+		LEFT JOIN units u ON u.id = p.unit_id
+		WHERE p.is_active = 1 AND (p.name LIKE ? OR p.barcode LIKE ?) LIMIT ?`
 
 	getLowStockQuery = `
-		SELECT id, name, stock, min_stock, unit
-		FROM products WHERE stock <= min_stock AND is_active = 1`
+		SELECT p.id, p.name, p.stock, p.min_stock, COALESCE(u.name, '') as unit_name
+		FROM products p
+		LEFT JOIN units u ON u.id = p.unit_id
+		WHERE p.stock <= p.min_stock AND p.is_active = 1`
 
 	checkBarcodeExistsQuery  = `SELECT id FROM products WHERE barcode = ? AND id != ? LIMIT 1`
 	checkSkuExistsQuery      = `SELECT id FROM products WHERE sku = ? AND id != ? LIMIT 1`
 	countSkuByCategoryQuery  = `SELECT COUNT(*) FROM products WHERE category_id = ?`
 	checkProductUsedQuery    = `SELECT COUNT(*) FROM transaction_items WHERE product_id = ?`
-	createProductQuery       = `INSERT INTO products (barcode, sku, name, category_id, purchase_price, selling_price, stock, min_stock, unit) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	updateProductQuery       = `UPDATE products SET barcode=?, sku=?, name=?, category_id=?, purchase_price=?, selling_price=?, stock=?, min_stock=?, unit=?, updated_at=NOW() WHERE id=?`
+	createProductQuery       = `INSERT INTO products (barcode, sku, name, category_id, purchase_price, selling_price, stock, min_stock, unit_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	updateProductQuery       = `UPDATE products SET barcode=?, sku=?, name=?, category_id=?, purchase_price=?, selling_price=?, stock=?, min_stock=?, unit_id=?, updated_at=NOW() WHERE id=?`
 	deleteProductQuery       = `DELETE FROM products WHERE id = ?`
 	toggleProductStatusQuery = `UPDATE products SET is_active = NOT is_active, updated_at = NOW() WHERE id = ?`
 	updateProductStockQuery  = `UPDATE products SET stock = stock + ?, updated_at = NOW() WHERE id = ?`
@@ -122,8 +139,9 @@ func (r *productRepo) GetAll(filter *dto_product.ProductFilter) ([]*dto_product.
 	for rows.Next() {
 		var p dto_product.ProductResponse
 		if err := rows.Scan(&p.ID, &p.Barcode, &p.SKU, &p.Name, &p.CategoryID, &p.CategoryName,
-			&p.PurchasePrice, &p.SellingPrice, &p.Stock, &p.MinStock, &p.Unit, &p.IsActive,
-			&p.ExtraUnitsCount, &p.PriceTiersCount); err != nil {
+			&p.PurchasePrice, &p.SellingPrice, &p.Stock, &p.MinStock,
+			&p.UnitID, &p.UnitName, &p.UnitAbbreviation,
+			&p.IsActive, &p.ExtraPackages, &p.PriceTiersCount); err != nil {
 			return nil, 0, err
 		}
 		products = append(products, &p)
@@ -145,8 +163,9 @@ func (r *productRepo) GetByID(id int) (*model_product.Product, error) {
 	}
 	var p model_product.Product
 	if err := rows.Scan(&p.ID, &p.Barcode, &p.SKU, &p.Name, &p.CategoryID, &p.CategoryName,
-		&p.PurchasePrice, &p.SellingPrice, &p.Stock, &p.MinStock, &p.Unit, &p.IsActive,
-		&p.CreatedAt, &p.UpdatedAt); err != nil {
+		&p.PurchasePrice, &p.SellingPrice, &p.Stock, &p.MinStock,
+		&p.UnitID, &p.UnitName, &p.UnitAbbreviation,
+		&p.IsActive, &p.CreatedAt, &p.UpdatedAt); err != nil {
 		return nil, err
 	}
 	return &p, nil
@@ -163,8 +182,9 @@ func (r *productRepo) GetByBarcode(barcode string) (*model_product.Product, erro
 	}
 	var p model_product.Product
 	if err := rows.Scan(&p.ID, &p.Barcode, &p.SKU, &p.Name, &p.CategoryID, &p.CategoryName,
-		&p.PurchasePrice, &p.SellingPrice, &p.Stock, &p.MinStock, &p.Unit, &p.IsActive,
-		&p.CreatedAt, &p.UpdatedAt); err != nil {
+		&p.PurchasePrice, &p.SellingPrice, &p.Stock, &p.MinStock,
+		&p.UnitID, &p.UnitName, &p.UnitAbbreviation,
+		&p.IsActive, &p.CreatedAt, &p.UpdatedAt); err != nil {
 		return nil, err
 	}
 	return &p, nil
@@ -181,7 +201,7 @@ func (r *productRepo) Search(keyword string, limit int) ([]*dto_product.ProductS
 	var results []*dto_product.ProductSearchResult
 	for rows.Next() {
 		var p dto_product.ProductSearchResult
-		if err := rows.Scan(&p.ID, &p.Barcode, &p.Name, &p.SellingPrice, &p.Stock, &p.Unit); err != nil {
+		if err := rows.Scan(&p.ID, &p.Barcode, &p.Name, &p.SellingPrice, &p.Stock, &p.UnitID, &p.UnitName); err != nil {
 			return nil, err
 		}
 		results = append(results, &p)
@@ -202,7 +222,7 @@ func (r *productRepo) GetLowStock() ([]*dto_product.LowStockProduct, error) {
 	var results []*dto_product.LowStockProduct
 	for rows.Next() {
 		var p dto_product.LowStockProduct
-		if err := rows.Scan(&p.ID, &p.Name, &p.Stock, &p.MinStock, &p.Unit); err != nil {
+		if err := rows.Scan(&p.ID, &p.Name, &p.Stock, &p.MinStock, &p.UnitName); err != nil {
 			return nil, err
 		}
 		results = append(results, &p)
@@ -256,7 +276,7 @@ func (r *productRepo) CountSkuByCategory(categoryID int) (int, error) {
 func (r *productRepo) Create(req *dto_product.ProductRequest) (int64, error) {
 	if err := r.db.Exec(createProductQuery,
 		req.Barcode, req.SKU, req.Name, req.CategoryID, req.PurchasePrice,
-		req.SellingPrice, req.Stock, req.MinStock, req.Unit,
+		req.SellingPrice, req.Stock, req.MinStock, req.UnitID,
 	).Error; err != nil {
 		return 0, err
 	}
@@ -270,7 +290,7 @@ func (r *productRepo) Create(req *dto_product.ProductRequest) (int64, error) {
 func (r *productRepo) Update(id int, req *dto_product.ProductRequest) error {
 	return r.db.Exec(updateProductQuery,
 		req.Barcode, req.SKU, req.Name, req.CategoryID, req.PurchasePrice,
-		req.SellingPrice, req.Stock, req.MinStock, req.Unit, id,
+		req.SellingPrice, req.Stock, req.MinStock, req.UnitID, id,
 	).Error
 }
 

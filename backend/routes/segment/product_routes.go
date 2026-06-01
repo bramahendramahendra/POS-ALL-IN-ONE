@@ -14,14 +14,15 @@ import (
 
 func ProductRoutes(r *gin.RouterGroup) {
 	categoryRepo := product_category_repo.NewCategoryRepo(pkgdatabase.DB)
+	masterUnitRepo := unit_repo.NewUnitRepo(pkgdatabase.DB)
 
 	productRepo := product_repo.NewProductRepo(pkgdatabase.DB)
-	productUnitRepo := product_repo.NewProductUnitRepo(pkgdatabase.DB)
-	masterUnitRepo := unit_repo.NewUnitRepo(pkgdatabase.DB)
-	productSvc := product_service.NewProductService(productRepo, categoryRepo, productUnitRepo, masterUnitRepo)
+	productPackageRepo := product_repo.NewProductPackageRepo(pkgdatabase.DB)
+	productSvc := product_service.NewProductService(productRepo, categoryRepo, productPackageRepo, masterUnitRepo)
 	productHand := product_handler.NewProductHandler(productSvc)
-	productUnitSvc := product_service.NewProductUnitService(productUnitRepo, productRepo)
-	productUnitHand := product_handler.NewProductUnitHandler(productUnitSvc)
+
+	productPackageSvc := product_service.NewProductPackageService(productPackageRepo, productRepo)
+	productPackageHand := product_handler.NewProductPackageHandler(productPackageSvc)
 
 	productPriceRepo := product_repo.NewProductPriceRepo(pkgdatabase.DB)
 	productPriceSvc := product_service.NewProductPriceService(productPriceRepo, productRepo)
@@ -44,9 +45,9 @@ func ProductRoutes(r *gin.RouterGroup) {
 		g.DELETE("/:id", middleware.RoleMiddleware("owner", "admin"), productHand.Delete)
 		g.PATCH("/:id/toggle-status", middleware.RoleMiddleware("owner", "admin"), productHand.ToggleStatus)
 
-		g.GET("/:id/units", productUnitHand.GetByProduct)
-		g.POST("/:id/units", middleware.RoleMiddleware("owner", "admin"), productUnitHand.Save)
-		g.DELETE("/:id/units/:unit_id", middleware.RoleMiddleware("owner", "admin"), productUnitHand.Delete)
+		g.GET("/:id/packages", productPackageHand.GetByProduct)
+		g.POST("/:id/packages", middleware.RoleMiddleware("owner", "admin"), productPackageHand.Save)
+		g.DELETE("/:id/packages/:package_id", middleware.RoleMiddleware("owner", "admin"), productPackageHand.Delete)
 
 		g.GET("/:id/prices", productPriceHand.GetByProduct)
 		g.POST("/:id/prices", middleware.RoleMiddleware("owner", "admin"), productPriceHand.Save)

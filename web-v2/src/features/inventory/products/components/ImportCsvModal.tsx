@@ -103,6 +103,8 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
     filterView === 'valid' ? validGrosirRows : filterView === 'error' ? invalidGrosirRows : grosirRows
 
   const isLoading = isLoadingPreview || isImporting
+  const hasFile = fileName !== ''
+  const hasError = invalidRows.length > 0 && !isLoadingPreview
   const submitLabel = isLoadingPreview
     ? 'Memuat preview...'
     : validRows.length > 0
@@ -116,6 +118,7 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
       title="Import Produk"
       size="lg"
       isLoading={isLoading}
+      submitDisabled={validRows.length === 0 && hasFile}
       submitLabel={submitLabel}
       onSubmit={handleImport}
     >
@@ -136,10 +139,18 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
 
         {/* Upload area */}
         <div
-          className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 p-6 cursor-pointer hover:border-gray-300 transition-colors"
-          onClick={() => !isLoading && fileInputRef.current?.click()}
+          className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 cursor-pointer transition-colors ${
+            hasError
+              ? 'border-red-300 bg-red-50 hover:border-red-400'
+              : 'border-gray-200 hover:border-gray-300'
+          }`}
+          onClick={() => {
+            if (isLoading) return
+            if (fileInputRef.current) fileInputRef.current.value = ''
+            fileInputRef.current?.click()
+          }}
         >
-          <Upload size={24} className={isLoadingPreview ? 'text-blue-400 animate-pulse' : 'text-gray-400'} />
+          <Upload size={24} className={isLoadingPreview ? 'text-blue-400 animate-pulse' : hasError ? 'text-red-400' : 'text-gray-400'} />
           <p className="text-sm text-gray-500">
             {isLoadingPreview ? (
               <span className="font-medium text-blue-600">Memvalidasi data...</span>
@@ -149,6 +160,11 @@ export function ImportCsvModal({ open, onOpenChange }: ImportCsvModalProps) {
               'Klik untuk pilih file Excel (.xlsx)'
             )}
           </p>
+          {hasError && (
+            <p className="text-xs text-red-500 font-medium">
+              Terdapat {invalidRows.length} baris error — perbaiki file Excel lalu klik area ini untuk upload ulang
+            </p>
+          )}
           {!fileName && (
             <p className="text-xs text-gray-400">
               Sheet "Produk": no, nama, deskripsi, barcode, kategori, harga_beli, harga_jual, stok, stok_minimum, satuan

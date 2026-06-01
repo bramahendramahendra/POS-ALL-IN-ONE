@@ -67,15 +67,15 @@ type ProfitLossResponse struct {
 // ─── Stock Report ──────────────────────────────────────────────
 
 type StockItem struct {
-	ID           int     `json:"id"`
-	Name         string  `json:"name"`
-	CategoryName string  `json:"category_name"`
-	Stock        float64 `json:"stock"`
-	MinStock     float64 `json:"min_stock"`
-	Unit         string  `json:"unit"`
+	ID            int     `json:"id"`
+	Name          string  `json:"name"`
+	CategoryName  string  `json:"category_name"`
+	Stock         float64 `json:"stock"`
+	MinStock      float64 `json:"min_stock"`
+	UnitName      string  `json:"unit_name"`
 	PurchasePrice float64 `json:"purchase_price"`
-	StockValue   float64 `json:"stock_value"`
-	IsLowStock   bool    `json:"is_low_stock"`
+	StockValue    float64 `json:"stock_value"`
+	IsLowStock    bool    `json:"is_low_stock"`
 }
 
 type StockReportResponse struct {

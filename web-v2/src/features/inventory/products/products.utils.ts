@@ -1,4 +1,4 @@
-import type { PriceTier, ProductUnit } from './products.types'
+import type { PriceTier, ProductPackage } from './products.types'
 
 export function getApplicablePrice(
   prices: PriceTier[],
@@ -12,7 +12,6 @@ export function getApplicablePrice(
   return tiersByUnit[0]?.price ?? null
 }
 
-export function formatProductUnit(unit: ProductUnit): string {
-  const barcode = unit.barcode ? ` — ${unit.barcode}` : ''
-  return `${unit.unit_name}${barcode}`
+export function formatProductPackage(pkg: ProductPackage): string {
+  return pkg.package_name ? `${pkg.unit_name} (${pkg.package_name})` : pkg.unit_name
 }
