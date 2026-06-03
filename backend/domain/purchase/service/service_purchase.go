@@ -64,6 +64,16 @@ func (s *purchaseService) GenerateCode() (*dto_purchase.GeneratePurchaseCodeResp
 }
 
 func (s *purchaseService) Create(req *dto_purchase.PurchaseRequest, userID int) (*dto_purchase.PurchaseResponse, error) {
+	if req.PaymentMethod != "" {
+		valid, err := s.repo.IsValidPaymentMethod(req.PaymentMethod)
+		if err != nil {
+			return nil, &errors.InternalServerError{Message: err.Error()}
+		}
+		if !valid {
+			return nil, &errors.BadRequestError{Message: "Metode pembayaran tidak valid"}
+		}
+	}
+
 	item, err := s.repo.Create(req, userID)
 	if err != nil {
 		return nil, &errors.InternalServerError{Message: err.Error()}
@@ -121,6 +131,14 @@ func (s *purchaseService) Pay(id int, req *dto_purchase.PayPurchaseRequest, user
 	}
 	if req.Amount > existing.RemainingAmount {
 		return &errors.BadRequestError{Message: "Jumlah pembayaran melebihi sisa tagihan"}
+	}
+
+	valid, err := s.repo.IsValidPaymentMethod(req.PaymentMethod)
+	if err != nil {
+		return &errors.InternalServerError{Message: err.Error()}
+	}
+	if !valid {
+		return &errors.BadRequestError{Message: "Metode pembayaran tidak valid"}
 	}
 
 	if err := s.repo.Pay(id, req, userID); err != nil {

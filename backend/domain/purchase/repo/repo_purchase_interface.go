@@ -16,4 +16,5 @@ type PurchaseRepo interface {
 	Delete(id int) error
 	Pay(id int, req *dto_purchase.PayPurchaseRequest, userID int) error
 	GetRawByID(id int) (*model_purchase.Purchase, error)
+	IsValidPaymentMethod(code string) (bool, error)
 }

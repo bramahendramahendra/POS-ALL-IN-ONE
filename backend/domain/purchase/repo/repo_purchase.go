@@ -28,6 +28,7 @@ const (
 	countPurchasesBase        = `SELECT COUNT(*) FROM purchases p WHERE 1=1`
 	createStockMutationQuery  = `INSERT INTO stock_mutations (product_id, mutation_type, quantity, stock_before, stock_after, reference_type, reference_id, notes, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	getProductStockQuery      = `SELECT stock FROM products WHERE id = ? LIMIT 1`
+	validatePaymentMethodQuery = `SELECT COUNT(*) FROM payment_methods WHERE code = ? AND is_active = 1`
 )
 
 type purchaseRepo struct {
@@ -386,6 +387,14 @@ func (r *purchaseRepo) Delete(id int) error {
 
 		return tx.Exec(deletePurchaseQuery, id).Error
 	})
+}
+
+func (r *purchaseRepo) IsValidPaymentMethod(code string) (bool, error) {
+	var count int
+	if err := r.db.Raw(validatePaymentMethodQuery, code).Scan(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }
 
 func (r *purchaseRepo) Pay(id int, req *dto_purchase.PayPurchaseRequest, userID int) error {
