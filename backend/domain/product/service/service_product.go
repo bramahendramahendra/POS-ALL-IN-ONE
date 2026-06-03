@@ -409,6 +409,8 @@ func (s *productService) ImportBulk(bulkReq dto_product.BulkImportRequest) (*dto
 
 	// noToProductID maps the Excel row "no" to the saved product ID for grosir cross-reference
 	noToProductID := make(map[int]int)
+	// defaultPackages menyimpan default package per productID, dikumpulkan dulu sebelum disimpan
+	defaultPackages := make(map[int]dto_product.ProductPackageRequest)
 
 	for i, row := range bulkReq.Rows {
 		rowNum := i + 2
@@ -506,22 +508,20 @@ func (s *productService) ImportBulk(bulkReq dto_product.BulkImportRequest) (*dto
 			noToProductID[row.No] = int(productID)
 		}
 
-		// Simpan default package (satuan dasar, is_default=true, conversion=1)
-		// persis seperti alur tambah produk manual
-		defaultPkg := dto_product.ProductPackageRequest{
+		// Catat default package per productID — belum disimpan, dikumpulkan dulu
+		// agar tidak ada dua kali Save untuk produk yang juga punya grosir
+		defaultPackages[int(productID)] = dto_product.ProductPackageRequest{
 			UnitID:        resolvedUnitID,
 			ConversionQty: 1,
 			PurchasePrice: row.HargaBeli,
 			SellingPrice:  row.HargaJual,
 			IsDefault:     true,
 		}
-		_ = s.packageRepo.Save(int(productID), []dto_product.ProductPackageRequest{defaultPkg})
 
 		result.Success++
 	}
 
-	// Proses grosir/extra packages — gabungkan default + grosir per produk, simpan sekaligus
-	// Kumpulkan dulu semua grosir per productID
+	// Kumpulkan grosir per productID
 	grosirByProduct := make(map[int][]dto_product.ProductPackageRequest)
 	for _, g := range bulkReq.Grosir {
 		productID, ok := noToProductID[g.NoProduk]
@@ -538,22 +538,12 @@ func (s *productService) ImportBulk(bulkReq dto_product.BulkImportRequest) (*dto
 		})
 	}
 
-	// Untuk setiap produk yang punya grosir, simpan ulang: default dulu baru grosir
-	for productID, grosirPkgs := range grosirByProduct {
-		prod, err := s.repo.GetByID(productID)
-		if err != nil || prod == nil {
-			continue
+	// Simpan packages sekali per produk: default dulu, baru grosir (jika ada)
+	for productID, defaultPkg := range defaultPackages {
+		allPkgs := []dto_product.ProductPackageRequest{defaultPkg}
+		if grosirPkgs, ok := grosirByProduct[productID]; ok {
+			allPkgs = append(allPkgs, grosirPkgs...)
 		}
-		allPkgs := []dto_product.ProductPackageRequest{
-			{
-				UnitID:        prod.UnitID,
-				ConversionQty: 1,
-				PurchasePrice: prod.PurchasePrice,
-				SellingPrice:  prod.SellingPrice,
-				IsDefault:     true,
-			},
-		}
-		allPkgs = append(allPkgs, grosirPkgs...)
 		_ = s.packageRepo.Save(productID, allPkgs)
 	}
 

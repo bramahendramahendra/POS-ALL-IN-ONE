@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -19,13 +19,16 @@ import {
 } from '@/shared/components/ui/select'
 import { formatRupiah } from '@/shared/utils'
 import { RupiahInput } from '@/shared/components/ui/rupiah-input'
+import { api } from '@/services'
 import { useSupplierListQuery } from '@/features/inventory/suppliers/suppliers.api'
 import { useProductListQuery } from '@/features/inventory/products/products.api'
+import { useQueryClient } from '@tanstack/react-query'
+import { queryKeys } from '@/shared/constants'
 import { useCreateSupplierPurchaseMutation, useGeneratePurchaseCodeQuery } from '../supplier-purchases.api'
 import { usePaymentStatusesQuery } from '../payment-statuses.api'
 import { usePaymentMethodsQuery } from '../payment-methods.api'
 import type { PaymentStatus } from '../supplier-purchases.types'
-import type { Product } from '@/features/inventory/products/products.types'
+import type { Product, ProductPackage } from '@/features/inventory/products/products.types'
 
 interface PurchaseFormModalProps {
   open: boolean
@@ -75,6 +78,7 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
   const suppliers = suppliersData?.items ?? []
   const products: Product[] = productsData?.items ?? []
 
+  const queryClient = useQueryClient()
   const { mutate: create, isPending } = useCreateSupplierPurchaseMutation()
   const { data: codeData, isFetching: isGeneratingCode } = useGeneratePurchaseCodeQuery(open)
   const { data: paymentStatuses = [] } = usePaymentStatusesQuery()
@@ -95,6 +99,10 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
 
   const { fields, append, remove } = useFieldArray({ control, name: 'items' })
 
+  // unit options per item index: hanya terisi jika produk punya >1 package
+  const [itemUnitOptions, setItemUnitOptions] = useState<Record<number, ProductPackage[]>>({})
+  const [itemSelectedPackageId, setItemSelectedPackageId] = useState<Record<number, number>>({})
+
   const watchItems = watch('items')
   const watchDiscount = watch('discount_amount') ?? 0
   const watchPaymentStatus = watch('payment_status')
@@ -104,17 +112,54 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
   const total = Math.max(0, subtotal - (watchDiscount || 0))
 
   useEffect(() => {
-    if (!open) reset({ ...defaultValues, purchase_date: todayString() })
+    if (!open) {
+      reset({ ...defaultValues, purchase_date: todayString() })
+      setItemUnitOptions({})
+      setItemSelectedPackageId({})
+    }
   }, [open, reset])
 
-  function handleProductChange(index: number, productId: string) {
+  async function handleProductChange(index: number, productId: string) {
     const id = Number(productId)
     setValue(`items.${index}.product_id`, id)
     const product = products.find((p) => p.id === id)
-    if (product) {
+    if (!product) return
+
+    // fetch packages on-demand (list API tidak include units)
+    const packages = await queryClient.fetchQuery<ProductPackage[]>({
+      queryKey: queryKeys.products.productUnits(id),
+      queryFn: () => api.get<ProductPackage[]>(`/products/${id}/packages`),
+    }).catch(() => [] as ProductPackage[])
+
+    const validPackages = Array.isArray(packages) ? packages : []
+    const defaultPkg = validPackages.find((pkg) => pkg.is_default) ?? validPackages[0]
+
+    if (validPackages.length > 1) {
+      setItemUnitOptions((prev) => ({ ...prev, [index]: validPackages }))
+      setItemSelectedPackageId((prev) => ({ ...prev, [index]: defaultPkg?.id ?? 0 }))
+      setValue(`items.${index}.unit`, defaultPkg?.unit_name ?? product.unit_name ?? 'pcs')
+      setValue(`items.${index}.price`, defaultPkg?.purchase_price ?? product.purchase_price ?? 0)
+    } else {
+      setItemUnitOptions((prev) => { const next = { ...prev }; delete next[index]; return next })
+      setItemSelectedPackageId((prev) => { const next = { ...prev }; delete next[index]; return next })
       setValue(`items.${index}.unit`, product.unit_name ?? 'pcs')
       setValue(`items.${index}.price`, product.purchase_price ?? 0)
     }
+  }
+
+  function handleUnitChange(index: number, packageId: string) {
+    const id = Number(packageId)
+    const pkg = itemUnitOptions[index]?.find((p) => p.id === id)
+    if (!pkg) return
+    setItemSelectedPackageId((prev) => ({ ...prev, [index]: id }))
+    setValue(`items.${index}.unit`, pkg.unit_name)
+    setValue(`items.${index}.price`, pkg.purchase_price)
+  }
+
+  function unitOptionLabel(pkg: ProductPackage) {
+    return pkg.conversion_qty > 1
+      ? `${pkg.package_name || pkg.unit_name} (x${pkg.conversion_qty})`
+      : (pkg.package_name || pkg.unit_name)
   }
 
   function onSubmit(values: FormValues) {
@@ -260,7 +305,25 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
                         />
                       </td>
                       <td className="px-3 py-2 text-xs text-gray-700">
-                        {watchItems[index]?.unit || '-'}
+                        {itemUnitOptions[index]?.length > 1 ? (
+                          <Select
+                            value={String(itemSelectedPackageId[index] ?? '')}
+                            onValueChange={(v) => handleUnitChange(index, v)}
+                          >
+                            <SelectTrigger className="h-8 text-xs min-w-[120px]">
+                              <SelectValue placeholder="-" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {itemUnitOptions[index].map((pkg) => (
+                                <SelectItem key={pkg.id} value={String(pkg.id)}>
+                                  {unitOptionLabel(pkg)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          watchItems[index]?.unit || '-'
+                        )}
                       </td>
                       <td className="px-3 py-2">
                         <Controller
