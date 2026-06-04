@@ -137,8 +137,8 @@ CREATE TABLE IF NOT EXISTS products (
 ) DEFAULT CHARSET=utf8mb4;
 
 -- product_packages: varian satuan jual produk (grosir, konversi, dll)
--- unit_id  : FK ke master units (wajib, NOT NULL)
--- package_name : label deskriptif opsional, misal "1 Dus", "3 Botol"
+-- unit_id       : FK ke master units (wajib, NOT NULL)
+-- package_name  : label deskriptif opsional, misal "1 Dus", "3 Botol"
 -- conversion_qty: kelipatan konversi ke satuan dasar (is_default=true selalu = 1)
 -- is_default=1  : paket satuan dasar produk
 CREATE TABLE IF NOT EXISTS product_packages (
@@ -220,8 +220,8 @@ CREATE TABLE IF NOT EXISTS purchases (
     notes            TEXT          NULL,
     created_at       DATETIME      DEFAULT CURRENT_TIMESTAMP,
     updated_at       DATETIME      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (supplier_id)    REFERENCES suppliers(id)        ON DELETE SET NULL,
-    FOREIGN KEY (user_id)        REFERENCES users(id)            ON DELETE SET NULL,
+    FOREIGN KEY (supplier_id)    REFERENCES suppliers(id)         ON DELETE SET NULL,
+    FOREIGN KEY (user_id)        REFERENCES users(id)             ON DELETE SET NULL,
     FOREIGN KEY (payment_status) REFERENCES payment_statuses(code)
 ) DEFAULT CHARSET=utf8mb4;
 
@@ -231,6 +231,7 @@ CREATE TABLE IF NOT EXISTS purchase_items (
     product_id     INT           NULL,
     quantity       DECIMAL(15,3) NOT NULL,
     unit           VARCHAR(50)   NOT NULL,
+    conversion_qty DECIMAL(15,3) NOT NULL DEFAULT 1,
     purchase_price DECIMAL(15,2) NOT NULL,
     subtotal       DECIMAL(15,2) NOT NULL,
     created_at     DATETIME      DEFAULT CURRENT_TIMESTAMP,
@@ -243,12 +244,13 @@ CREATE TABLE IF NOT EXISTS purchase_payments (
     purchase_id    INT           NOT NULL,
     payment_date   DATE          NOT NULL,
     amount         DECIMAL(15,2) NOT NULL,
-    payment_method VARCHAR(50)   NOT NULL DEFAULT 'tunai',
+    payment_method VARCHAR(30)   NOT NULL DEFAULT 'cash',
     notes          TEXT          NULL,
     user_id        INT           NULL,
     created_at     DATETIME      DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (purchase_id) REFERENCES purchases(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id)     REFERENCES users(id)     ON DELETE SET NULL
+    FOREIGN KEY (purchase_id)    REFERENCES purchases(id)        ON DELETE CASCADE,
+    FOREIGN KEY (user_id)        REFERENCES users(id)            ON DELETE SET NULL,
+    FOREIGN KEY (payment_method) REFERENCES payment_methods(code)
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS supplier_returns (
@@ -302,35 +304,6 @@ CREATE TABLE IF NOT EXISTS customers (
     updated_at    DATETIME      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS receivables (
-    id               INT AUTO_INCREMENT PRIMARY KEY,
-    transaction_id   INT                             NULL,
-    customer_id      INT                             NULL,
-    total_amount     DECIMAL(15,2)                   NOT NULL,
-    paid_amount      DECIMAL(15,2)                   DEFAULT 0,
-    remaining_amount DECIMAL(15,2)                   NOT NULL,
-    status           ENUM('unpaid','partial','paid') DEFAULT 'unpaid',
-    due_date         DATE                            NULL,
-    notes            TEXT                            NULL,
-    created_at       DATETIME                        DEFAULT CURRENT_TIMESTAMP,
-    updated_at       DATETIME                        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE SET NULL,
-    FOREIGN KEY (customer_id)    REFERENCES customers(id)    ON DELETE SET NULL
-) DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE IF NOT EXISTS receivable_payments (
-    id             INT AUTO_INCREMENT PRIMARY KEY,
-    receivable_id  INT                                  NOT NULL,
-    payment_date   DATE                                 NOT NULL,
-    amount         DECIMAL(15,2)                        NOT NULL,
-    payment_method ENUM('cash','debit','credit','qris') DEFAULT 'cash',
-    notes          TEXT                                 NULL,
-    user_id        INT                                  NULL,
-    created_at     DATETIME                             DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (receivable_id) REFERENCES receivables(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id)       REFERENCES users(id)       ON DELETE SET NULL
-) DEFAULT CHARSET=utf8mb4;
-
 -- -------------------------------------------------------------
 -- Penjualan
 -- -------------------------------------------------------------
@@ -347,26 +320,27 @@ CREATE TABLE IF NOT EXISTS shifts (
 
 CREATE TABLE IF NOT EXISTS transactions (
     id               INT AUTO_INCREMENT PRIMARY KEY,
-    transaction_code VARCHAR(50)                          UNIQUE NOT NULL,
-    user_id          INT                                  NULL,
-    shift_id         INT                                  NULL,
-    transaction_date DATETIME                             NOT NULL,
-    subtotal         DECIMAL(15,2)                        DEFAULT 0,
-    discount         DECIMAL(15,2)                        DEFAULT 0,
-    tax              DECIMAL(15,2)                        DEFAULT 0,
-    total_amount     DECIMAL(15,2)                        DEFAULT 0,
-    payment_method   ENUM('cash','debit','credit','qris') DEFAULT 'cash',
-    payment_amount   DECIMAL(15,2)                        DEFAULT 0,
-    change_amount    DECIMAL(15,2)                        DEFAULT 0,
-    customer_id      INT                                  NULL,
-    is_credit        TINYINT(1)                           DEFAULT 0,
-    status           ENUM('pending','completed','void')   DEFAULT 'completed',
-    device_source    ENUM('desktop','web','android')      DEFAULT 'web',
-    created_at       DATETIME                             DEFAULT CURRENT_TIMESTAMP,
-    updated_at       DATETIME                             DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id)     REFERENCES users(id)     ON DELETE SET NULL,
-    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL,
-    FOREIGN KEY (shift_id)    REFERENCES shifts(id)    ON DELETE SET NULL
+    transaction_code VARCHAR(50)                        UNIQUE NOT NULL,
+    user_id          INT                                NULL,
+    shift_id         INT                                NULL,
+    transaction_date DATETIME                           NOT NULL,
+    subtotal         DECIMAL(15,2)                      DEFAULT 0,
+    discount         DECIMAL(15,2)                      DEFAULT 0,
+    tax              DECIMAL(15,2)                      DEFAULT 0,
+    total_amount     DECIMAL(15,2)                      DEFAULT 0,
+    payment_method   VARCHAR(30)                        NOT NULL DEFAULT 'cash',
+    payment_amount   DECIMAL(15,2)                      DEFAULT 0,
+    change_amount    DECIMAL(15,2)                      DEFAULT 0,
+    customer_id      INT                                NULL,
+    is_credit        TINYINT(1)                         DEFAULT 0,
+    status           ENUM('pending','completed','void') DEFAULT 'completed',
+    device_source    ENUM('desktop','web','android')    DEFAULT 'web',
+    created_at       DATETIME                           DEFAULT CURRENT_TIMESTAMP,
+    updated_at       DATETIME                           DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id)        REFERENCES users(id)            ON DELETE SET NULL,
+    FOREIGN KEY (customer_id)    REFERENCES customers(id)        ON DELETE SET NULL,
+    FOREIGN KEY (shift_id)       REFERENCES shifts(id)           ON DELETE SET NULL,
+    FOREIGN KEY (payment_method) REFERENCES payment_methods(code)
 ) DEFAULT CHARSET=utf8mb4;
 
 -- unit        : snapshot nama satuan saat transaksi (tidak berubah meski master unit diedit)
@@ -387,6 +361,36 @@ CREATE TABLE IF NOT EXISTS transaction_items (
     created_at     DATETIME      DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id)     REFERENCES products(id)     ON DELETE SET NULL
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS receivables (
+    id               INT AUTO_INCREMENT PRIMARY KEY,
+    transaction_id   INT                             NULL,
+    customer_id      INT                             NULL,
+    total_amount     DECIMAL(15,2)                   NOT NULL,
+    paid_amount      DECIMAL(15,2)                   DEFAULT 0,
+    remaining_amount DECIMAL(15,2)                   NOT NULL,
+    status           ENUM('unpaid','partial','paid') DEFAULT 'unpaid',
+    due_date         DATE                            NULL,
+    notes            TEXT                            NULL,
+    created_at       DATETIME                        DEFAULT CURRENT_TIMESTAMP,
+    updated_at       DATETIME                        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE SET NULL,
+    FOREIGN KEY (customer_id)    REFERENCES customers(id)    ON DELETE SET NULL
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS receivable_payments (
+    id             INT AUTO_INCREMENT PRIMARY KEY,
+    receivable_id  INT           NOT NULL,
+    payment_date   DATE          NOT NULL,
+    amount         DECIMAL(15,2) NOT NULL,
+    payment_method VARCHAR(30)   NOT NULL DEFAULT 'cash',
+    notes          TEXT          NULL,
+    user_id        INT           NULL,
+    created_at     DATETIME      DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (receivable_id)  REFERENCES receivables(id)      ON DELETE CASCADE,
+    FOREIGN KEY (user_id)        REFERENCES users(id)             ON DELETE SET NULL,
+    FOREIGN KEY (payment_method) REFERENCES payment_methods(code)
 ) DEFAULT CHARSET=utf8mb4;
 
 -- -------------------------------------------------------------
@@ -417,16 +421,17 @@ CREATE TABLE IF NOT EXISTS cash_drawer (
 
 CREATE TABLE IF NOT EXISTS expenses (
     id             INT AUTO_INCREMENT PRIMARY KEY,
-    expense_date   DATE                                    NOT NULL,
-    category       VARCHAR(100)                            NOT NULL,
-    description    VARCHAR(255)                            NOT NULL DEFAULT '',
-    amount         DECIMAL(15,2)                           NOT NULL,
-    payment_method ENUM('cash','debit','credit','qris')    NOT NULL DEFAULT 'cash',
-    user_id        INT                                     NOT NULL,
-    notes          TEXT                                    NULL,
-    created_at     DATETIME                                DEFAULT CURRENT_TIMESTAMP,
-    updated_at     DATETIME                                DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
+    expense_date   DATE          NOT NULL,
+    category       VARCHAR(100)  NOT NULL,
+    description    VARCHAR(255)  NOT NULL DEFAULT '',
+    amount         DECIMAL(15,2) NOT NULL,
+    payment_method VARCHAR(30)   NOT NULL DEFAULT 'cash',
+    user_id        INT           NOT NULL,
+    notes          TEXT          NULL,
+    created_at     DATETIME      DEFAULT CURRENT_TIMESTAMP,
+    updated_at     DATETIME      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id)        REFERENCES users(id)             ON DELETE RESTRICT,
+    FOREIGN KEY (payment_method) REFERENCES payment_methods(code)
 ) DEFAULT CHARSET=utf8mb4;
 
 -- -------------------------------------------------------------

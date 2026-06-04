@@ -20,6 +20,7 @@ import { useSupplierReturnsQuery, useDeleteSupplierReturnMutation } from './supp
 import type { SupplierReturn, SupplierReturnFilter } from './supplier-returns.types'
 import { ReturnTable } from './components/ReturnTable'
 import { ReturnFormModal } from './components/ReturnFormModal'
+import { ReturnDetailModal } from './components/ReturnDetailModal'
 
 function monthStartString() {
   const d = new Date()
@@ -35,12 +36,15 @@ export function SupplierReturnsPage() {
   const [dateFrom, setDateFrom] = useState(monthStartString())
   const [dateTo, setDateTo] = useState(today)
   const [supplierId, setSupplierId] = useState<number | undefined>()
+  const [statusFilter, setStatusFilter] = useState<string>('all')
 
   const { page, pageSize, onPageChange, onPageSizeChange } = usePagination()
   const { isOpen: formOpen, open: openForm, close: closeForm } = useDisclosure()
   const { isOpen: deleteOpen, open: openDelete, close: closeDelete } = useDisclosure()
+  const { isOpen: detailOpen, open: openDetail, close: closeDetail } = useDisclosure()
 
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [detailId, setDetailId] = useState<number | null>(null)
 
   const { data: suppliersData, isLoading: isSuppliersLoading } = useSupplierListQuery({ page_size: 200 })
   const { data: productsData, isLoading: isProductsLoading } = useProductListQuery({ page_size: 1 })
@@ -52,6 +56,7 @@ export function SupplierReturnsPage() {
     date_from: dateFrom || undefined,
     date_to: dateTo || undefined,
     supplier_id: supplierId,
+    status: statusFilter !== 'all' ? statusFilter : undefined,
     page,
     page_size: pageSize,
   }
@@ -61,6 +66,11 @@ export function SupplierReturnsPage() {
 
   const returns = data?.items ?? []
   const total = data?.total ?? 0
+
+  function handleDetail(row: SupplierReturn) {
+    setDetailId(row.id)
+    openDetail()
+  }
 
   function handleDelete(row: SupplierReturn) {
     setDeletingId(row.id)
@@ -184,16 +194,42 @@ export function SupplierReturnsPage() {
             </SelectContent>
           </Select>
         </div>
+        <div className="space-y-1">
+          <label className="text-xs text-gray-500">Status</label>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40 h-9">
+              <SelectValue placeholder="Semua Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Status</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="approved">Disetujui</SelectItem>
+              <SelectItem value="rejected">Ditolak</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <ReturnTable
         data={returns}
         isLoading={isLoading}
         pagination={{ page, pageSize, total, onPageChange, onPageSizeChange, pageSizeOptions: [10, 20, 50] }}
+        onDetail={handleDetail}
         onDelete={handleDelete}
       />
 
       <ReturnFormModal open={formOpen} onOpenChange={(o) => !o && closeForm()} />
+
+      <ReturnDetailModal
+        returnId={detailId}
+        open={detailOpen}
+        onOpenChange={(o) => {
+          if (!o) {
+            closeDetail()
+            setDetailId(null)
+          }
+        }}
+      />
 
       <ConfirmDialog
         open={deleteOpen}

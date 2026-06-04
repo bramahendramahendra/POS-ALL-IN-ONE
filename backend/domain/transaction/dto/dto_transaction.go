@@ -20,7 +20,7 @@ type CreateTransactionRequest struct {
 	Discount      float64                        `json:"discount"`
 	Tax           float64                        `json:"tax"`
 	TotalAmount   float64                        `json:"total_amount" validate:"required,min=0"`
-	PaymentMethod string                         `json:"payment_method" validate:"required,oneof=cash transfer qris credit"`
+	PaymentMethod string                         `json:"payment_method" validate:"required,oneof=cash transfer qris card kredit"`
 	PaymentAmount float64                        `json:"payment_amount" validate:"required,min=0"`
 	ChangeAmount  float64                        `json:"change_amount"`
 	CustomerID    *int                           `json:"customer_id"`
@@ -46,6 +46,7 @@ type TransactionResponse struct {
 	ID              int                       `json:"id"`
 	TransactionCode string                    `json:"transaction_code"`
 	UserID          int                       `json:"user_id"`
+	KasirName       string                    `json:"kasir_name"`
 	ShiftID         *int                      `json:"shift_id"`
 	TransactionDate time.Time                 `json:"transaction_date"`
 	Subtotal        float64                   `json:"subtotal"`
@@ -56,6 +57,7 @@ type TransactionResponse struct {
 	PaymentAmount   float64                   `json:"payment_amount"`
 	ChangeAmount    float64                   `json:"change_amount"`
 	CustomerID      *int                      `json:"customer_id"`
+	CustomerName    string                    `json:"customer_name"`
 	IsCredit        bool                      `json:"is_credit"`
 	Status          string                    `json:"status"`
 	DeviceSource    string                    `json:"device_source"`

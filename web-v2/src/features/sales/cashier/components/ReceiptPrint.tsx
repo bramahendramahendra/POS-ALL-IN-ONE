@@ -99,7 +99,7 @@ export function ReceiptPrint({
           {/* Transaction info */}
           <div className="space-y-0.5 pb-2">
             <p>No : {checkoutData.transaction_code}</p>
-            <p>Tgl: {formatDate(checkoutData.created_at)}</p>
+            <p>Tgl: {formatDate(checkoutData.transaction_date)}</p>
             {customerName && <p>Plg: {customerName}</p>}
           </div>
 
@@ -114,10 +114,21 @@ export function ReceiptPrint({
                 </p>
                 <div className="flex justify-between pl-2 text-gray-600">
                   <span>
-                    {item.unit_name} @ {formatRupiah(item.price)}
+                    {item.unit_name} @ {formatRupiah(item.effective_price ?? item.price)}
                   </span>
                   <span>{formatRupiah(item.subtotal)}</span>
                 </div>
+                {item.discount_amount && item.discount_amount > 0 && (
+                  <div className="flex justify-between pl-2 text-gray-500">
+                    <span>
+                      Disc{' '}
+                      {item.discount_type === 'percent'
+                        ? `${item.discount_value}%`
+                        : formatRupiah(item.discount_value ?? 0)}
+                    </span>
+                    <span>-{formatRupiah(item.discount_amount)}</span>
+                  </div>
+                )}
               </div>
             ))}
           </div>

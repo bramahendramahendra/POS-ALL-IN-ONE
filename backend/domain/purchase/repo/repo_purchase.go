@@ -13,15 +13,16 @@ import (
 const (
 	generatePurchaseCodeQuery = `SELECT COUNT(*) FROM purchases WHERE DATE(purchase_date) = ?`
 	createPurchaseQuery       = `INSERT INTO purchases (purchase_code, invoice_number, supplier_id, purchase_date, discount_amount, total_amount, payment_status, paid_amount, remaining_amount, user_id, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	createPurchaseItemQuery   = `INSERT INTO purchase_items (purchase_id, product_id, quantity, unit, purchase_price, subtotal) VALUES (?, ?, ?, ?, ?, ?)`
+	createPurchaseItemQuery   = `INSERT INTO purchase_items (purchase_id, product_id, quantity, unit, conversion_qty, purchase_price, subtotal) VALUES (?, ?, ?, ?, ?, ?, ?)`
 	addStockQuery             = `UPDATE products SET stock = stock + ?, updated_at = NOW() WHERE id = ?`
 	payPurchaseQuery          = `UPDATE purchases SET paid_amount = paid_amount + ?, remaining_amount = remaining_amount - ?, payment_status = CASE WHEN remaining_amount - ? <= 0 THEN 'paid' WHEN paid_amount + ? > 0 THEN 'partial' ELSE 'unpaid' END, updated_at = NOW() WHERE id = ?`
-	getPurchaseItemsQuery     = `SELECT pi.id, pi.product_id, COALESCE(p.name, '') as product_name, pi.quantity, pi.unit, pi.purchase_price, pi.subtotal FROM purchase_items pi LEFT JOIN products p ON pi.product_id = p.id WHERE pi.purchase_id = ?`
+	getPurchaseItemsQuery     = `SELECT pi.id, pi.product_id, COALESCE(p.name, '') as product_name, pi.quantity, pi.unit, COALESCE(pi.conversion_qty, 1) as conversion_qty, pi.purchase_price, pi.subtotal FROM purchase_items pi LEFT JOIN products p ON pi.product_id = p.id WHERE pi.purchase_id = ?`
 	createPaymentQuery        = `INSERT INTO purchase_payments (purchase_id, payment_date, amount, payment_method, notes, user_id) VALUES (?, ?, ?, ?, ?, ?)`
 	getPaymentsQuery          = `SELECT pp.id, pp.payment_date, pp.amount, COALESCE(pp.payment_method, '') as payment_method, COALESCE(pp.notes, '') as notes, COALESCE(u.full_name, '') as user_name, pp.created_at FROM purchase_payments pp LEFT JOIN users u ON pp.user_id = u.id WHERE pp.purchase_id = ? ORDER BY pp.created_at ASC`
-	rollbackStockQuery        = `UPDATE products SET stock = stock - ?, updated_at = NOW() WHERE id = ?`
-	deletePurchaseItemsQuery  = `DELETE FROM purchase_items WHERE purchase_id = ?`
-	deletePurchaseQuery       = `DELETE FROM purchases WHERE id = ?`
+	rollbackStockQuery           = `UPDATE products SET stock = stock - ?, updated_at = NOW() WHERE id = ?`
+	deleteStockMutationsQuery    = `DELETE FROM stock_mutations WHERE reference_type = 'purchase' AND reference_id = ?`
+	deletePurchaseItemsQuery     = `DELETE FROM purchase_items WHERE purchase_id = ?`
+	deletePurchaseQuery          = `DELETE FROM purchases WHERE id = ?`
 	getPurchaseByIDQuery      = `SELECT p.id, p.purchase_code, p.invoice_number, p.supplier_id, COALESCE(s.name, '') as supplier_name, p.purchase_date, p.discount_amount, p.total_amount, p.payment_status, p.paid_amount, p.remaining_amount, COALESCE(u.full_name, '') as user_name, p.notes FROM purchases p LEFT JOIN users u ON p.user_id = u.id LEFT JOIN suppliers s ON p.supplier_id = s.id WHERE p.id = ?`
 	getRawPurchaseByIDQuery   = `SELECT id, purchase_code, invoice_number, supplier_id, purchase_date, discount_amount, total_amount, payment_status, paid_amount, remaining_amount, user_id, notes FROM purchases WHERE id = ?`
 	getAllPurchasesBase       = `SELECT p.id, p.purchase_code, p.invoice_number, p.supplier_id, COALESCE(s.name, '') as supplier_name, p.purchase_date, p.discount_amount, p.total_amount, p.payment_status, p.paid_amount, p.remaining_amount, COALESCE(u.full_name, '') as user_name, p.notes FROM purchases p LEFT JOIN users u ON p.user_id = u.id LEFT JOIN suppliers s ON p.supplier_id = s.id WHERE 1=1`
@@ -137,6 +138,7 @@ func (r *purchaseRepo) GetByID(id int) (*dto_purchase.PurchaseResponse, error) {
 			ProductName:   mi.ProductName,
 			Quantity:      mi.Quantity,
 			Unit:          mi.Unit,
+			ConversionQty: mi.ConversionQty,
 			PurchasePrice: mi.PurchasePrice,
 			Subtotal:      mi.Subtotal,
 		})
@@ -168,7 +170,7 @@ func (r *purchaseRepo) GetItems(purchaseID int) ([]model_purchase.PurchaseItem, 
 		var item model_purchase.PurchaseItem
 		if err := rows.Scan(
 			&item.ID, &item.ProductID, &item.ProductName,
-			&item.Quantity, &item.Unit, &item.PurchasePrice, &item.Subtotal,
+			&item.Quantity, &item.Unit, &item.ConversionQty, &item.PurchasePrice, &item.Subtotal,
 		); err != nil {
 			return nil, err
 		}
@@ -272,10 +274,18 @@ func (r *purchaseRepo) Create(req *dto_purchase.PurchaseRequest, userID int) (*d
 		for _, item := range req.Items {
 			subtotal := item.PurchasePrice * item.Quantity
 
+			// Normalisasi conversion_qty: default 1 jika tidak dikirim
+			conversionQty := item.ConversionQty
+			if conversionQty <= 0 {
+				conversionQty = 1
+			}
+			// Stok yang ditambah = qty × conversion_qty (konversi ke satuan dasar)
+			stockAdd := item.Quantity * conversionQty
+
 			// Simpan item
 			if err := tx.Exec(createPurchaseItemQuery,
 				purchaseID, item.ProductID,
-				item.Quantity, item.Unit, item.PurchasePrice, subtotal,
+				item.Quantity, item.Unit, conversionQty, item.PurchasePrice, subtotal,
 			).Error; err != nil {
 				return err
 			}
@@ -286,16 +296,16 @@ func (r *purchaseRepo) Create(req *dto_purchase.PurchaseRequest, userID int) (*d
 				return err
 			}
 
-			// Tambah stok
-			if err := tx.Exec(addStockQuery, item.Quantity, item.ProductID).Error; err != nil {
+			// Tambah stok dalam satuan dasar
+			if err := tx.Exec(addStockQuery, stockAdd, item.ProductID).Error; err != nil {
 				return err
 			}
 
-			// Catat mutasi stok
-			stockAfter := stockBefore + item.Quantity
+			// Catat mutasi stok (dalam satuan dasar)
+			stockAfter := stockBefore + stockAdd
 			notes := fmt.Sprintf("Purchase Order %s", code)
 			if err := tx.Exec(createStockMutationQuery,
-				item.ProductID, "in", item.Quantity, stockBefore, stockAfter,
+				item.ProductID, "in", stockAdd, stockBefore, stockAfter,
 				"purchase", purchaseID, notes, userID,
 			).Error; err != nil {
 				return err
@@ -319,9 +329,13 @@ func (r *purchaseRepo) Update(id int, req *dto_purchase.PurchaseRequest) (*dto_p
 			return err
 		}
 
-		// Rollback stok item lama
+		// Rollback stok item lama (dalam satuan dasar)
 		for _, item := range oldItems {
-			if err := tx.Exec(rollbackStockQuery, item.Quantity, item.ProductID).Error; err != nil {
+			convQty := item.ConversionQty
+			if convQty <= 0 {
+				convQty = 1
+			}
+			if err := tx.Exec(rollbackStockQuery, item.Quantity*convQty, item.ProductID).Error; err != nil {
 				return err
 			}
 		}
@@ -345,16 +359,20 @@ func (r *purchaseRepo) Update(id int, req *dto_purchase.PurchaseRequest) (*dto_p
 			return err
 		}
 
-		// Insert items baru + update stok
+		// Insert items baru + update stok (dalam satuan dasar)
 		for _, item := range req.Items {
 			subtotal := item.PurchasePrice * item.Quantity
+			conversionQty := item.ConversionQty
+			if conversionQty <= 0 {
+				conversionQty = 1
+			}
 			if err := tx.Exec(createPurchaseItemQuery,
 				id, item.ProductID,
-				item.Quantity, item.Unit, item.PurchasePrice, subtotal,
+				item.Quantity, item.Unit, conversionQty, item.PurchasePrice, subtotal,
 			).Error; err != nil {
 				return err
 			}
-			if err := tx.Exec(addStockQuery, item.Quantity, item.ProductID).Error; err != nil {
+			if err := tx.Exec(addStockQuery, item.Quantity*conversionQty, item.ProductID).Error; err != nil {
 				return err
 			}
 		}
@@ -376,9 +394,17 @@ func (r *purchaseRepo) Delete(id int) error {
 		}
 
 		for _, item := range items {
-			if err := tx.Exec(rollbackStockQuery, item.Quantity, item.ProductID).Error; err != nil {
+			convQty := item.ConversionQty
+			if convQty <= 0 {
+				convQty = 1
+			}
+			if err := tx.Exec(rollbackStockQuery, item.Quantity*convQty, item.ProductID).Error; err != nil {
 				return err
 			}
+		}
+
+		if err := tx.Exec(deleteStockMutationsQuery, id).Error; err != nil {
+			return err
 		}
 
 		if err := tx.Exec(deletePurchaseItemsQuery, id).Error; err != nil {

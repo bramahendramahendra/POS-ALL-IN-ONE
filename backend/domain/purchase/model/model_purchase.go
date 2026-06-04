@@ -26,6 +26,7 @@ type PurchaseItem struct {
 	ProductName   string  `db:"product_name"`
 	Quantity      float64 `db:"quantity"`
 	Unit          string  `db:"unit"`
+	ConversionQty float64 `db:"conversion_qty"`
 	PurchasePrice float64 `db:"purchase_price"`
 	Subtotal      float64 `db:"subtotal"`
 }

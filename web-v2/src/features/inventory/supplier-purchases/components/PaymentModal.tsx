@@ -57,7 +57,7 @@ export function PaymentModal({ open, onOpenChange, purchase }: PaymentModalProps
     defaultValues: {
       amount: 0,
       payment_date: todayString(),
-      payment_method: 'tunai',
+      payment_method: 'cash',
       notes: '',
     },
   })
@@ -67,7 +67,7 @@ export function PaymentModal({ open, onOpenChange, purchase }: PaymentModalProps
       reset({
         amount: 0,
         payment_date: todayString(),
-        payment_method: 'tunai',
+        payment_method: 'cash',
         notes: '',
       })
     }

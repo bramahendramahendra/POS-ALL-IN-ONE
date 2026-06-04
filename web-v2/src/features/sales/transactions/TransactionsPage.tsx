@@ -19,7 +19,7 @@ export function TransactionsPage() {
   const { data: txData, isLoading } = useTransactionListQuery({
     ...filter,
     page,
-    page_size: pageSize,
+    limit: pageSize,
   })
 
   const transactions = txData?.data?.data ?? []

@@ -9,14 +9,14 @@ import type { ApiResponse } from '@/shared/types'
 import type { Product, ProductPackage } from '@/features/inventory/products'
 
 import { useCashierStore } from './cashier.store'
-import type { CheckoutResponse, PaymentPayload } from './cashier.types'
+import type { CheckoutResponse, PaymentPayload, ProductSearchResult } from './cashier.types'
 
 // ─── Queries ─────────────────────────────────────────────────────────────────
 
 export function useProductSearchQuery(keyword: string, enabled: boolean) {
   return useQuery({
-    queryKey: queryKeys.products.list({ search: keyword }),
-    queryFn: () => api.get<Product[]>('/products', { search: keyword }),
+    queryKey: ['cashier', 'search', keyword],
+    queryFn: () => api.get<ProductSearchResult[]>('/products/search', { q: keyword, limit: 20 }),
     enabled: enabled && keyword.length >= 2,
   })
 }
@@ -24,7 +24,7 @@ export function useProductSearchQuery(keyword: string, enabled: boolean) {
 export function useProductBarcodeSearchQuery(code: string, enabled: boolean) {
   return useQuery({
     queryKey: queryKeys.products.barcode(code),
-    queryFn: () => api.get<{ product: Product; units: ProductPackage[] }>(`/products/barcode/${code}`),
+    queryFn: () => api.get<Product>(`/products/barcode/${code}`),
     enabled: enabled && code.length > 0,
   })
 }
@@ -52,13 +52,13 @@ export function useCheckoutMutation() {
 
   return useMutation({
     mutationFn: (payload: PaymentPayload) =>
-      api.post<CheckoutResponse>('/transactions/checkout', payload),
+      api.post<CheckoutResponse>('/transactions', payload),
     onSuccess: (data) => {
       clearCart()
       closePaymentModal()
       qc.invalidateQueries({ queryKey: queryKeys.transactions.all() })
       toast.success(`Transaksi ${(data as unknown as CheckoutResponse).transaction_code} berhasil`)
-      navigate(`${ROUTES.TRANSACTIONS}/${(data as unknown as CheckoutResponse).transaction_id}`)
+      navigate(`${ROUTES.TRANSACTIONS}/${(data as unknown as CheckoutResponse).id}`)
     },
     onError: (e: Error) => toast.error(e.message),
   })

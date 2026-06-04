@@ -25,7 +25,7 @@ export function useTransactionDetailQuery(id: number) {
 export function useVoidTransactionMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) => api.post<Transaction>(`/transactions/${id}/void`),
+    mutationFn: (id: number) => api.patch<Transaction>(`/transactions/${id}/void`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.transactions.all() })
       toast.success('Transaksi berhasil dibatalkan')

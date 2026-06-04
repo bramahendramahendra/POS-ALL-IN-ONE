@@ -28,8 +28,14 @@ interface ReturnFormModalProps {
   onOpenChange: (open: boolean) => void
 }
 
+const today = new Date().toISOString().slice(0, 10)
+
 const schema = z.object({
   purchase_id: z.number({ error: 'Pilih pembelian' }).positive('Pilih pembelian'),
+  return_date: z
+    .string()
+    .min(1, 'Tanggal wajib diisi')
+    .refine((v) => v <= today, 'Tanggal retur tidak boleh lebih dari hari ini'),
   reason: z.string().min(1, 'Alasan wajib diisi'),
   notes: z.string().optional(),
 })
@@ -38,6 +44,7 @@ type FormValues = z.infer<typeof schema>
 
 const defaultValues: FormValues = {
   purchase_id: 0,
+  return_date: today,
   reason: '',
   notes: '',
 }
@@ -63,9 +70,10 @@ export function ReturnFormModal({ open, onOpenChange }: ReturnFormModalProps) {
 
   const purchaseId = watch('purchase_id')
 
-  const { data: purchaseDetailData } = useSupplierPurchaseDetailQuery(
-    purchaseId > 0 ? purchaseId : null,
-  )
+  const {
+    data: purchaseDetailData,
+    isLoading: isPurchaseDetailLoading,
+  } = useSupplierPurchaseDetailQuery(purchaseId > 0 ? purchaseId : null)
   const purchaseDetail = purchaseDetailData
 
   useEffect(() => {
@@ -79,35 +87,62 @@ export function ReturnFormModal({ open, onOpenChange }: ReturnFormModalProps) {
     setSelectedItems({})
   }, [purchaseId])
 
-  function toggleItem(itemId: number, maxQty: number) {
+  function toggleItem(purchaseItemId: number, maxQty: number) {
     setSelectedItems((prev) => {
-      if (prev[itemId]) {
+      if (prev[purchaseItemId]) {
         const next = { ...prev }
-        delete next[itemId]
+        delete next[purchaseItemId]
         return next
       }
-      return { ...prev, [itemId]: { checked: true, quantity: maxQty } }
+      return { ...prev, [purchaseItemId]: { checked: true, quantity: maxQty } }
     })
   }
 
-  function setItemQty(itemId: number, qty: number) {
-    setSelectedItems((prev) => ({ ...prev, [itemId]: { ...prev[itemId], quantity: qty } }))
+  function setItemQty(purchaseItemId: number, qty: number) {
+    setSelectedItems((prev) => ({
+      ...prev,
+      [purchaseItemId]: { ...prev[purchaseItemId], quantity: qty },
+    }))
   }
 
   function onSubmit(values: FormValues) {
-    const items = Object.entries(selectedItems).map(([id, v]) => ({
-      item_id: Number(id),
-      quantity: v.quantity,
-    }))
+    if (!purchaseDetail) return
+
+    const items = purchaseDetail.items
+      .filter((item) => !!selectedItems[item.id])
+      .map((item) => ({
+        purchase_item_id: item.id,
+        product_id: item.product_id,
+        product_name: item.product_name,
+        quantity: selectedItems[item.id].quantity,
+        unit: item.unit,
+        purchase_price: item.purchase_price,
+      }))
 
     if (items.length === 0) {
       toast.error('Pilih minimal 1 item untuk diretur')
       return
     }
 
+    for (const item of items) {
+      const original = purchaseDetail.items.find((i) => i.id === item.purchase_item_id)
+      if (!original) continue
+      if (item.quantity <= 0) {
+        toast.error(`Jumlah retur ${item.product_name} harus lebih dari 0`)
+        return
+      }
+      if (item.quantity > original.quantity) {
+        toast.error(`Jumlah retur ${item.product_name} melebihi jumlah pembelian (maks ${original.quantity})`)
+        return
+      }
+    }
+
     create(
       {
         purchase_id: values.purchase_id,
+        supplier_id: purchaseDetail.supplier_id > 0 ? purchaseDetail.supplier_id : undefined,
+        supplier_name: purchaseDetail.supplier_name,
+        return_date: values.return_date,
         items,
         reason: values.reason,
         notes: values.notes || undefined,
@@ -133,6 +168,22 @@ export function ReturnFormModal({ open, onOpenChange }: ReturnFormModalProps) {
     >
       <div className="space-y-4">
         <div className="space-y-1.5">
+          <Label htmlFor="ret-date">
+            Tanggal Retur <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="ret-date"
+            type="date"
+            max={today}
+            {...register('return_date')}
+            className={errors.return_date ? 'border-red-500' : ''}
+          />
+          {errors.return_date && (
+            <p className="text-xs text-red-500">{errors.return_date.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
           <Label>
             Pembelian <span className="text-red-500">*</span>
           </Label>
@@ -153,18 +204,29 @@ export function ReturnFormModal({ open, onOpenChange }: ReturnFormModalProps) {
           )}
         </div>
 
-        {purchaseDetail && purchaseDetail.items.length > 0 && (
+        {isPurchaseDetailLoading && purchaseId > 0 && (
+          <div className="space-y-2">
+            <Label>Item yang Diretur</Label>
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-10 animate-pulse rounded-md bg-gray-100" />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!isPurchaseDetailLoading && purchaseDetail && purchaseDetail.items.length > 0 && (
           <div className="space-y-2">
             <Label>Item yang Diretur</Label>
             <div className="rounded-lg border divide-y text-sm">
-              {purchaseDetail.items.map((item, idx) => {
-                const sel = selectedItems[item.product_id]
+              {purchaseDetail.items.map((item) => {
+                const sel = selectedItems[item.id]
                 return (
-                  <div key={idx} className="flex items-center gap-3 px-3 py-2">
+                  <div key={item.id} className="flex items-center gap-3 px-3 py-2">
                     <input
                       type="checkbox"
                       checked={!!sel}
-                      onChange={() => toggleItem(item.product_id, item.quantity)}
+                      onChange={() => toggleItem(item.id, item.quantity)}
                       className="h-4 w-4 rounded border-gray-300"
                     />
                     <span className="flex-1">{item.product_name}</span>
@@ -175,7 +237,7 @@ export function ReturnFormModal({ open, onOpenChange }: ReturnFormModalProps) {
                         min={1}
                         max={item.quantity}
                         value={sel.quantity}
-                        onChange={(e) => setItemQty(item.product_id, Number(e.target.value))}
+                        onChange={(e) => setItemQty(item.id, Number(e.target.value))}
                         className="w-20 h-7 text-xs text-right"
                       />
                     )}

@@ -12,6 +12,7 @@ export interface SupplierPurchaseItem {
   product_name: string
   quantity: number
   unit: string
+  conversion_qty: number
   purchase_price: number
   subtotal: number
 }
@@ -64,6 +65,7 @@ export interface CreatePurchaseItemPayload {
   quantity: number
   purchase_price: number
   unit: string
+  conversion_qty: number
 }
 
 export interface CreateSupplierPurchasePayload {

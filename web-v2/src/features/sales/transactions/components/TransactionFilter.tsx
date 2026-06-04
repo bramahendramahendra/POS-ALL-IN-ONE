@@ -37,15 +37,15 @@ export function TransactionFilterBar({ filter, onChange, onReset }: TransactionF
       {/* Date range */}
       <Input
         type="date"
-        value={filter.date_from ?? ''}
-        onChange={(e) => set({ date_from: e.target.value || undefined })}
+        value={filter.start_date ?? ''}
+        onChange={(e) => set({ start_date: e.target.value || undefined })}
         className="h-9 w-[150px] text-sm"
       />
       <span className="text-gray-400 text-sm">s/d</span>
       <Input
         type="date"
-        value={filter.date_to ?? ''}
-        onChange={(e) => set({ date_to: e.target.value || undefined })}
+        value={filter.end_date ?? ''}
+        onChange={(e) => set({ end_date: e.target.value || undefined })}
         className="h-9 w-[150px] text-sm"
       />
 
@@ -65,6 +65,7 @@ export function TransactionFilterBar({ filter, onChange, onReset }: TransactionF
           <SelectItem value="transfer">Transfer</SelectItem>
           <SelectItem value="qris">QRIS</SelectItem>
           <SelectItem value="card">Kartu</SelectItem>
+          <SelectItem value="kredit">Kredit</SelectItem>
         </SelectContent>
       </Select>
 
@@ -81,7 +82,7 @@ export function TransactionFilterBar({ filter, onChange, onReset }: TransactionF
         <SelectContent>
           <SelectItem value="all">Semua Status</SelectItem>
           <SelectItem value="completed">Selesai</SelectItem>
-          <SelectItem value="voided">Dibatalkan</SelectItem>
+          <SelectItem value="void">Dibatalkan</SelectItem>
         </SelectContent>
       </Select>
 

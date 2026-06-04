@@ -1,6 +1,8 @@
 package service_supplier_return
 
 import (
+	"time"
+
 	dto_supplier_return "pos_api/domain/supplier_return/dto"
 	repo_supplier_return "pos_api/domain/supplier_return/repo"
 	"pos_api/errors"
@@ -34,9 +36,32 @@ func (s *supplierReturnService) GetByID(id int) (*dto_supplier_return.SupplierRe
 }
 
 func (s *supplierReturnService) Create(req *dto_supplier_return.CreateSupplierReturnRequest, userID int) (*dto_supplier_return.SupplierReturnResponse, error) {
-	item, err := s.repo.Create(req, userID)
+	returnDate, err := time.Parse("2006-01-02", req.ReturnDate)
+	if err != nil {
+		return nil, &errors.BadRequestError{Message: "Format tanggal retur tidak valid"}
+	}
+	if returnDate.After(time.Now().Truncate(24 * time.Hour)) {
+		return nil, &errors.BadRequestError{Message: "Tanggal retur tidak boleh lebih dari hari ini"}
+	}
+
+	purchaseDateStr, err := s.repo.GetPurchaseDate(req.PurchaseID)
 	if err != nil {
 		return nil, &errors.InternalServerError{Message: err.Error()}
+	}
+	if purchaseDateStr == "" {
+		return nil, &errors.NotFoundError{Message: "Purchase order tidak ditemukan"}
+	}
+	purchaseDate, err := time.Parse("2006-01-02", purchaseDateStr[:10])
+	if err != nil {
+		return nil, &errors.InternalServerError{Message: err.Error()}
+	}
+	if returnDate.Before(purchaseDate) {
+		return nil, &errors.BadRequestError{Message: "Tanggal retur tidak boleh lebih awal dari tanggal pembelian"}
+	}
+
+	item, repoErr := s.repo.Create(req, userID)
+	if repoErr != nil {
+		return nil, &errors.InternalServerError{Message: repoErr.Error()}
 	}
 	return item, nil
 }
@@ -55,9 +80,16 @@ func (s *supplierReturnService) UpdateStatus(id int, req *dto_supplier_return.Up
 
 	if req.Status == "approved" {
 		if err := s.repo.ApproveWithStockReduction(id, userID); err != nil {
+			if badReq, ok := err.(*errors.BadRequestError); ok {
+				return badReq
+			}
 			return &errors.InternalServerError{Message: err.Error()}
 		}
 		return nil
+	}
+
+	if req.Status == "rejected" && req.Notes == "" {
+		return &errors.BadRequestError{Message: "Catatan penolakan wajib diisi"}
 	}
 
 	if err := s.repo.UpdateStatus(id, req.Status, req.Notes); err != nil {

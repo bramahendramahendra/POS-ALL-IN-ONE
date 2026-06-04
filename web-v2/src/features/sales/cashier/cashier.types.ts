@@ -1,5 +1,18 @@
+export interface ProductSearchResult {
+  id: number
+  barcode: string
+  name: string
+  selling_price: number
+  stock: number
+  unit_id: number
+  unit_name: string
+}
+
 export type DiscountType = 'none' | 'percent' | 'amount'
 export type PaymentMethod = 'cash' | 'transfer' | 'qris' | 'card' | 'kredit'
+
+// Nilai enum yang diterima backend (sesuai validasi oneof)
+export const PAYMENT_METHOD_VALUES = ['cash', 'transfer', 'qris', 'card', 'kredit'] as const
 
 export interface CartItem {
   product_id: number
@@ -39,37 +52,34 @@ export interface CartSummary {
 
 export interface PaymentPayload {
   customer_id?: number
+  shift_id?: number
+  is_credit: boolean
+  device_source: 'web'
   items: Array<{
     product_id: number
-    unit_id: number
-    unit_name: string
+    product_name: string
+    unit_id?: number
+    unit: string
     conversion_qty: number
-    qty: number
+    quantity: number
     price: number
     subtotal: number
-    notes?: string
-    discount_type?: 'percent' | 'nominal'
-    discount_value?: number
-    discount_amount?: number
+    discount_item?: number
   }>
   subtotal: number
-  discount_type: DiscountType
-  discount_value: number
-  discount_amount: number
-  tax_percent: number
-  tax_amount: number
-  grand_total: number
+  discount: number
+  tax: number
+  total_amount: number
   payment_method: PaymentMethod
-  amount_paid: number
+  payment_amount: number
   change_amount: number
-  notes?: string
 }
 
 export interface CheckoutResponse {
-  transaction_id: number
+  id: number
   transaction_code: string
-  grand_total: number
-  amount_paid: number
+  total_amount: number
+  payment_amount: number
   change_amount: number
-  created_at: string
+  transaction_date: string
 }

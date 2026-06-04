@@ -25,16 +25,26 @@ const (
 	updateReceivableVoidQuery    = `UPDATE receivables SET status = 'void', updated_at = NOW() WHERE transaction_id = ?`
 	getProductStockQuery         = `SELECT stock FROM products WHERE id = ? LIMIT 1`
 	getTransactionItemsQuery     = `SELECT id, transaction_id, product_id, product_name, quantity, unit, price, subtotal, discount_item, conversion_qty, unit_id FROM transaction_items WHERE transaction_id = ?`
-	getTransactionByIDQuery      = `
-		SELECT t.id, t.transaction_code, t.user_id, t.shift_id, t.transaction_date,
+	getTransactionByIDQuery = `
+		SELECT t.id, t.transaction_code, t.user_id, COALESCE(u.full_name, '') AS kasir_name,
+		       t.shift_id, t.transaction_date,
 		       t.subtotal, t.discount, t.tax, t.total_amount, t.payment_method,
-		       t.payment_amount, t.change_amount, t.customer_id, t.is_credit, t.status, t.device_source
-		FROM transactions t WHERE t.id = ? LIMIT 1`
+		       t.payment_amount, t.change_amount, t.customer_id, COALESCE(c.name, '') AS customer_name,
+		       t.is_credit, t.status, t.device_source
+		FROM transactions t
+		LEFT JOIN users u ON u.id = t.user_id
+		LEFT JOIN customers c ON c.id = t.customer_id
+		WHERE t.id = ? LIMIT 1`
 	getAllTransactionsBase = `
-		SELECT t.id, t.transaction_code, t.user_id, t.shift_id, t.transaction_date,
+		SELECT t.id, t.transaction_code, t.user_id, COALESCE(u.full_name, '') AS kasir_name,
+		       t.shift_id, t.transaction_date,
 		       t.subtotal, t.discount, t.tax, t.total_amount, t.payment_method,
-		       t.payment_amount, t.change_amount, t.customer_id, t.is_credit, t.status, t.device_source
-		FROM transactions t WHERE 1=1`
+		       t.payment_amount, t.change_amount, t.customer_id, COALESCE(c.name, '') AS customer_name,
+		       t.is_credit, t.status, t.device_source
+		FROM transactions t
+		LEFT JOIN users u ON u.id = t.user_id
+		LEFT JOIN customers c ON c.id = t.customer_id
+		WHERE 1=1`
 	countTransactionsBase = `SELECT COUNT(*) FROM transactions t WHERE 1=1`
 )
 
@@ -75,6 +85,12 @@ func (r *transactionRepo) GetAll(filter *dto_transaction.TransactionFilter) ([]*
 		args = append(args, *filter.UserID)
 		countArgs = append(countArgs, *filter.UserID)
 	}
+	if filter.Search != "" {
+		conditions += " AND (t.transaction_code LIKE ? OR c.name LIKE ?)"
+		like := "%" + filter.Search + "%"
+		args = append(args, like, like)
+		countArgs = append(countArgs, like, like)
+	}
 
 	var total int
 	if err := r.db.Raw(countTransactionsBase+conditions, countArgs...).Scan(&total).Error; err != nil {
@@ -103,9 +119,10 @@ func (r *transactionRepo) GetAll(filter *dto_transaction.TransactionFilter) ([]*
 	for rows.Next() {
 		var t dto_transaction.TransactionResponse
 		if err := rows.Scan(
-			&t.ID, &t.TransactionCode, &t.UserID, &t.ShiftID, &t.TransactionDate,
+			&t.ID, &t.TransactionCode, &t.UserID, &t.KasirName, &t.ShiftID, &t.TransactionDate,
 			&t.Subtotal, &t.Discount, &t.Tax, &t.TotalAmount, &t.PaymentMethod,
-			&t.PaymentAmount, &t.ChangeAmount, &t.CustomerID, &t.IsCredit, &t.Status, &t.DeviceSource,
+			&t.PaymentAmount, &t.ChangeAmount, &t.CustomerID, &t.CustomerName,
+			&t.IsCredit, &t.Status, &t.DeviceSource,
 		); err != nil {
 			return nil, 0, err
 		}
@@ -118,14 +135,25 @@ func (r *transactionRepo) GetAll(filter *dto_transaction.TransactionFilter) ([]*
 }
 
 func (r *transactionRepo) GetByID(id int) (*dto_transaction.TransactionResponse, error) {
-	var t dto_transaction.TransactionResponse
-	result := r.db.Raw(getTransactionByIDQuery, id).Scan(&t)
-	if result.Error != nil {
-		return nil, result.Error
+	rows, err := r.db.Raw(getTransactionByIDQuery, id).Rows()
+	if err != nil {
+		return nil, err
 	}
-	if result.RowsAffected == 0 {
+	defer rows.Close()
+
+	if !rows.Next() {
 		return nil, nil
 	}
+	var t dto_transaction.TransactionResponse
+	if err := rows.Scan(
+		&t.ID, &t.TransactionCode, &t.UserID, &t.KasirName, &t.ShiftID, &t.TransactionDate,
+		&t.Subtotal, &t.Discount, &t.Tax, &t.TotalAmount, &t.PaymentMethod,
+		&t.PaymentAmount, &t.ChangeAmount, &t.CustomerID, &t.CustomerName,
+		&t.IsCredit, &t.Status, &t.DeviceSource,
+	); err != nil {
+		return nil, err
+	}
+	rows.Close()
 
 	items, err := r.GetItems(id)
 	if err != nil {
@@ -305,14 +333,20 @@ func (r *transactionRepo) Void(id, userID int) error {
 				return err
 			}
 
-			if err := tx.Exec(restoreStockQuery, item.Quantity, item.ProductID).Error; err != nil {
+			convQty := item.ConversionQty
+			if convQty <= 0 {
+				convQty = 1
+			}
+			stockRestore := item.Quantity * convQty
+
+			if err := tx.Exec(restoreStockQuery, stockRestore, item.ProductID).Error; err != nil {
 				return err
 			}
 
-			stockAfter := stockBefore + item.Quantity
+			stockAfter := stockBefore + stockRestore
 			notes := fmt.Sprintf("Void transaksi ID %d", id)
 			if err := tx.Exec(createStockMutationQuery,
-				item.ProductID, "void", item.Quantity, stockBefore, stockAfter,
+				item.ProductID, "void", stockRestore, stockBefore, stockAfter,
 				"transaction", id, notes, userID,
 			).Error; err != nil {
 				return err

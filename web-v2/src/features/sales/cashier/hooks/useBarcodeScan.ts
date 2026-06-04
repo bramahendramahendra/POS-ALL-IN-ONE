@@ -14,13 +14,14 @@ export const useBarcodeScan = () => {
   ): Promise<{ product: Product; units: ProductPackage[] }> => {
     setIsScanning(true)
     try {
-      const result = await qc.fetchQuery({
+      const product = await qc.fetchQuery({
         queryKey: queryKeys.products.barcode(code),
-        queryFn: () =>
-          api.get<{ product: Product; units: ProductPackage[] }>(`/products/barcode/${code}`),
+        queryFn: () => api.get<Product>(`/products/barcode/${code}`),
         staleTime: 30_000,
       })
-      return result as { product: Product; units: ProductPackage[] }
+      // Backend mengembalikan Product langsung (sudah termasuk units di dalamnya)
+      // units dikosongkan agar ProductSearch fallback ke product.units
+      return { product: product as Product, units: [] }
     } finally {
       setIsScanning(false)
     }

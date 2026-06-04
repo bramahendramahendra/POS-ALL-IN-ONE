@@ -5,7 +5,7 @@ type ExpenseRequest struct {
 	Category      string  `json:"category" validate:"required"`
 	Description   string  `json:"description"`
 	Amount        float64 `json:"amount" validate:"required,gt=0"`
-	PaymentMethod string  `json:"payment_method" validate:"required,oneof=cash debit credit qris"`
+	PaymentMethod string  `json:"payment_method" validate:"required,oneof=cash transfer card qris kredit"`
 	Notes         string  `json:"notes"`
 	// CashDrawerID opsional: dikirim oleh desktop saat offline agar expense dikaitkan ke sesi kas yang tepat.
 	// Jika nil, backend fallback ke GetOpenCashDrawer (kas yang sedang terbuka milik user).

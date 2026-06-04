@@ -31,7 +31,13 @@ function formatDate(s: string) {
   return new Date(s).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-const PAYMENT_METHODS = ['tunai', 'transfer', 'qris', 'kartu_debit', 'kartu_kredit']
+const PAYMENT_METHODS = [
+  { value: 'cash',     label: 'Tunai' },
+  { value: 'transfer', label: 'Transfer' },
+  { value: 'card',     label: 'Kartu' },
+  { value: 'qris',     label: 'QRIS' },
+  { value: 'kredit',   label: 'Kredit' },
+]
 
 function exportCSV(data: SalesReport[]) {
   const headers = ['Tanggal', 'Kode Transaksi', 'Kasir', 'Customer', 'Total', 'Metode Bayar', 'Status']
@@ -175,8 +181,8 @@ export function SalesReportTab() {
             <SelectContent>
               <SelectItem value="all">Semua</SelectItem>
               {PAYMENT_METHODS.map((m) => (
-                <SelectItem key={m} value={m} className="capitalize">
-                  {m}
+                <SelectItem key={m.value} value={m.value}>
+                  {m.label}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -52,10 +52,10 @@ export function TransactionTable({
       ),
     },
     {
-      key: 'created_at',
+      key: 'transaction_date',
       header: 'Tanggal',
       cell: (row) => (
-        <span className="text-sm text-gray-600">{formatDateTime(row.created_at)}</span>
+        <span className="text-sm text-gray-600">{formatDateTime(row.transaction_date)}</span>
       ),
     },
     {
@@ -74,10 +74,10 @@ export function TransactionTable({
       cell: (row) => <span className="text-sm">{row.kasir_name}</span>,
     },
     {
-      key: 'grand_total',
+      key: 'total_amount',
       header: 'Total',
       align: 'right',
-      cell: (row) => <span className="font-semibold">{formatRupiah(row.grand_total)}</span>,
+      cell: (row) => <span className="font-semibold">{formatRupiah(row.total_amount)}</span>,
     },
     {
       key: 'payment_method',

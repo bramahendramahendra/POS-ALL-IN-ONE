@@ -108,9 +108,11 @@ export function PurchaseTable({
               Bayar
             </Button>
           )}
-          <Button variant="ghost" size="sm" onClick={() => onDelete(row)} title="Hapus">
-            <Trash2 className="h-4 w-4 text-red-500" />
-          </Button>
+          {row.paid_amount === 0 && (
+            <Button variant="ghost" size="sm" onClick={() => onDelete(row)} title="Hapus">
+              <Trash2 className="h-4 w-4 text-red-500" />
+            </Button>
+          )}
         </div>
       ),
     },

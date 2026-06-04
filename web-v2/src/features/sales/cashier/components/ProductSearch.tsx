@@ -1,38 +1,77 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Loader2, Search } from 'lucide-react'
 import { toast } from 'sonner'
+import { useQueryClient } from '@tanstack/react-query'
 
 import { Input } from '@/shared/components/ui/input'
 import { formatRupiah } from '@/shared/utils'
-import type { Product } from '@/features/inventory/products'
+import { queryKeys } from '@/shared/constants'
+import { api } from '@/services/api.client'
+import type { Product, ProductPackage, PriceTier } from '@/features/inventory/products'
 
 import { useCashierStore } from '../cashier.store'
 import { getApplicablePrice } from '../cashier.utils'
 import { useBarcodeScan } from '../hooks/useBarcodeScan'
 import { useProductSearch } from '../hooks/useProductSearch'
+import type { ProductSearchResult } from '../cashier.types'
 
 export function ProductSearch() {
   const inputRef = useRef<HTMLInputElement>(null)
   const { keyword, setKeyword, results, isLoading, clearSearch } = useProductSearch()
   const { handleBarcodeEnter, isScanning } = useBarcodeScan()
   const { addToCart, openUnitSelectModal } = useCashierStore()
+  const qc = useQueryClient()
+  const [loadingId, setLoadingId] = useState<number | null>(null)
 
   useEffect(() => {
     inputRef.current?.focus()
   }, [])
 
-  const handleAddProduct = (product: Product) => {
-    const units = product.units
-    if (units.length === 0) {
-      toast.error('Produk ini belum memiliki unit')
-      return
+  const fetchFullProduct = async (id: number): Promise<Product> => {
+    const [product, packages, prices] = await Promise.all([
+      qc.fetchQuery({
+        queryKey: queryKeys.products.detail(id),
+        queryFn: () => api.get<Product>(`/products/${id}`),
+        staleTime: 60_000,
+      }) as Promise<Product>,
+      qc.fetchQuery({
+        queryKey: queryKeys.products.productUnits(id),
+        queryFn: () => api.get<ProductPackage[]>(`/products/${id}/packages`),
+        staleTime: 60_000,
+      }) as Promise<ProductPackage[]>,
+      qc.fetchQuery({
+        queryKey: queryKeys.products.priceTiers(id),
+        queryFn: () => api.get<PriceTier[]>(`/products/${id}/prices`),
+        staleTime: 60_000,
+      }) as Promise<PriceTier[]>,
+    ])
+    return {
+      ...product,
+      units: Array.isArray(packages) ? packages : [],
+      prices: Array.isArray(prices) ? prices : [],
     }
-    if (units.length === 1) {
-      addItemToCart(product, units[0].unit_id, units[0].unit_name)
-    } else {
-      openUnitSelectModal(product, units)
+  }
+
+  const handleAddProduct = async (item: ProductSearchResult) => {
+    setLoadingId(item.id)
+    try {
+      const product = await fetchFullProduct(item.id)
+      const units = product.units ?? []
+      if (units.length === 0) {
+        toast.error('Produk ini belum memiliki unit')
+        return
+      }
+      if (units.length === 1) {
+        addItemToCart(product, units[0].unit_id, units[0].unit_name)
+      } else {
+        openUnitSelectModal(product, units)
+      }
+      clearSearch()
+    } catch {
+      toast.error('Gagal memuat data produk')
+    } finally {
+      setLoadingId(null)
     }
-    clearSearch()
   }
 
   const addItemToCart = (product: Product, unitId: number, unitName: string) => {
@@ -55,14 +94,13 @@ export function ProductSearch() {
     if (e.key !== 'Enter' || !keyword.trim()) return
     e.preventDefault()
     try {
-      const { product, units } = await handleBarcodeEnter(keyword.trim())
-      if (!units || units.length === 0) {
-        if (product.units.length === 1) {
-          addItemToCart(product, product.units[0].unit_id, product.units[0].unit_name)
-        } else {
-          openUnitSelectModal(product, product.units)
-        }
-      } else if (units.length === 1) {
+      const { product } = await handleBarcodeEnter(keyword.trim())
+      const units = product.units ?? []
+      if (units.length === 0) {
+        toast.error('Produk ini belum memiliki unit')
+        return
+      }
+      if (units.length === 1) {
         addItemToCart(product, units[0].unit_id, units[0].unit_name)
       } else {
         openUnitSelectModal(product, units)
@@ -70,17 +108,6 @@ export function ProductSearch() {
     } catch {
       toast.error('Produk dengan barcode tersebut tidak ditemukan')
     }
-  }
-
-  const getDefaultPrice = (product: Product): number | null => {
-    const defaultUnit = product.units.find((u) => u.is_default)
-    if (!defaultUnit) return null
-    return getApplicablePrice(product.prices, defaultUnit.unit_id, 1)
-  }
-
-  const getDefaultUnitName = (product: Product): string => {
-    const defaultUnit = product.units.find((u) => u.is_default)
-    return defaultUnit?.unit_name ?? product.units[0]?.unit_name ?? ''
   }
 
   return (
@@ -112,32 +139,29 @@ export function ProductSearch() {
               Produk tidak ditemukan
             </p>
           ) : (
-            results.map((product: Product) => {
-              const price = getDefaultPrice(product)
-              const unitName = getDefaultUnitName(product)
-              return (
-                <button
-                  key={product.id}
-                  onClick={() => handleAddProduct(product)}
-                  className="flex flex-col items-center gap-1.5 rounded-lg border bg-white p-3 text-center shadow-sm hover:border-blue-400 hover:shadow-md transition-all active:scale-95"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-lg">
-                    📦
-                  </div>
-                  <p className="text-sm font-medium text-gray-800 line-clamp-2 leading-tight">
-                    {product.name}
-                  </p>
-                  {price !== null ? (
-                    <p className="text-xs font-semibold text-blue-600">
-                      {formatRupiah(price)}
-                      {unitName ? `/${unitName}` : ''}
-                    </p>
+            results.map((item: ProductSearchResult) => (
+              <button
+                key={item.id}
+                onClick={() => handleAddProduct(item)}
+                disabled={loadingId === item.id}
+                className="flex flex-col items-center gap-1.5 rounded-lg border bg-white p-3 text-center shadow-sm hover:border-blue-400 hover:shadow-md transition-all active:scale-95 disabled:opacity-60"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-lg">
+                  {loadingId === item.id ? (
+                    <Loader2 size={18} className="animate-spin text-gray-400" />
                   ) : (
-                    <p className="text-xs text-gray-400">—</p>
+                    '📦'
                   )}
-                </button>
-              )
-            })
+                </div>
+                <p className="text-sm font-medium text-gray-800 line-clamp-2 leading-tight">
+                  {item.name}
+                </p>
+                <p className="text-xs font-semibold text-blue-600">
+                  {formatRupiah(item.selling_price)}
+                  {item.unit_name ? `/${item.unit_name}` : ''}
+                </p>
+              </button>
+            ))
           )}
         </div>
       )}

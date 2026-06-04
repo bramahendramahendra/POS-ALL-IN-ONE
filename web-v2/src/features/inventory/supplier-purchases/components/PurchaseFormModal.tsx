@@ -40,6 +40,7 @@ const itemSchema = z.object({
   quantity: z.number({ error: 'Wajib diisi' }).positive('Harus lebih dari 0'),
   price: z.number({ error: 'Wajib diisi' }).nonnegative(),
   unit: z.string().min(1, 'Wajib diisi'),
+  conversion_qty: z.number().positive().default(1),
 })
 
 const schema = z.object({
@@ -64,12 +65,12 @@ const defaultValues: FormValues = {
   purchase_date: todayString(),
   invoice_number: '',
   supplier_id: 0,
-  items: [{ product_id: 0, quantity: 1, price: 0, unit: '' }],
+  items: [{ product_id: 0, quantity: 1, price: 0, unit: '', conversion_qty: 1 }],
   discount_amount: 0,
   notes: '',
   payment_status: 'paid',
   paid_amount: 0,
-  payment_method: 'tunai',
+  payment_method: 'cash',
 }
 
 export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps) {
@@ -139,11 +140,13 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
       setItemSelectedPackageId((prev) => ({ ...prev, [index]: defaultPkg?.id ?? 0 }))
       setValue(`items.${index}.unit`, defaultPkg?.unit_name ?? product.unit_name ?? 'pcs')
       setValue(`items.${index}.price`, defaultPkg?.purchase_price ?? product.purchase_price ?? 0)
+      setValue(`items.${index}.conversion_qty`, defaultPkg?.conversion_qty ?? 1)
     } else {
       setItemUnitOptions((prev) => { const next = { ...prev }; delete next[index]; return next })
       setItemSelectedPackageId((prev) => { const next = { ...prev }; delete next[index]; return next })
       setValue(`items.${index}.unit`, product.unit_name ?? 'pcs')
       setValue(`items.${index}.price`, product.purchase_price ?? 0)
+      setValue(`items.${index}.conversion_qty`, 1)
     }
   }
 
@@ -154,6 +157,7 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
     setItemSelectedPackageId((prev) => ({ ...prev, [index]: id }))
     setValue(`items.${index}.unit`, pkg.unit_name)
     setValue(`items.${index}.price`, pkg.purchase_price)
+    setValue(`items.${index}.conversion_qty`, pkg.conversion_qty ?? 1)
   }
 
   function unitOptionLabel(pkg: ProductPackage) {
@@ -171,6 +175,7 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
           quantity: item.quantity,
           purchase_price: item.price,
           unit: item.unit,
+          conversion_qty: item.conversion_qty ?? 1,
         })),
         paid_amount: values.payment_status === 'paid' ? total : values.paid_amount,
       },
@@ -256,7 +261,7 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => append({ product_id: 0, quantity: 1, price: 0, unit: '' })}
+              onClick={() => append({ product_id: 0, quantity: 1, price: 0, unit: '', conversion_qty: 1 })}
               className="h-7 gap-1 text-xs"
             >
               <Plus className="h-3 w-3" />
@@ -416,7 +421,7 @@ export function PurchaseFormModal({ open, onOpenChange }: PurchaseFormModalProps
               <div className="space-y-1.5">
                 <Label>Metode Pembayaran</Label>
                 <Select
-                  value={watchPaymentMethod ?? 'tunai'}
+                  value={watchPaymentMethod ?? 'cash'}
                   onValueChange={(v) => setValue('payment_method', v)}
                 >
                   <SelectTrigger>

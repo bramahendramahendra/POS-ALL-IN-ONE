@@ -4,6 +4,7 @@ type PurchaseItemRequest struct {
 	ProductID     int     `json:"product_id" validate:"required,gt=0"`
 	Quantity      float64 `json:"quantity" validate:"required,gt=0"`
 	Unit          string  `json:"unit" validate:"required"`
+	ConversionQty float64 `json:"conversion_qty"`
 	PurchasePrice float64 `json:"purchase_price" validate:"required,gt=0"`
 }
 
@@ -22,7 +23,7 @@ type PurchaseRequest struct {
 type PayPurchaseRequest struct {
 	Amount        float64 `json:"amount" validate:"required,gt=0"`
 	PaymentDate   string  `json:"payment_date" validate:"required"`
-	PaymentMethod string  `json:"payment_method" validate:"required"`
+	PaymentMethod string  `json:"payment_method" validate:"required,oneof=cash transfer card qris kredit"`
 	Notes         string  `json:"notes"`
 }
 
@@ -42,6 +43,7 @@ type PurchaseItemResponse struct {
 	ProductName   string  `json:"product_name"`
 	Quantity      float64 `json:"quantity"`
 	Unit          string  `json:"unit"`
+	ConversionQty float64 `json:"conversion_qty"`
 	PurchasePrice float64 `json:"purchase_price"`
 	Subtotal      float64 `json:"subtotal"`
 }

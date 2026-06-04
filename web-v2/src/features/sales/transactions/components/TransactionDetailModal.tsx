@@ -40,31 +40,32 @@ function buildReceiptData(t: Transaction): {
   discount: Discount
   tax: Tax
 } {
-  const cart: CartItem[] = t.items.map((item, i) => ({
-    product_id: i,
+  const cart: CartItem[] = t.items.map((item) => ({
+    product_id: item.product_id,
     product_name: item.product_name,
-    unit_id: 0,
-    unit_name: item.unit_name,
+    unit_id: item.id,
+    unit_name: item.unit,
     conversion_qty: item.conversion_qty ?? 1,
-    qty: item.qty,
+    qty: item.quantity,
     price: item.price,
     subtotal: item.subtotal,
+    discount_amount: item.discount_item > 0 ? item.discount_item : undefined,
   }))
 
   const summary: CartSummary = {
     subtotal: t.subtotal,
-    discountAmount: t.discount_amount,
-    taxAmount: t.tax_amount,
-    grandTotal: t.grand_total,
+    discountAmount: t.discount,
+    taxAmount: t.tax,
+    grandTotal: t.total_amount,
   }
 
   const discount: Discount = {
-    type: t.discount_type,
-    value: 0,
-    amount: t.discount_amount,
+    type: 'amount',
+    value: t.discount,
+    amount: t.discount,
   }
 
-  const tax: Tax = { percent: 0, amount: t.tax_amount }
+  const tax: Tax = { percent: 0, amount: t.tax }
 
   return { cart, summary, discount, tax }
 }
@@ -121,7 +122,7 @@ export function TransactionDetailModal({ transactionId, onClose }: TransactionDe
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                   <div>
                     <p className="text-xs text-gray-500">Tanggal</p>
-                    <p className="font-medium">{formatDateTime(transaction.created_at)}</p>
+                    <p className="font-medium">{formatDateTime(transaction.transaction_date)}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Status</p>
@@ -162,9 +163,14 @@ export function TransactionDetailModal({ transactionId, onClose }: TransactionDe
                         <tr key={i}>
                           <td className="py-1.5">
                             <p className="font-medium">{item.product_name}</p>
-                            <p className="text-xs text-gray-400">{item.unit_name}</p>
+                            <p className="text-xs text-gray-400">{item.unit}</p>
+                            {item.discount_item > 0 && (
+                              <p className="text-xs text-green-600">
+                                Disc -{formatRupiah(item.discount_item)}
+                              </p>
+                            )}
                           </td>
-                          <td className="text-center py-1.5">{item.qty}</td>
+                          <td className="text-center py-1.5">{item.quantity}</td>
                           <td className="text-right py-1.5">{formatRupiah(item.price)}</td>
                           <td className="text-right py-1.5 font-medium">
                             {formatRupiah(item.subtotal)}
@@ -181,25 +187,25 @@ export function TransactionDetailModal({ transactionId, onClose }: TransactionDe
                     <span>Subtotal</span>
                     <span>{formatRupiah(transaction.subtotal)}</span>
                   </div>
-                  {transaction.discount_amount > 0 && (
+                  {transaction.discount > 0 && (
                     <div className="flex justify-between text-green-600">
                       <span>Diskon</span>
-                      <span>-{formatRupiah(transaction.discount_amount)}</span>
+                      <span>-{formatRupiah(transaction.discount)}</span>
                     </div>
                   )}
-                  {transaction.tax_amount > 0 && (
+                  {transaction.tax > 0 && (
                     <div className="flex justify-between text-gray-600">
                       <span>Pajak</span>
-                      <span>+{formatRupiah(transaction.tax_amount)}</span>
+                      <span>+{formatRupiah(transaction.tax)}</span>
                     </div>
                   )}
                   <div className="flex justify-between border-t pt-2 font-bold text-gray-900">
                     <span>TOTAL</span>
-                    <span>{formatRupiah(transaction.grand_total)}</span>
+                    <span>{formatRupiah(transaction.total_amount)}</span>
                   </div>
                   <div className="flex justify-between text-gray-600">
                     <span>Bayar</span>
-                    <span>{formatRupiah(transaction.amount_paid)}</span>
+                    <span>{formatRupiah(transaction.payment_amount)}</span>
                   </div>
                   <div className="flex justify-between text-gray-600">
                     <span>Kembalian</span>
@@ -261,19 +267,19 @@ export function TransactionDetailModal({ transactionId, onClose }: TransactionDe
               open={receiptOpen}
               onClose={() => setReceiptOpen(false)}
               checkoutData={{
-                transaction_id: transaction.id,
+                id: transaction.id,
                 transaction_code: transaction.transaction_code,
-                grand_total: transaction.grand_total,
-                amount_paid: transaction.amount_paid,
+                total_amount: transaction.total_amount,
+                payment_amount: transaction.payment_amount,
                 change_amount: transaction.change_amount,
-                created_at: transaction.created_at,
+                transaction_date: transaction.transaction_date,
               }}
               cart={cart}
               summary={summary}
               discount={discount}
               tax={tax}
               paymentMethod={transaction.payment_method}
-              amountPaid={transaction.amount_paid}
+              amountPaid={transaction.payment_amount}
               customerName={transaction.customer_name}
             />
           )

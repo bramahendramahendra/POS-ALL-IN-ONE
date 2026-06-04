@@ -1,11 +1,13 @@
 package repo_supplier_return
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	dto_supplier_return "pos_api/domain/supplier_return/dto"
 	model_supplier_return "pos_api/domain/supplier_return/model"
+	custom_errors "pos_api/errors"
 
 	"gorm.io/gorm"
 )
@@ -17,13 +19,19 @@ const (
 	updateReturnStatusQuery  = `UPDATE supplier_returns SET status = ?, notes = ?, updated_at = NOW() WHERE id = ?`
 	reduceStockQuery         = `UPDATE products SET stock = stock - ?, updated_at = NOW() WHERE id = ?`
 	getReturnItemsQuery      = `SELECT sri.id, sri.product_id, sri.product_name, sri.quantity, sri.unit, sri.purchase_price, sri.subtotal FROM supplier_return_items sri WHERE sri.return_id = ?`
-	checkReturnApprovedQuery = `SELECT status FROM supplier_returns WHERE id = ?`
+	checkReturnApprovedQuery      = `SELECT status FROM supplier_returns WHERE id = ?`
+	getPurchaseIDAndAmountQuery   = `SELECT purchase_id, total_return_amount FROM supplier_returns WHERE id = ?`
+	reducePurchaseDebtQuery       = `UPDATE purchases SET remaining_amount = GREATEST(remaining_amount - ?, 0), payment_status = CASE WHEN remaining_amount <= ? THEN 'paid' WHEN paid_amount > 0 THEN 'partial' ELSE 'unpaid' END, updated_at = NOW() WHERE id = ?`
 	getReturnByIDQuery       = `SELECT sr.id, sr.return_code, sr.purchase_id, sr.supplier_id, sr.supplier_name, sr.return_date, sr.total_return_amount, sr.reason, sr.status, u.full_name as user_name, sr.notes FROM supplier_returns sr LEFT JOIN users u ON sr.user_id = u.id WHERE sr.id = ?`
 	getAllReturnsBase        = `SELECT sr.id, sr.return_code, sr.purchase_id, sr.supplier_id, sr.supplier_name, sr.return_date, sr.total_return_amount, sr.reason, sr.status, u.full_name as user_name, sr.notes FROM supplier_returns sr LEFT JOIN users u ON sr.user_id = u.id WHERE 1=1`
 	countReturnsBase         = `SELECT COUNT(*) FROM supplier_returns sr WHERE 1=1`
+	getPurchaseDateQuery          = `SELECT purchase_date FROM purchases WHERE id = ? LIMIT 1`
+	getPurchaseItemQtyQuery       = `SELECT quantity FROM purchase_items WHERE id = ? AND purchase_id = ? LIMIT 1 FOR UPDATE`
+	getTotalReturnedQtyQuery      = `SELECT COALESCE(SUM(sri.quantity), 0) FROM supplier_return_items sri JOIN supplier_returns sr ON sri.return_id = sr.id WHERE sri.purchase_item_id = ? AND sr.status IN ('pending', 'approved')`
 	deleteReturnItemsQuery   = `DELETE FROM supplier_return_items WHERE return_id = ?`
 	deleteReturnQuery        = `DELETE FROM supplier_returns WHERE id = ?`
-	getProductStockQuery     = `SELECT stock FROM products WHERE id = ? LIMIT 1`
+	getProductStockQuery          = `SELECT stock FROM products WHERE id = ? LIMIT 1`
+	getProductStockForUpdateQuery = `SELECT stock FROM products WHERE id = ? LIMIT 1 FOR UPDATE`
 	createStockMutationQuery = `INSERT INTO stock_mutations (product_id, mutation_type, quantity, stock_before, stock_after, reference_type, reference_id, notes, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 )
 
@@ -169,6 +177,14 @@ func (r *supplierReturnRepo) GetItems(returnID int) ([]model_supplier_return.Sup
 	return items, nil
 }
 
+func (r *supplierReturnRepo) GetPurchaseDate(purchaseID int) (string, error) {
+	var purchaseDate string
+	if err := r.db.Raw(getPurchaseDateQuery, purchaseID).Scan(&purchaseDate).Error; err != nil {
+		return "", err
+	}
+	return purchaseDate, nil
+}
+
 func (r *supplierReturnRepo) Create(req *dto_supplier_return.CreateSupplierReturnRequest, userID int) (*dto_supplier_return.SupplierReturnResponse, error) {
 	var returnID int
 
@@ -197,6 +213,22 @@ func (r *supplierReturnRepo) Create(req *dto_supplier_return.CreateSupplierRetur
 		}
 
 		for _, item := range req.Items {
+			var purchaseQty float64
+			row := tx.Raw(getPurchaseItemQtyQuery, item.PurchaseItemID, req.PurchaseID).Row()
+			if err := row.Scan(&purchaseQty); err != nil {
+				return errors.New("item pembelian tidak ditemukan")
+			}
+
+			var alreadyReturned float64
+			if err := tx.Raw(getTotalReturnedQtyQuery, item.PurchaseItemID).Scan(&alreadyReturned).Error; err != nil {
+				return err
+			}
+
+			sisaQty := purchaseQty - alreadyReturned
+			if item.Quantity > sisaQty {
+				return fmt.Errorf("jumlah retur %s melebihi sisa yang bisa diretur (maks %.0f)", item.ProductName, sisaQty)
+			}
+
 			subtotal := item.PurchasePrice * item.Quantity
 			if err := tx.Exec(createReturnItemQuery,
 				returnID, item.PurchaseItemID, item.ProductID, item.ProductName,
@@ -225,6 +257,12 @@ func (r *supplierReturnRepo) ApproveWithStockReduction(id int, userID int) error
 			return err
 		}
 
+		var purchaseID int
+		var totalReturnAmount float64
+		if err := tx.Raw(getPurchaseIDAndAmountQuery, id).Row().Scan(&purchaseID, &totalReturnAmount); err != nil {
+			return err
+		}
+
 		items, err := r.GetItems(id)
 		if err != nil {
 			return err
@@ -232,8 +270,14 @@ func (r *supplierReturnRepo) ApproveWithStockReduction(id int, userID int) error
 
 		for _, item := range items {
 			var stockBefore float64
-			if err := tx.Raw(getProductStockQuery, item.ProductID).Scan(&stockBefore).Error; err != nil {
+			if err := tx.Raw(getProductStockForUpdateQuery, item.ProductID).Scan(&stockBefore).Error; err != nil {
 				return err
+			}
+
+			if stockBefore < item.Quantity {
+				return &custom_errors.BadRequestError{
+					Message: fmt.Sprintf("stok %s tidak mencukupi untuk retur (stok saat ini: %.0f)", item.ProductName, stockBefore),
+				}
 			}
 
 			if err := tx.Exec(reduceStockQuery, item.Quantity, item.ProductID).Error; err != nil {
@@ -248,6 +292,10 @@ func (r *supplierReturnRepo) ApproveWithStockReduction(id int, userID int) error
 			).Error; err != nil {
 				return err
 			}
+		}
+
+		if err := tx.Exec(reducePurchaseDebtQuery, totalReturnAmount, totalReturnAmount, purchaseID).Error; err != nil {
+			return err
 		}
 
 		return nil

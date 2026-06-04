@@ -10,7 +10,7 @@ import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
 import { formatRupiah } from '@/shared/utils'
 
-import { useCheckoutMutation, useCustomerCreditQuery } from '../cashier.api'
+import { useActiveShiftQuery, useCheckoutMutation, useCustomerCreditQuery } from '../cashier.api'
 import { useCashierStore } from '../cashier.store'
 import type {
   CartSummary,
@@ -58,39 +58,37 @@ function buildRoundedOptions(grandTotal: number): number[] {
 function buildPayload(
   cart: CartItem[],
   summary: CartSummary,
-  discount: Discount,
-  tax: Tax,
+  _discount: Discount,
+  _tax: Tax,
   customerId: number | undefined,
+  shiftId: number | undefined,
   paymentMethod: PaymentMethod,
   amountPaid: number,
-  notes?: string
 ): PaymentPayload {
+  const isKredit = paymentMethod === 'kredit'
   return {
     customer_id: customerId,
+    shift_id: shiftId,
+    is_credit: isKredit,
+    device_source: 'web',
     items: cart.map((i) => ({
       product_id: i.product_id,
+      product_name: i.product_name,
       unit_id: i.unit_id,
-      unit_name: i.unit_name,
+      unit: i.unit_name,
       conversion_qty: i.conversion_qty,
-      qty: i.qty,
+      quantity: i.qty,
       price: i.price,
       subtotal: i.subtotal,
-      notes: i.notes,
-      discount_type: i.discount_type,
-      discount_value: i.discount_value,
-      discount_amount: i.discount_amount,
+      discount_item: i.discount_amount,
     })),
     subtotal: summary.subtotal,
-    discount_type: discount.type,
-    discount_value: discount.value,
-    discount_amount: summary.discountAmount,
-    tax_percent: tax.percent,
-    tax_amount: summary.taxAmount,
-    grand_total: summary.grandTotal,
+    discount: summary.discountAmount,
+    tax: summary.taxAmount,
+    total_amount: summary.grandTotal,
     payment_method: paymentMethod,
-    amount_paid: amountPaid,
-    change_amount: paymentMethod === 'kredit' ? 0 : calcChange(summary.grandTotal, amountPaid),
-    notes,
+    payment_amount: isKredit ? 0 : amountPaid,
+    change_amount: isKredit ? 0 : Math.max(0, amountPaid - summary.grandTotal),
   }
 }
 
@@ -111,6 +109,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
   const { cart, discount, tax, selectedCustomer } = useCashierStore()
   const summary = calcCartSummary(cart, discount, tax)
   const { mutate: checkout, isPending } = useCheckoutMutation()
+  const { data: activeShift } = useActiveShiftQuery()
 
   // Fetch customer credit info when kredit mode is active
   const { data: creditData } = useCustomerCreditQuery(selectedCustomer?.id ?? null)
@@ -193,8 +192,9 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
       discount,
       tax,
       selectedCustomer?.id,
+      activeShift?.id,
       values.payment_method,
-      effectiveAmountPaid
+      effectiveAmountPaid,
     )
 
     checkout(payload, {
@@ -368,7 +368,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                     >
                       {sufficient
                         ? formatRupiah(change)
-                        : `Kurang ${formatRupiah(Math.abs(change))}`}
+                        : `Kurang ${formatRupiah(summary.grandTotal - amountPaid)}`}
                     </span>
                   </div>
                 </>

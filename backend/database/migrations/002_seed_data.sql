@@ -16,10 +16,11 @@ INSERT IGNORE INTO payment_statuses (code, label, is_active, sort_order) VALUES
 -- Payment Methods
 -- -------------------------------------------------------------
 INSERT IGNORE INTO payment_methods (code, label, is_active, sort_order) VALUES
-    ('tunai',    'Tunai',         1, 1),
+    ('cash',     'Tunai',         1, 1),
     ('transfer', 'Transfer Bank', 1, 2),
-    ('debit',    'Kartu Debit',   1, 3),
-    ('qris',     'QRIS',          1, 4);
+    ('card',     'Kartu',         1, 3),
+    ('qris',     'QRIS',          1, 4),
+    ('kredit',   'Kredit',        1, 5);
 
 -- -------------------------------------------------------------
 -- Roles (3 role sistem, tidak bisa dihapus)

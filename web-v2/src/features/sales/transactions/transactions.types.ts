@@ -3,39 +3,45 @@ import type { DiscountType, PaymentMethod } from '@/features/sales/cashier'
 export type { DiscountType, PaymentMethod }
 
 export interface TransactionItem {
+  id: number
+  product_id: number
   product_name: string
-  unit_name: string
+  unit: string
   conversion_qty: number
-  qty: number
+  quantity: number
   price: number
   subtotal: number
+  discount_item: number
 }
 
 export interface Transaction {
   id: number
   transaction_code: string
-  customer_name?: string
+  user_id: number
   kasir_name: string
+  customer_id?: number
+  customer_name?: string
+  shift_id?: number
+  transaction_date: string
   items: TransactionItem[]
   subtotal: number
-  discount_type: DiscountType
-  discount_amount: number
-  tax_amount: number
-  grand_total: number
+  discount: number
+  tax: number
+  total_amount: number
   payment_method: PaymentMethod
-  amount_paid: number
+  payment_amount: number
   change_amount: number
-  status: 'completed' | 'voided'
-  notes?: string
-  created_at: string
+  is_credit: boolean
+  status: 'completed' | 'void'
+  device_source: string
 }
 
 export interface TransactionFilter {
   search?: string
-  date_from?: string
-  date_to?: string
+  start_date?: string
+  end_date?: string
   payment_method?: PaymentMethod | ''
-  status?: 'completed' | 'voided' | ''
+  status?: 'completed' | 'void' | ''
   page?: number
-  page_size?: number
+  limit?: number
 }
